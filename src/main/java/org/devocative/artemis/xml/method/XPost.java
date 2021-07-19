@@ -9,5 +9,8 @@ import org.devocative.artemis.xml.XBaseRequest;
 @Setter
 @XStreamAlias("post")
 public class XPost extends XBaseRequest {
-	private XBody body;
+	@Override
+	public EMethod getMethod() {
+		return EMethod.POST;
+	}
 }

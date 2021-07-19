@@ -5,4 +5,8 @@ import org.devocative.artemis.xml.XBaseRequest;
 
 @XStreamAlias("get")
 public class XGet extends XBaseRequest {
+	@Override
+	public EMethod getMethod() {
+		return EMethod.GET;
+	}
 }

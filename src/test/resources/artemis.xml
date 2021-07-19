@@ -1,0 +1,16 @@
+<scenario name="test1">
+	<post id="sms" url="/auth/sms-code/mobile/${mobile}">
+		<init call="initCustomer"/>
+
+		<body type="json">
+			<![CDATA[
+{
+	"type": "REAL",
+	"nationalId": "${nationalID}"
+}
+]]>
+		</body>
+
+		<assertRs status="200"/>
+	</post>
+</scenario>

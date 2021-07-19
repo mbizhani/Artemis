@@ -5,4 +5,8 @@ import org.devocative.artemis.xml.XBaseRequest;
 
 @XStreamAlias("put")
 public class XPut extends XBaseRequest {
+	@Override
+	public EMethod getMethod() {
+		return EMethod.PUT;
+	}
 }

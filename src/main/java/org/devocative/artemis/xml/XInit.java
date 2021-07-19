@@ -10,11 +10,11 @@ import java.util.List;
 
 @Getter
 @Setter
-@XStreamAlias("scenario")
-public class XScenario {
+@XStreamAlias("init")
+public class XInit {
 	@XStreamAsAttribute
-	private String name;
+	private String call;
 
 	@XStreamImplicit
-	private List<XBaseRequest> requests;
+	private List<XVar> vars;
 }
