@@ -45,9 +45,9 @@ public class ArtemisMain {
 		final XInit init = rq.getInit();
 		if (init != null) {
 			if (init.getCall() != null) {
-				GroovyHandler.invoke(init.getCall());
+				ContextHandler.invoke(init.getCall());
 			}
-			final Context ctx = GroovyHandler.getContext();
+			final Context ctx = ContextHandler.getContext();
 			final List<XVar> vars = init.getVars();
 			if (vars != null) {
 				for (XVar var : vars) {
@@ -62,7 +62,7 @@ public class ArtemisMain {
 	}
 
 	private static void sendRq(XBaseRequest rq) throws Exception {
-		final Context ctx = GroovyHandler.getContext();
+		final Context ctx = ContextHandler.getContext();
 		final String url = ctx.getBaseUrl() + rq.getUrl(); //TODO
 		final List<XParam> params = rq.getParams();
 

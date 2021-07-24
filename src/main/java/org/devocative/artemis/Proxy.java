@@ -37,7 +37,7 @@ public class Proxy {
 						.collect(Collectors.toList());
 				} else if (result instanceof String) {
 					final String str = (String) result;
-					return str.contains("${") ? GroovyHandler.eval(str) : str;
+					return str.contains("${") ? ContextHandler.eval(str) : str;
 				} else if (doProxify(result)) {
 					return create(result);
 				}
