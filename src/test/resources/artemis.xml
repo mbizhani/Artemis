@@ -2,8 +2,7 @@
 	<post id="sms" url="/auth/sms-code/mobile/${mobile}">
 		<init call="initCustomer"/>
 
-		<body type="json">
-			<![CDATA[
+		<body type="json"><![CDATA[
 {
 	"type": "REAL",
 	"nationalId": "${nationalID}"
@@ -11,6 +10,18 @@
 ]]>
 		</body>
 
-		<assertRs status="200"/>
+		<assertRs status="200" type="json" properties="smsCode"/>
 	</post>
+
+	<post id="verifyCode" url="/auth/sms-code/verify/${mobile}">
+		<body><![CDATA[
+{
+	"smsCode": "${sms.rs.smsCode}"
+}
+]]>
+		</body>
+
+		<assertRs status="200" properties="token"/>
+	</post>
+
 </scenario>

@@ -1,5 +1,6 @@
 package org.devocative.artemis;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thoughtworks.xstream.XStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
@@ -18,13 +19,17 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.devocative.artemis.xml.XBaseRequest.EMethod.POST;
+import static org.devocative.artemis.xml.EMethod.POST;
 
 @Slf4j
 public class ArtemisMain {
+
+	private static ObjectMapper mapper;
 
 	public static void run() throws Exception {
 		final XStream xStream = new XStream();
@@ -36,6 +41,8 @@ public class ArtemisMain {
 		final XScenario proxy = (XScenario) Proxy.create(scenario);
 		log.info("Scenario: {}", proxy.getName());
 
+		mapper = new ObjectMapper();
+
 		for (XBaseRequest rq : proxy.getRequests()) {
 			processRq(rq);
 		}
@@ -46,6 +53,7 @@ public class ArtemisMain {
 		if (init != null) {
 			if (init.getCall() != null) {
 				ContextHandler.invoke(init.getCall());
+				log.info("Rq({}) - call: {}", rq.getId(), init.getCall());
 			}
 			final Context ctx = ContextHandler.getContext();
 			final List<XVar> vars = init.getVars();
@@ -53,10 +61,9 @@ public class ArtemisMain {
 				for (XVar var : vars) {
 					ctx.addVar(var.getName(), var.getValue());
 				}
+				log.info("Rq({}) - add ({}) vars to context", rq.getId(), vars.size());
 			}
 		}
-
-		log.info("Rq - id({}): {}", rq.getId(), rq.getUrl());
 
 		sendRq(rq);
 	}
@@ -78,35 +85,66 @@ public class ArtemisMain {
 		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
 			final HttpUriRequestBase httpRq = new HttpUriRequestBase(rq.getMethod().name(), uri);
 
+			final Map<String, Object> rqAndRs = new HashMap<>();
+			ctx.addVar(rq.getId(), rqAndRs);
+
 			final XBody body = rq.getBody();
 			final StringBuilder builder = new StringBuilder();
+
 			if (rq.getMethod() == POST) {
 				if (body != null) {
-					httpRq.setEntity(new StringEntity(body.getContent().trim(), ContentType.APPLICATION_JSON, "UTF-8", false));
+					final String content = body.getContent().trim();
+					httpRq.setEntity(new StringEntity(content, ContentType.APPLICATION_JSON, "UTF-8", false));
+					rqAndRs.put("rq", body.isJson() ? mapper.readValue(content, Object.class) : content);
 					builder
 						.append("\n")
-						.append(body.getContent().trim());
+						.append(content);
 				} else if (params != null) {
 					final List<BasicNameValuePair> httpParams = params.stream()
 						.map(p -> new BasicNameValuePair(p.getName(), p.getValue()))
 						.collect(Collectors.toList());
 					httpRq.setEntity(new UrlEncodedFormEntity(httpParams));
+					rqAndRs.put("rq", params.stream().collect(Collectors.toMap(XParam::getName, XParam::getValue)));
 
 					builder.append("\n");
 					params.forEach(p -> builder.append(p.getName()).append(" = ").append(p.getValue()));
 				}
 			}
 
-			log.info("{} - {}{}", rq.getMethod(), uri, builder.toString());
+			log.info("Rq({}): {} - {}{}", rq.getId(), rq.getMethod(), uri, builder.toString());
 			try (final CloseableHttpResponse rs = httpclient.execute(httpRq)) {
+				final XAssertRs assertRs = rq.getAssertRs();
+				if (assertRs.getStatus() != null && !assertRs.getStatus().equals(rs.getCode())) {
+					throw new TestFailedException(rq.getId(), "Invalid Rs Code: expected %s, got %s",
+						assertRs.getStatus(), rs.getCode());
+				}
+
 				final String contentType = rs.getEntity().getContentType();
 				if (contentType.contains("text") || contentType.contains("json")) {
 					final String rsBodyAsStr = new BufferedReader(new InputStreamReader(rs.getEntity().getContent(), StandardCharsets.UTF_8))
 						.lines()
 						.collect(Collectors.joining("\n"));
 
-					log.info("{} ({}) - {}\nContentType: {}\n{}",
-						rq.getMethod(), rs.getCode(), uri, contentType, rsBodyAsStr);
+					log.info("Rs({}): {} ({}) - {}\nContentType: {}\n{}",
+						rq.getId(), rq.getMethod(), rs.getCode(), uri, contentType, rsBodyAsStr);
+
+					rqAndRs.put("rs", assertRs.isJson() ? mapper.readValue(rsBodyAsStr, Object.class) : rsBodyAsStr);
+
+					if (assertRs.getProperties() != null) {
+						final String[] properties = assertRs.getProperties().split(",");
+						final Object rsAsObj = rqAndRs.get("rs");
+
+						if (rsAsObj instanceof Map) {
+							Map rsAsMap = (Map) rsAsObj;
+							for (String property : properties) {
+								if (!rsAsMap.containsKey(property)) {
+									throw new TestFailedException(rq.getId(), "Invalid Property in Rs Object: %s", property);
+								}
+							}
+						} else {
+							throw new TestFailedException(rq.getId(), "Invalid Rs Type for Asserting Properties");
+						}
+					}
 				}
 			}
 		}

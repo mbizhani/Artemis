@@ -10,9 +10,6 @@ import java.util.List;
 @Getter
 @Setter
 public abstract class XBaseRequest {
-	public enum EMethod {
-		GET, POST, PUT, DELETE
-	}
 
 	@XStreamAsAttribute
 	private String id;

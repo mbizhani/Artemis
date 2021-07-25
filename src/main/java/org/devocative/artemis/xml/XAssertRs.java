@@ -11,4 +11,16 @@ import lombok.Setter;
 public class XAssertRs {
 	@XStreamAsAttribute
 	private Integer status;
+
+	@XStreamAsAttribute
+	private EContentType type;
+
+	@XStreamAsAttribute
+	private String properties;
+
+	// ------------------------------
+
+	public boolean isJson() {
+		return type == null || EContentType.json.equals(type);
+	}
 }
