@@ -7,6 +7,9 @@ import org.devocative.artemis.xml.method.XBody;
 
 import java.util.List;
 
+import static org.devocative.artemis.xml.EMethod.POST;
+import static org.devocative.artemis.xml.EMethod.PUT;
+
 @Getter
 @Setter
 public abstract class XBaseRequest {
@@ -33,4 +36,8 @@ public abstract class XBaseRequest {
 	// ------------------------------
 
 	public abstract EMethod getMethod();
+
+	public boolean shouldHaveBody() {
+		return getMethod() == POST || getMethod() == PUT;
+	}
 }

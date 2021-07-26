@@ -3,6 +3,11 @@ package org.devocative.artemis.test;
 import io.javalin.Javalin;
 import org.devocative.artemis.ArtemisMain;
 import org.devocative.artemis.ContextHandler;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -12,45 +17,66 @@ import java.util.stream.Collectors;
 import static org.devocative.artemis.test.Pair.pair;
 
 public class TestArtemis {
+	private static final Logger log = LoggerFactory.getLogger(TestArtemis.class);
 
-	public static void main(String[] args) throws Exception {
+	Javalin app;
 
-		/*ContextHandler.get().addVar("a", 23);
-		System.out.println(ContextHandler.eval("ASD: ${_.genNationalId()}"));
-		System.out.println("TestArtemis.main");
-
-		if(1==1) {
-			return;
-		}*/
-
+	@BeforeEach
+	void init() {
 		if ("local".equals(ContextHandler.get().getProfile())) {
-			final Javalin app = Javalin
+			app = Javalin
 				.create()
 				.start(8080);
 
-			try {
-				app
-					.post("/auth/sms-code/mobile/:mobile", ctx -> {
-						ctx.json(asMap(
-							pair("smsCode", Math.abs(ctx.pathParam("mobile").hashCode()))
-						));
-					})
-					.post("/auth/sms-code/verify/:mobile", ctx -> {
-						ctx.json(asMap(
-							pair("token", UUID.randomUUID().toString())
-						));
-					});
+			app
+				.post("/registrations", ctx -> {
+					final Map<String, String> data = ctx.bodyAsClass(Map.class);
+					final String cell = data.get("cell");
 
-				ArtemisMain.run();
-			} finally {
-				app.stop();
-			}
-		} else {
-			ArtemisMain.run();
+					log("Register - cell=[{}]", cell);
+
+					ctx.json(asMap(
+						pair("smsCode", Math.abs(cell.hashCode())),
+						pair("token", UUID.randomUUID().toString())
+					));
+				})
+				.put("/registrations", ctx -> {
+					final Map<String, String> data = ctx.bodyAsClass(Map.class);
+					log("Verify - smsCode=[{}], authHeader=[{}]", data.get("smsCode"), ctx.header("Authorization"));
+
+					ctx
+						.json(asMap(
+							pair("userId", UUID.randomUUID().toString())
+						))
+						.status(201);
+				})
+				.put("/users/:id", ctx -> {
+					final Map<String, String> data = ctx.bodyAsClass(Map.class);
+					log("UpdateProfile - id=[{}] data={} authHeader=[{}]",
+						ctx.pathParam("id"), data, ctx.header("Authorization"));
+				});
 		}
 	}
 
+	@Test
+	public void main() throws Exception {
+		ArtemisMain.run();
+	}
+
+	@AfterEach
+	void tearDown() {
+		if (app != null) {
+			app.stop();
+		}
+	}
+
+	// ------------------------------
+
 	private static Map<String, Object> asMap(Pair... pairs) {
 		return Arrays.stream(pairs).collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+	}
+
+	private static void log(String str, Object... vars) {
+		log.info("--- TEST --- | " + str, vars);
 	}
 }

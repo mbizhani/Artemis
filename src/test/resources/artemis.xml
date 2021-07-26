@@ -1,27 +1,43 @@
 <scenario name="test1">
-	<post id="sms" url="/auth/sms-code/mobile/${mobile}">
-		<init call="initCustomer"/>
 
-		<body type="json"><![CDATA[
+    <post id="register" url="/registrations">
+        <vars>
+            <var name="cell" value="09${_.generate(9, '0'..'9')}"/>
+        </vars>
+
+        <body type="json"><![CDATA[
 {
-	"type": "REAL",
-	"nationalId": "${nationalID}"
+	"name": "Foo Bar",
+	"cell": "${cell}"
 }
-]]>
-		</body>
+		]]></body>
 
-		<assertRs status="200" type="json" properties="smsCode"/>
-	</post>
+        <assertRs status="200" type="json" properties="smsCode,token"/>
+    </post>
 
-	<post id="verifyCode" url="/auth/sms-code/verify/${mobile}">
-		<body><![CDATA[
+    <put id="verify" url="/registrations">
+        <headers>
+            <header name="Authorization" value="${register.rs.token}"/>
+        </headers>
+
+        <body><![CDATA[
 {
-	"smsCode": "${sms.rs.smsCode}"
+	"smsCode": "${register.rs.smsCode}"
 }
-]]>
-		</body>
+		]]></body>
 
-		<assertRs status="200" properties="token"/>
-	</post>
+        <assertRs status="201" properties="userId"/>
+    </put>
+
+    <put id="updateProfile" url="/users/${verify.rs.userId}">
+        <body><![CDATA[
+{
+	"city": "Tehran",
+	"email": "a@a.com"
+}
+		]]></body>
+
+        <assertRs status="200"/>
+    </put>
 
 </scenario>
