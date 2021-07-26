@@ -17,7 +17,10 @@ public abstract class XBaseRequest {
 	@XStreamAsAttribute
 	private String url;
 
-	private XInit init;
+	@XStreamAsAttribute
+	private String call;
+
+	private List<XVar> vars;
 
 	private List<XHeader> headers;
 

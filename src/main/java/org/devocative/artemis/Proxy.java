@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -42,6 +43,8 @@ public class Proxy {
 					return create(result);
 				}
 				return result;
+			} else if (method.getReturnType().equals(List.class)) {
+				return Collections.emptyList();
 			}
 			return null;
 		});

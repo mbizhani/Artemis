@@ -49,36 +49,35 @@ public class ArtemisMain {
 	}
 
 	private static void processRq(XBaseRequest rq) throws Exception {
-		final XInit init = rq.getInit();
-		if (init != null) {
-			if (init.getCall() != null) {
-				ContextHandler.invoke(init.getCall());
-				log.info("Rq({}) - call: {}", rq.getId(), init.getCall());
-			}
-			final Context ctx = ContextHandler.getContext();
-			final List<XVar> vars = init.getVars();
-			if (vars != null) {
-				for (XVar var : vars) {
-					ctx.addVar(var.getName(), var.getValue());
-				}
-				log.info("Rq({}) - add ({}) vars to context", rq.getId(), vars.size());
-			}
+		final Context ctx = ContextHandler.get();
+		int addVars = 0;
+		for (XVar var : rq.getVars()) {
+			ctx.addVar(var.getName(), var.getTheValue());
+			addVars++;
+		}
+		if (addVars > 0) {
+			log.info("Rq({}) - [{}] vars added to context", rq.getId(), addVars);
+		}
+
+		if (rq.getCall() != null) {
+			ContextHandler.invoke(rq.getCall());
+			log.info("Rq({}) - call: {}", rq.getId(), rq.getCall());
 		}
 
 		sendRq(rq);
 	}
 
 	private static void sendRq(XBaseRequest rq) throws Exception {
-		final Context ctx = ContextHandler.getContext();
+		final Context ctx = ContextHandler.get();
 		final String url = ctx.getBaseUrl() + rq.getUrl(); //TODO
 		final List<XParam> params = rq.getParams();
 
 		final URI uri;
-		if (rq.getMethod() == POST || params == null) {
+		if (rq.getMethod() == POST || params.isEmpty()) {
 			uri = URI.create(url);
 		} else {
 			final URIBuilder builder = new URIBuilder(url);
-			params.forEach(p -> builder.addParameter(p.getName(), p.getValue()));
+			params.forEach(p -> builder.addParameter(p.getName(), p.getTheValue()));
 			uri = builder.build();
 		}
 
@@ -99,25 +98,31 @@ public class ArtemisMain {
 					builder
 						.append("\n")
 						.append(content);
-				} else if (params != null) {
+				} else if (!params.isEmpty()) {
 					final List<BasicNameValuePair> httpParams = params.stream()
-						.map(p -> new BasicNameValuePair(p.getName(), p.getValue()))
+						.map(p -> new BasicNameValuePair(p.getName(), p.getTheValue()))
 						.collect(Collectors.toList());
 					httpRq.setEntity(new UrlEncodedFormEntity(httpParams));
 					rqAndRs.put("rq", params.stream().collect(Collectors.toMap(XParam::getName, XParam::getValue)));
 
 					builder.append("\n");
-					params.forEach(p -> builder.append(p.getName()).append(" = ").append(p.getValue()));
+					params.forEach(p -> builder.append(p.getName()).append(" = ").append(p.getTheValue()));
+				} else {
+					log.warn("Rq({}): Sending POST without body or any param", rq.getId());
 				}
 			}
 
+			rq.getHeaders().forEach(h -> httpRq.addHeader(h.getName(), h.getTheValue()));
+
 			log.info("Rq({}): {} - {}{}", rq.getId(), rq.getMethod(), uri, builder.toString());
 			try (final CloseableHttpResponse rs = httpclient.execute(httpRq)) {
-				final XAssertRs assertRs = rq.getAssertRs();
-				if (assertRs.getStatus() != null && !assertRs.getStatus().equals(rs.getCode())) {
-					throw new TestFailedException(rq.getId(), "Invalid Rs Code: expected %s, got %s",
-						assertRs.getStatus(), rs.getCode());
+				XAssertRs assertRs = rq.getAssertRs();
+				if (assertRs == null) {
+					log.warn("Rq({}) - No <assertRs/>!", rq.getId());
+					assertRs = new XAssertRs();
 				}
+
+				assertCode(rq, rs, assertRs);
 
 				final String contentType = rs.getEntity().getContentType();
 				if (contentType.contains("text") || contentType.contains("json")) {
@@ -135,10 +140,10 @@ public class ArtemisMain {
 						final Object rsAsObj = rqAndRs.get("rs");
 
 						if (rsAsObj instanceof Map) {
-							Map rsAsMap = (Map) rsAsObj;
+							final Map rsAsMap = (Map) rsAsObj;
 							for (String property : properties) {
-								if (!rsAsMap.containsKey(property)) {
-									throw new TestFailedException(rq.getId(), "Invalid Property in Rs Object: %s", property);
+								if (!rsAsMap.containsKey(property.trim())) {
+									throw new TestFailedException(rq.getId(), "Invalid Property in Rs Object: [%s]", property.trim());
 								}
 							}
 						} else {
@@ -147,6 +152,13 @@ public class ArtemisMain {
 					}
 				}
 			}
+		}
+	}
+
+	private static void assertCode(XBaseRequest rq, CloseableHttpResponse rs, XAssertRs assertRs) {
+		if (assertRs.getStatus() != null && !assertRs.getStatus().equals(rs.getCode())) {
+			throw new TestFailedException(rq.getId(), "Invalid Rs Code: expected %s, got %s",
+				assertRs.getStatus(), rs.getCode());
 		}
 	}
 

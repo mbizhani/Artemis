@@ -3,9 +3,11 @@ package org.devocative.artemis;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import groovy.text.SimpleTemplateEngine;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.InputStreamReader;
 
+@Slf4j
 public class ContextHandler {
 	private static final String ARTEMIS_PROFILE_ENV = "ARTEMIS_PROFILE";
 	private static final String ARTEMIS_PROFILE_SYS_PROP = "artemis.profile";
@@ -24,7 +26,7 @@ public class ContextHandler {
 
 	// ------------------------------
 
-	public static synchronized Context getContext() {
+	public static synchronized Context get() {
 		Context ctx = CTX.get();
 
 		if (ctx == null) {
@@ -36,14 +38,14 @@ public class ContextHandler {
 
 	public static Object eval(String str) {
 		try {
-			return ENGINE.createTemplate(str).make(getContext().getVars()).toString();
+			return ENGINE.createTemplate(str).make(get().getVars()).toString();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	public static void invoke(String method) {
-		MAIN.invokeMethod(method, new Object[]{getContext()});
+		MAIN.invokeMethod(method, new Object[]{get()});
 	}
 
 	// ------------------------------
@@ -62,6 +64,11 @@ public class ContextHandler {
 		ctx.setBaseUrl("http://localhost:8080");
 
 		MAIN.invokeMethod("init", new Object[]{ctx});
+		ctx.addVar("_", MAIN);
+
+		log.info("Context Handler: env=[{}] system=[{}]",
+			System.getenv(ARTEMIS_PROFILE_ENV), System.getProperty(ARTEMIS_PROFILE_SYS_PROP));
+		log.info("Context Handler: PROFILE=[{}] BASE_URL=[{}]", ctx.getProfile(), ctx.getBaseUrl());
 
 		return ctx;
 	}
