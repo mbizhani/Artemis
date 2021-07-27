@@ -12,19 +12,18 @@ public class ContextHandler {
 	private static final String ARTEMIS_PROFILE_ENV = "ARTEMIS_PROFILE";
 	private static final String ARTEMIS_PROFILE_SYS_PROP = "artemis.profile";
 
-	private final static ThreadLocal<Context> CTX = new ThreadLocal<>();
-
+	private static final ThreadLocal<Context> CTX = new ThreadLocal<>();
 	private static final SimpleTemplateEngine ENGINE = new SimpleTemplateEngine();
-	private static final Script MAIN;
+
+	private static Script MAIN;
 
 	// ------------------------------
 
-	static {
-		GroovyShell shell = new GroovyShell();
-		MAIN = shell.parse(new InputStreamReader(ContextHandler.class.getResourceAsStream("/artemis.groovy")));
+	public static void init(String name) {
+		final GroovyShell shell = new GroovyShell();
+		MAIN = shell.parse(new InputStreamReader(
+			ContextHandler.class.getResourceAsStream(String.format("/%s.groovy", name))));
 	}
-
-	// ------------------------------
 
 	public static synchronized Context get() {
 		Context ctx = CTX.get();

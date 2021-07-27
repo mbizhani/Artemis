@@ -1,8 +1,7 @@
 package org.devocative.artemis.test;
 
 import io.javalin.Javalin;
-import org.devocative.artemis.ArtemisMain;
-import org.devocative.artemis.ContextHandler;
+import org.devocative.artemis.ArtemisExecutor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,10 +19,13 @@ public class TestArtemis {
 	private static final Logger log = LoggerFactory.getLogger(TestArtemis.class);
 
 	Javalin app;
+	ArtemisExecutor executor;
 
 	@BeforeEach
 	void init() {
-		if ("local".equals(ContextHandler.get().getProfile())) {
+		executor = new ArtemisExecutor();
+
+		if ("local".equals(executor.getProfile())) {
 			app = Javalin
 				.create()
 				.start(8080);
@@ -60,7 +62,7 @@ public class TestArtemis {
 
 	@Test
 	public void main() throws Exception {
-		ArtemisMain.run();
+		executor.execute();
 	}
 
 	@AfterEach

@@ -27,21 +27,34 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class ArtemisMain {
+public class ArtemisExecutor {
+	private final String name;
+	private final ObjectMapper mapper;
 
-	private static ObjectMapper mapper;
+	// ------------------------------
 
-	public static void run() throws Exception {
+	public ArtemisExecutor() {
+		this("artemis");
+	}
+
+	public ArtemisExecutor(String name) {
+		this.name = name;
+		mapper = new ObjectMapper();
+		ContextHandler.init(name);
+	}
+
+	// ------------------------------
+
+	public void execute() throws Exception {
 		final XStream xStream = new XStream();
 		XStream.setupDefaultSecurity(xStream);
 		xStream.processAnnotations(new Class[]{XScenario.class, XGet.class, XPost.class, XPut.class, XDelete.class});
 		xStream.allowTypesByWildcard(new String[]{"org.devocative.artemis.xml.**"});
 
-		final XScenario scenario = (XScenario) xStream.fromXML(ArtemisMain.class.getResourceAsStream("/artemis.xml"));
+		final XScenario scenario = (XScenario) xStream.fromXML(
+			ArtemisExecutor.class.getResourceAsStream(String.format("/%s.xml", name)));
 		final XScenario proxy = (XScenario) Proxy.create(scenario);
 		log.info("Scenario: {}", proxy.getName());
-
-		mapper = new ObjectMapper();
 
 		for (XBaseRequest rq : proxy.getRequests()) {
 			initRq(rq);
@@ -49,7 +62,13 @@ public class ArtemisMain {
 		}
 	}
 
-	private static void initRq(XBaseRequest rq) {
+	public String getProfile() {
+		return ContextHandler.get().getProfile();
+	}
+
+	// ------------------------------
+
+	private void initRq(XBaseRequest rq) {
 		final Context ctx = ContextHandler.get();
 		int addVars = 0;
 		for (XVar var : rq.getVars()) {
@@ -66,7 +85,7 @@ public class ArtemisMain {
 		}
 	}
 
-	private static void sendRq(XBaseRequest rq) throws Exception {
+	private void sendRq(XBaseRequest rq) throws Exception {
 		final Context ctx = ContextHandler.get();
 
 		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
@@ -134,7 +153,7 @@ public class ArtemisMain {
 		}
 	}
 
-	private static void assertProperties(XBaseRequest rq, Object rsAsObj) {
+	private void assertProperties(XBaseRequest rq, Object rsAsObj) {
 		final XAssertRs assertRs = rq.getAssertRs();
 
 		if (assertRs.getProperties() != null) {
@@ -156,7 +175,7 @@ public class ArtemisMain {
 
 	// ---------------
 
-	private static URI createURI(XBaseRequest rq) {
+	private URI createURI(XBaseRequest rq) {
 		final Context ctx = ContextHandler.get();
 		final String url = ctx.getBaseUrl() + rq.getUrl(); //TODO
 		final List<XParam> params = rq.getParams();
@@ -177,7 +196,7 @@ public class ArtemisMain {
 		return uri;
 	}
 
-	private static void assertCode(XBaseRequest rq, CloseableHttpResponse rs) {
+	private void assertCode(XBaseRequest rq, CloseableHttpResponse rs) {
 		final XAssertRs assertRs = rq.getAssertRs();
 		if (assertRs.getStatus() != null && !assertRs.getStatus().equals(rs.getCode())) {
 			throw new TestFailedException(rq.getId(), "Invalid RS Code: Expected %s, Got %s",
@@ -185,7 +204,7 @@ public class ArtemisMain {
 		}
 	}
 
-	private static Object json(String id, String content) {
+	private Object json(String id, String content) {
 		try {
 			return mapper.readValue(content, Object.class);
 		} catch (JsonProcessingException e) {
