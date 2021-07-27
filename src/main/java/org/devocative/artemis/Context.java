@@ -10,6 +10,7 @@ import java.util.Map;
 @Getter
 @RequiredArgsConstructor
 public class Context {
+	private final Map<String, Object> globalVars = new HashMap<>();
 	private final Map<String, Object> vars = new HashMap<>();
 	private final String profile;
 	private String baseUrl;
@@ -26,5 +27,17 @@ public class Context {
 
 	public void setBaseUrl(String baseUrl) {
 		this.baseUrl = baseUrl;
+	}
+
+	// ---------------
+
+	void addGlobalVar(String name, Object value) {
+		globalVars.put(name, value);
+		vars.put(name, value);
+	}
+
+	void clearVars() {
+		vars.clear();
+		vars.putAll(globalVars);
 	}
 }

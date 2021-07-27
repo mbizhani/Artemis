@@ -35,7 +35,7 @@ public class TestArtemis {
 					final Map<String, String> data = ctx.bodyAsClass(Map.class);
 					final String cell = data.get("cell");
 
-					log("Register - cell=[{}], name=[{}]", cell, data.get("name"));
+					log("Register - {}", data);
 
 					ctx.json(asMap(
 						pair("smsCode", Math.abs(cell.hashCode())),
@@ -57,11 +57,29 @@ public class TestArtemis {
 					log("UpdateProfile - id=[{}] data={} authHeader=[{}]",
 						ctx.pathParam("id"), data, ctx.header("Authorization"));
 				});
+
+			app
+				.get("/login/:cell", ctx -> {
+					final String cell = ctx.pathParam("cell");
+					log("GetLoginCode - cell=[{}]", cell);
+
+					ctx.json(asMap(
+						pair("smsCode", Math.abs(cell.hashCode()))
+					));
+				})
+				.post("/login", ctx -> {
+					final Map<String, String> data = ctx.bodyAsClass(Map.class);
+					log("Login - {}", data);
+
+					ctx.json(asMap(
+						pair("token", UUID.randomUUID().toString())
+					));
+				});
 		}
 	}
 
 	@Test
-	public void main() throws Exception {
+	public void main() {
 		executor.execute();
 	}
 

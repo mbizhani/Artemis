@@ -53,8 +53,8 @@ public class Proxy {
 
 	// ------------------------------
 
-	public static Object create(Object obj) {
-		return new Proxy(obj).get();
+	public static <T> T create(T obj) {
+		return (T) new Proxy(obj).get();
 	}
 
 	// ------------------------------

@@ -1,43 +1,63 @@
-<scenario name="test1">
+<artemis>
+	<vars>
+		<var name="cell" value="09${_.generate(9, '0'..'9')}"/>
+		<var name="password" value="${_.generate(9, '0'..'9', 'a'..'z')}"/>
+	</vars>
 
-    <post id="register" url="/registrations">
-        <vars>
-            <var name="cell" value="09${_.generate(9, '0'..'9')}"/>
-        </vars>
-
-        <body type="json"><![CDATA[
+	<scenario name="RegisterUser">
+		<post id="register" url="/registrations">
+			<body type="json"><![CDATA[
 {
 	"name": "Foo\\nBar",
 	"cell": "${cell}"
 }
 		]]></body>
 
-        <assertRs status="200" type="json" properties="smsCode,token"/>
-    </post>
+			<assertRs status="200" type="json" properties="smsCode,token"/>
+		</post>
 
-    <put id="verify" url="/registrations">
-        <headers>
-            <header name="Authorization" value="${register.rs.token}"/>
-        </headers>
+		<put id="verify" url="/registrations">
+			<headers>
+				<header name="Authorization" value="${register.rs.token}"/>
+			</headers>
 
-        <body><![CDATA[
+			<body><![CDATA[
 {
-	"smsCode": "${register.rs.smsCode}"
+	"smsCode": "${register.rs.smsCode}",
+	"password": "${password}"
 }
 		]]></body>
 
-        <assertRs status="201" properties="userId"/>
-    </put>
+			<assertRs status="201" properties="userId"/>
+		</put>
 
-    <put id="updateProfile" url="/users/${verify.rs.userId}">
-        <body><![CDATA[
+		<put id="updateProfile" url="/users/${verify.rs.userId}">
+			<body><![CDATA[
 {
 	"city": "Tehran",
 	"email": "a@a.com"
 }
 		]]></body>
 
-        <assertRs status="200"/>
-    </put>
+			<assertRs status="200"/>
+		</put>
+	</scenario>
 
-</scenario>
+	<scenario name="ProductCRUD">
+		<get id="loginCode" url="/login/${cell}">
+			<assertRs status="200" properties="smsCode"/>
+		</get>
+
+		<post id="login" url="/login">
+			<body><![CDATA[
+{
+	"cell": "${cell}",
+	"password": "${password}",
+	"smsCode": "${loginCode.rs.smsCode}"
+}
+			]]></body>
+
+			<assertRs status="200" properties="token"/>
+		</post>
+	</scenario>
+</artemis>

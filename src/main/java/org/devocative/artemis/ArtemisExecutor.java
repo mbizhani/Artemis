@@ -17,10 +17,12 @@ import org.devocative.artemis.xml.*;
 import org.devocative.artemis.xml.method.*;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,8 @@ import java.util.stream.Collectors;
 public class ArtemisExecutor {
 	private final String name;
 	private final ObjectMapper mapper;
+
+	private final CloseableHttpClient httpclient;
 
 	// ------------------------------
 
@@ -41,24 +45,44 @@ public class ArtemisExecutor {
 		this.name = name;
 		mapper = new ObjectMapper();
 		ContextHandler.init(name);
+		httpclient = HttpClients.createDefault();
 	}
 
 	// ------------------------------
 
-	public void execute() throws Exception {
+	public void execute(String... specificScenarios) {
 		final XStream xStream = new XStream();
 		XStream.setupDefaultSecurity(xStream);
-		xStream.processAnnotations(new Class[]{XScenario.class, XGet.class, XPost.class, XPut.class, XDelete.class});
+		xStream.processAnnotations(new Class[]{XArtemis.class, XGet.class, XPost.class, XPut.class, XDelete.class});
 		xStream.allowTypesByWildcard(new String[]{"org.devocative.artemis.xml.**"});
 
-		final XScenario scenario = (XScenario) xStream.fromXML(
+		final XArtemis artemis = (XArtemis) xStream.fromXML(
 			ArtemisExecutor.class.getResourceAsStream(String.format("/%s.xml", name)));
-		final XScenario proxy = (XScenario) Proxy.create(scenario);
-		log.info("Scenario: {}", proxy.getName());
+		final XArtemis proxy = Proxy.create(artemis);
 
-		for (XBaseRequest rq : proxy.getRequests()) {
-			initRq(rq);
-			sendRq(rq);
+		final Context ctx = ContextHandler.get();
+		proxy.getVars().forEach(var -> ctx.addGlobalVar(var.getName(), var.getTheValue()));
+
+		final List<String> filter = specificScenarios.length == 0 ? null : Arrays.asList(specificScenarios);
+		proxy
+			.getScenarios()
+			.stream()
+			.filter(scenario -> filter == null || filter.contains(scenario.getName()))
+			.forEach(scenario -> {
+				log.info("** SCENARIO ** => {}", scenario.getName());
+
+				for (XBaseRequest rq : scenario.getRequests()) {
+					initRq(rq);
+					sendRq(rq);
+				}
+
+				ctx.clearVars();
+			});
+
+		try {
+			httpclient.close();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -85,71 +109,72 @@ public class ArtemisExecutor {
 		}
 	}
 
-	private void sendRq(XBaseRequest rq) throws Exception {
+	private void sendRq(XBaseRequest rq) {
 		final Context ctx = ContextHandler.get();
 
-		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
-			final HttpUriRequestBase httpRq = new HttpUriRequestBase(rq.getMethod().name(), createURI(rq));
+		final HttpUriRequestBase httpRq = new HttpUriRequestBase(rq.getMethod().name(), createURI(rq));
 
-			final Map<String, Object> rqAndRs = new HashMap<>();
-			ctx.addVar(rq.getId(), rqAndRs);
+		final Map<String, Object> rqAndRs = new HashMap<>();
+		ctx.addVar(rq.getId(), rqAndRs);
 
-			final StringBuilder builder = new StringBuilder();
+		final StringBuilder builder = new StringBuilder();
 
-			if (rq.shouldHaveBody()) {
-				final XBody body = rq.getBody();
-				final List<XParam> params = rq.getParams();
+		if (rq.shouldHaveBody()) {
+			final XBody body = rq.getBody();
+			final List<XParam> params = rq.getParams();
 
-				if (body != null) {
-					final String content = body.getContent().trim();
-					httpRq.setEntity(new StringEntity(content, ContentType.APPLICATION_JSON, "UTF-8", false));
-					//rqAndRs.put("rq", body.isJson() ? json(rq.getId(), content) : content);
-					builder
-						.append("\n")
-						.append(content);
-				} else if (!params.isEmpty()) {
-					final List<BasicNameValuePair> httpParams = params.stream()
-						.map(p -> new BasicNameValuePair(p.getName(), p.getTheValue()))
-						.collect(Collectors.toList());
-					httpRq.setEntity(new UrlEncodedFormEntity(httpParams));
-					//rqAndRs.put("rq", params.stream().collect(Collectors.toMap(XParam::getName, XParam::getValue)));
+			if (body != null) {
+				final String content = body.getContent().trim();
+				httpRq.setEntity(new StringEntity(content, ContentType.APPLICATION_JSON, "UTF-8", false));
+				//rqAndRs.put("rq", body.isJson() ? json(rq.getId(), content) : content);
+				builder
+					.append("\n")
+					.append(content);
+			} else if (!params.isEmpty()) {
+				final List<BasicNameValuePair> httpParams = params.stream()
+					.map(p -> new BasicNameValuePair(p.getName(), p.getTheValue()))
+					.collect(Collectors.toList());
+				httpRq.setEntity(new UrlEncodedFormEntity(httpParams));
+				//rqAndRs.put("rq", params.stream().collect(Collectors.toMap(XParam::getName, XParam::getValue)));
 
-					builder.append("\n");
-					params.forEach(p -> builder.append(p.getName()).append(" = ").append(p.getTheValue()));
-				} else {
-					log.warn("RQ({}): Sending POST/PUT without body or any param", rq.getId());
-				}
+				builder.append("\n");
+				params.forEach(p -> builder.append(p.getName()).append(" = ").append(p.getTheValue()));
+			} else {
+				log.warn("RQ({}): Sending POST/PUT without body or any param", rq.getId());
+			}
+		}
+
+		rq.getHeaders().forEach(h -> httpRq.addHeader(h.getName(), h.getTheValue()));
+
+		log.info("RQ({}): {} - {}{}", rq.getId(), rq.getMethod(), rq.getUrl(), builder.toString());
+		try (final CloseableHttpResponse rs = httpclient.execute(httpRq)) {
+			if (rq.getAssertRs() == null) {
+				log.warn("RQ({}) - No <assertRs/>!", rq.getId());
+				rq.setAssertRs(new XAssertRs());
 			}
 
-			rq.getHeaders().forEach(h -> httpRq.addHeader(h.getName(), h.getTheValue()));
+			final XAssertRs assertRs = rq.getAssertRs();
 
-			log.info("RQ({}): {} - {}{}", rq.getId(), rq.getMethod(), rq.getUrl(), builder.toString());
-			try (final CloseableHttpResponse rs = httpclient.execute(httpRq)) {
-				if (rq.getAssertRs() == null) {
-					log.warn("RQ({}) - No <assertRs/>!", rq.getId());
-					rq.setAssertRs(new XAssertRs());
-				}
+			assertCode(rq, rs);
 
-				final XAssertRs assertRs = rq.getAssertRs();
+			final String contentType = rs.getEntity().getContentType();
+			if (contentType != null && (contentType.contains("text") || contentType.contains("json"))) {
+				final String rsBodyAsStr = new BufferedReader(new InputStreamReader(rs.getEntity().getContent(), StandardCharsets.UTF_8))
+					.lines()
+					.collect(Collectors.joining("\n"));
 
-				assertCode(rq, rs);
+				log.info("RS({}): {} ({}) - {}\n\tContentType: {}\n\t{}",
+					rq.getId(), rq.getMethod(), rs.getCode(), rq.getUrl(), contentType, rsBodyAsStr);
 
-				final String contentType = rs.getEntity().getContentType();
-				if (contentType != null && (contentType.contains("text") || contentType.contains("json"))) {
-					final String rsBodyAsStr = new BufferedReader(new InputStreamReader(rs.getEntity().getContent(), StandardCharsets.UTF_8))
-						.lines()
-						.collect(Collectors.joining("\n"));
-
-					log.info("RS({}): {} ({}) - {}\n\tContentType: {}\n\t{}",
-						rq.getId(), rq.getMethod(), rs.getCode(), rq.getUrl(), contentType, rsBodyAsStr);
-
-					if (!rsBodyAsStr.isEmpty()) {
-						final Object rsAsObject = assertRs.isJson() ? json(rq.getId(), rsBodyAsStr) : rsBodyAsStr;
-						rqAndRs.put("rs", rsAsObject);
-						assertProperties(rq, rsAsObject);
-					}
+				if (!rsBodyAsStr.isEmpty()) {
+					final Object rsAsObject = assertRs.isJson() ? json(rq.getId(), rsBodyAsStr) : rsBodyAsStr;
+					rqAndRs.put("rs", rsAsObject);
+					assertProperties(rq, rsAsObject);
 				}
 			}
+		} catch (IOException e) {
+			//TODO maybe TestFailedException
+			throw new RuntimeException(e);
 		}
 	}
 
