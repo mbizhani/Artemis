@@ -35,7 +35,7 @@ public class TestArtemis {
 					final Map<String, String> data = ctx.bodyAsClass(Map.class);
 					final String cell = data.get("cell");
 
-					log("Register - cell=[{}]", cell);
+					log("Register - cell=[{}], name=[{}]", cell, data.get("name"));
 
 					ctx.json(asMap(
 						pair("smsCode", Math.abs(cell.hashCode())),

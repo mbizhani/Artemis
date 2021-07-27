@@ -6,6 +6,7 @@ import groovy.text.SimpleTemplateEngine;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.InputStreamReader;
+import java.util.HashMap;
 
 @Slf4j
 public class ContextHandler {
@@ -37,7 +38,10 @@ public class ContextHandler {
 
 	public static Object eval(String str) {
 		try {
-			return ENGINE.createTemplate(str).make(get().getVars()).toString();
+			return ENGINE
+				.createTemplate(str)
+				.make(new HashMap<>(get().getVars()))
+				.toString();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

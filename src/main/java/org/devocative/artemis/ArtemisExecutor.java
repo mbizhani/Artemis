@@ -140,7 +140,7 @@ public class ArtemisExecutor {
 						.lines()
 						.collect(Collectors.joining("\n"));
 
-					log.info("RS({}): {} ({}) - {}\nContentType: {}\n{}",
+					log.info("RS({}): {} ({}) - {}\n\tContentType: {}\n\t{}",
 						rq.getId(), rq.getMethod(), rs.getCode(), rq.getUrl(), contentType, rsBodyAsStr);
 
 					if (!rsBodyAsStr.isEmpty()) {

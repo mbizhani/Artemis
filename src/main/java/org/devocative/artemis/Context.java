@@ -3,6 +3,7 @@ package org.devocative.artemis;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,6 +18,10 @@ public class Context {
 
 	public void addVar(String name, Object value) {
 		vars.put(name, value);
+	}
+
+	public Map<String, Object> getVars() {
+		return Collections.unmodifiableMap(vars);
 	}
 
 	public void setBaseUrl(String baseUrl) {
