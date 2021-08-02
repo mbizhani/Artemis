@@ -1,6 +1,6 @@
 import org.devocative.artemis.Context
 
-import java.text.DecimalFormat;
+import java.text.DecimalFormat
 
 // Called by ContextHandler Initialization
 def init(Context ctx) {
@@ -29,7 +29,7 @@ def genNationalId() {
 	}
 
 	// Calculate Control Code.
-	int sum = 0;
+	int sum = 0
 	for (int i = 0; i < arrayLength; i++) {
 		sum += Character.getNumericValue(randomNumberArray[i]) * (i + 2)
 	}

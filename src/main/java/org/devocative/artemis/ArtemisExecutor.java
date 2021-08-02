@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thoughtworks.xstream.XStream;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -30,6 +31,14 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class ArtemisExecutor {
+	public static final String ARTEMIS_PROFILE_ENV = "ARTEMIS_PROFILE";
+	public static final String ARTEMIS_PROFILE_SYS_PROP = "artemis.profile";
+
+	public static final String ARTEMIS_BASE_URL_ENV = "ARTEMIS_BASE_URL";
+	public static final String ARTEMIS_BASE_URL_SYS_PROP = "artemis.base.url";
+
+	// ---------------
+
 	private static final String THIS = "_this";
 	private static final String PREV = "_prev";
 	private final String name;
@@ -102,7 +111,7 @@ public class ArtemisExecutor {
 	private void initRq(XBaseRequest rq, int idx) {
 		rq.setWithId(rq.getId() != null);
 		if (rq.getId() == null) {
-			rq.setId(String.format("-%s-", idx));
+			rq.setId(String.format("step #%s", idx));
 		}
 
 		final Context ctx = ContextHandler.get();
@@ -165,15 +174,20 @@ public class ArtemisExecutor {
 		rq.getHeaders().forEach(h -> httpRq.addHeader(h.getName(), h.getTheValue()));
 
 		log.info("RQ({}): {} - {}{}", rq.getId(), rq.getMethod(), rq.getUrl(), builder.toString());
+
+		final long start = System.currentTimeMillis();
 		try (final CloseableHttpResponse rs = httpclient.execute(httpRq)) {
-			processRs(rs, rq, rqAndRs);
+			processRs(rs, rq, rqAndRs, start);
+		} catch (HttpHostConnectException e) {
+			throw new TestFailedException(rq.getId(), "Unknown Host");
 		} catch (IOException e) {
-			//TODO maybe TestFailedException
-			throw new RuntimeException(e);
+			throw new TestFailedException(rq.getId(), e.getMessage());
 		}
 	}
 
-	private void processRs(CloseableHttpResponse rs, XBaseRequest rq, Map<String, Object> rqAndRs) throws IOException {
+	private void processRs(CloseableHttpResponse rs, XBaseRequest rq, Map<String, Object> rqAndRs, long start) throws IOException {
+		final long duration = System.currentTimeMillis() - start;
+
 		if (rq.getAssertRs() == null) {
 			log.warn("RQ({}) - No <assertRs/>!", rq.getId());
 			rq.setAssertRs(new XAssertRs());
@@ -188,8 +202,8 @@ public class ArtemisExecutor {
 
 		final String contentType = rs.getEntity().getContentType();
 
-		log.info("RS({}): {} ({}) - {}\n\tContentType: {}\n\t{}",
-			rq.getId(), rq.getMethod(), rs.getCode(), rq.getUrl(), contentType, rsBodyAsStr);
+		log.info("RS({}): {} ({}) - {} [{} ms]\n\tContentType: {}\n\t{}",
+			rq.getId(), rq.getMethod(), rs.getCode(), rq.getUrl(), duration, contentType, rsBodyAsStr);
 
 		if (assertRs.getProperties() != null) {
 			if (assertRs.getBody() == null) {
@@ -267,7 +281,7 @@ public class ArtemisExecutor {
 	private void assertCode(XBaseRequest rq, CloseableHttpResponse rs) {
 		final XAssertRs assertRs = rq.getAssertRs();
 		if (assertRs.getStatus() != null && !assertRs.getStatus().equals(rs.getCode())) {
-			throw new TestFailedException(rq.getId(), "Invalid RS Code: Expected %s, Got %s",
+			throw new TestFailedException(rq.getId(), "Invalid RS Code: expected %s, got %s",
 				assertRs.getStatus(), rs.getCode());
 		}
 	}

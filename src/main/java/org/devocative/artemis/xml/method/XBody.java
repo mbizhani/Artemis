@@ -17,10 +17,4 @@ public class XBody {
 	private ERqBodyType type = ERqBodyType.json;
 
 	private String content;
-
-	// ------------------------------
-
-	public boolean isJson() {
-		return getType() == null || ERqBodyType.json == getType();
-	}
 }

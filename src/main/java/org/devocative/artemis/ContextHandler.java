@@ -8,11 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 
+import static org.devocative.artemis.ArtemisExecutor.*;
+
 @Slf4j
 public class ContextHandler {
-	private static final String ARTEMIS_PROFILE_ENV = "ARTEMIS_PROFILE";
-	private static final String ARTEMIS_PROFILE_SYS_PROP = "artemis.profile";
-
 	private static final ThreadLocal<Context> CTX = new ThreadLocal<>();
 	private static final SimpleTemplateEngine ENGINE = new SimpleTemplateEngine();
 
@@ -54,17 +53,8 @@ public class ContextHandler {
 	// ------------------------------
 
 	private static Context createContext() {
-		final String profile;
-		if (System.getenv(ARTEMIS_PROFILE_ENV) != null) {
-			profile = System.getenv(ARTEMIS_PROFILE_ENV);
-		} else if (System.getProperty(ARTEMIS_PROFILE_SYS_PROP) != null) {
-			profile = System.getProperty(ARTEMIS_PROFILE_SYS_PROP);
-		} else {
-			profile = "local";
-		}
-
-		final Context ctx = new Context(profile);
-		ctx.setBaseUrl("http://localhost:8080");
+		final Context ctx = new Context(findValue(ARTEMIS_PROFILE_ENV, ARTEMIS_PROFILE_SYS_PROP, "local"));
+		ctx.setBaseUrl(findValue(ARTEMIS_BASE_URL_ENV, ARTEMIS_BASE_URL_SYS_PROP, "http://localhost:8080"));
 
 		MAIN.invokeMethod("init", new Object[]{ctx});
 		ctx.addVar("_", MAIN);
@@ -74,5 +64,14 @@ public class ContextHandler {
 		log.info("Context Handler: PROFILE=[{}] BASE_URL=[{}]", ctx.getProfile(), ctx.getBaseUrl());
 
 		return ctx;
+	}
+
+	private static String findValue(String envVar, String sysVar, String def) {
+		if (System.getenv(envVar) != null) {
+			return System.getenv(envVar);
+		} else if (System.getProperty(sysVar) != null) {
+			return System.getProperty(sysVar);
+		}
+		return def;
 	}
 }
