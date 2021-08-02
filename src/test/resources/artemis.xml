@@ -1,3 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!DOCTYPE artemis PUBLIC "-//Devocative.Org//Artemis 1.0//EN"
+		"https://devocative.org/dtd/artemis-1.0.dtd">
+
 <artemis>
 	<vars>
 		<var name="cell" value="09${_.generate(9, '0'..'9')}"/>
@@ -11,7 +16,7 @@
 	"name": "Foo\\nBar",
 	"cell": "${cell}"
 }
-		]]></body>
+			]]></body>
 
 			<assertRs status="200" body="empty"/>
 		</post>
@@ -26,7 +31,7 @@
 	"smsCode": "${_prev.rs.smsCode}",
 	"password": "${password}"
 }
-		]]></body>
+			]]></body>
 
 			<assertRs status="201" properties="token,userId"/>
 		</put>
@@ -41,7 +46,7 @@
 	"city": "Tehran",
 	"email": "a@a.com"
 }
-		]]></body>
+			]]></body>
 
 			<assertRs status="200"/>
 		</put>
