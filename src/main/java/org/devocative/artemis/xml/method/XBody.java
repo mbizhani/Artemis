@@ -6,7 +6,7 @@ import com.thoughtworks.xstream.annotations.XStreamConverter;
 import com.thoughtworks.xstream.converters.extended.ToAttributedValueConverter;
 import lombok.Getter;
 import lombok.Setter;
-import org.devocative.artemis.xml.EContentType;
+import org.devocative.artemis.xml.ERqBodyType;
 
 @Getter
 @Setter
@@ -14,13 +14,13 @@ import org.devocative.artemis.xml.EContentType;
 @XStreamConverter(value = ToAttributedValueConverter.class, strings = "content")
 public class XBody {
 	@XStreamAsAttribute
-	private EContentType type = EContentType.json;
+	private ERqBodyType type = ERqBodyType.json;
 
 	private String content;
 
 	// ------------------------------
 
 	public boolean isJson() {
-		return type == null || EContentType.json.equals(getType());
+		return getType() == null || ERqBodyType.json == getType();
 	}
 }

@@ -1,5 +1,5 @@
 package org.devocative.artemis.xml;
 
-public enum EContentType {
+public enum ERqBodyType {
 	json, text
 }

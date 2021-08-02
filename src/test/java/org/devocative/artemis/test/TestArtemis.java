@@ -33,24 +33,25 @@ public class TestArtemis {
 			app
 				.post("/registrations", ctx -> {
 					final Map<String, String> data = ctx.bodyAsClass(Map.class);
-					final String cell = data.get("cell");
-
-					log("Register - {}", data);
+					log("Register (Sending SMS) - {}", data);
+				})
+				.get("/registrations/:cell", ctx -> {
+					final String cell = ctx.pathParam("cell");
+					log("Query (Sent SMS) - {}", cell);
 
 					ctx.json(asMap(
-						pair("smsCode", Math.abs(cell.hashCode())),
-						pair("token", UUID.randomUUID().toString())
+						pair("smsCode", Math.abs(cell.hashCode()))
 					));
 				})
 				.put("/registrations", ctx -> {
 					final Map<String, String> data = ctx.bodyAsClass(Map.class);
-					log("Verify - smsCode=[{}], authHeader=[{}]", data.get("smsCode"), ctx.header("Authorization"));
+					log("Verify - {}", data);
 
-					ctx
+					ctx.status(201)
 						.json(asMap(
+							pair("token", UUID.randomUUID().toString()),
 							pair("userId", UUID.randomUUID().toString())
-						))
-						.status(201);
+						));
 				})
 				.put("/users/:id", ctx -> {
 					final Map<String, String> data = ctx.bodyAsClass(Map.class);

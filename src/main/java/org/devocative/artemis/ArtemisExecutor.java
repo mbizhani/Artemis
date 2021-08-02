@@ -30,6 +30,8 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class ArtemisExecutor {
+	private static final String THIS = "_this";
+	private static final String PREV = "_prev";
 	private final String name;
 	private final ObjectMapper mapper;
 
@@ -61,18 +63,23 @@ public class ArtemisExecutor {
 		final XArtemis proxy = Proxy.create(artemis);
 
 		final Context ctx = ContextHandler.get();
-		proxy.getVars().forEach(var -> ctx.addGlobalVar(var.getName(), var.getTheValue()));
+		proxy.getVars().forEach(var -> {
+			final String value = var.getTheValue();
+			ctx.addGlobalVar(var.getName(), value);
+			log.info("Global Var: name=[{}} value=[{}]", var.getName(), value);
+		});
 
 		final List<String> filter = specificScenarios.length == 0 ? null : Arrays.asList(specificScenarios);
 		proxy
 			.getScenarios()
 			.stream()
-			.filter(scenario -> filter == null || filter.contains(scenario.getName()))
+			.filter(scenario -> scenario.isEnabled() && (filter == null || filter.contains(scenario.getName())))
 			.forEach(scenario -> {
 				log.info("** SCENARIO ** => {}", scenario.getName());
 
+				int idx = 1;
 				for (XBaseRequest rq : scenario.getRequests()) {
-					initRq(rq);
+					initRq(rq, idx++);
 					sendRq(rq);
 				}
 
@@ -92,8 +99,17 @@ public class ArtemisExecutor {
 
 	// ------------------------------
 
-	private void initRq(XBaseRequest rq) {
+	private void initRq(XBaseRequest rq, int idx) {
+		rq.setWithId(rq.getId() != null);
+		if (rq.getId() == null) {
+			rq.setId(String.format("-%s-", idx));
+		}
+
 		final Context ctx = ContextHandler.get();
+		if (ctx.containsVar(THIS)) {
+			ctx.addVar(PREV, ctx.removeVar(THIS));
+		}
+
 		int addVars = 0;
 		for (XVar var : rq.getVars()) {
 			ctx.addVar(var.getName(), var.getTheValue());
@@ -115,7 +131,10 @@ public class ArtemisExecutor {
 		final HttpUriRequestBase httpRq = new HttpUriRequestBase(rq.getMethod().name(), createURI(rq));
 
 		final Map<String, Object> rqAndRs = new HashMap<>();
-		ctx.addVar(rq.getId(), rqAndRs);
+		ctx.addVar(THIS, rqAndRs);
+		if (rq.isWithId()) {
+			ctx.addVar(rq.getId(), rqAndRs);
+		}
 
 		final StringBuilder builder = new StringBuilder();
 
@@ -126,7 +145,6 @@ public class ArtemisExecutor {
 			if (body != null) {
 				final String content = body.getContent().trim();
 				httpRq.setEntity(new StringEntity(content, ContentType.APPLICATION_JSON, "UTF-8", false));
-				//rqAndRs.put("rq", body.isJson() ? json(rq.getId(), content) : content);
 				builder
 					.append("\n")
 					.append(content);
@@ -148,52 +166,57 @@ public class ArtemisExecutor {
 
 		log.info("RQ({}): {} - {}{}", rq.getId(), rq.getMethod(), rq.getUrl(), builder.toString());
 		try (final CloseableHttpResponse rs = httpclient.execute(httpRq)) {
-			if (rq.getAssertRs() == null) {
-				log.warn("RQ({}) - No <assertRs/>!", rq.getId());
-				rq.setAssertRs(new XAssertRs());
-			}
-
-			final XAssertRs assertRs = rq.getAssertRs();
-
-			assertCode(rq, rs);
-
-			final String contentType = rs.getEntity().getContentType();
-			if (contentType != null && (contentType.contains("text") || contentType.contains("json"))) {
-				final String rsBodyAsStr = new BufferedReader(new InputStreamReader(rs.getEntity().getContent(), StandardCharsets.UTF_8))
-					.lines()
-					.collect(Collectors.joining("\n"));
-
-				log.info("RS({}): {} ({}) - {}\n\tContentType: {}\n\t{}",
-					rq.getId(), rq.getMethod(), rs.getCode(), rq.getUrl(), contentType, rsBodyAsStr);
-
-				if (!rsBodyAsStr.isEmpty()) {
-					final Object rsAsObject = assertRs.isJson() ? json(rq.getId(), rsBodyAsStr) : rsBodyAsStr;
-					rqAndRs.put("rs", rsAsObject);
-					assertProperties(rq, rsAsObject);
-				}
-			}
+			processRs(rs, rq, rqAndRs);
 		} catch (IOException e) {
 			//TODO maybe TestFailedException
 			throw new RuntimeException(e);
 		}
 	}
 
-	private void assertProperties(XBaseRequest rq, Object rsAsObj) {
+	private void processRs(CloseableHttpResponse rs, XBaseRequest rq, Map<String, Object> rqAndRs) throws IOException {
+		if (rq.getAssertRs() == null) {
+			log.warn("RQ({}) - No <assertRs/>!", rq.getId());
+			rq.setAssertRs(new XAssertRs());
+		}
+
 		final XAssertRs assertRs = rq.getAssertRs();
+		assertCode(rq, rs);
+
+		final String rsBodyAsStr = new BufferedReader(new InputStreamReader(rs.getEntity().getContent(), StandardCharsets.UTF_8))
+			.lines()
+			.collect(Collectors.joining("\n"));
+
+		final String contentType = rs.getEntity().getContentType();
+
+		log.info("RS({}): {} ({}) - {}\n\tContentType: {}\n\t{}",
+			rq.getId(), rq.getMethod(), rs.getCode(), rq.getUrl(), contentType, rsBodyAsStr);
 
 		if (assertRs.getProperties() != null) {
-			final String[] properties = assertRs.getProperties().split(",");
+			if (assertRs.getBody() == null) {
+				assertRs.setBody(ERsBodyType.json);
+			} else if (assertRs.getBody() != ERsBodyType.json) {
+				throw new TestFailedException(rq.getId(), "Invalid Assert Rs Definition: properties defined for non-json body");
+			}
+		}
 
-			if (rsAsObj instanceof Map) {
-				final Map rsAsMap = (Map) rsAsObj;
-				for (String property : properties) {
-					final String prop = property.trim();
-					if (!rsAsMap.containsKey(prop)) {
-						throw new TestFailedException(rq.getId(), "Invalid Property in RS Object: [%s]", prop);
+		if (assertRs.getBody() != null) {
+			switch (assertRs.getBody()) {
+				case json:
+					final Object obj = json(rq.getId(), rsBodyAsStr);
+					rqAndRs.put("rs", obj);
+					assertProperties(rq, obj);
+					break;
+				case text:
+					if (rsBodyAsStr.trim().isEmpty()) {
+						throw new TestFailedException(rq.getId(), "Invalid Rs Body: expecting text, got empty");
 					}
-				}
-			} else {
-				throw new TestFailedException(rq.getId(), "Invalid RS Type for Asserting Properties");
+					rqAndRs.put("rs", rsBodyAsStr);
+					break;
+				case empty:
+					if (!rsBodyAsStr.trim().isEmpty()) {
+						throw new TestFailedException(rq.getId(), "Invalid Rs Body: expecting empty, got text");
+					}
+					break;
 			}
 		}
 	}
@@ -219,6 +242,26 @@ public class ArtemisExecutor {
 		}
 
 		return uri;
+	}
+
+	private void assertProperties(XBaseRequest rq, Object rsAsObj) {
+		final XAssertRs assertRs = rq.getAssertRs();
+
+		if (assertRs.getProperties() != null) {
+			final String[] properties = assertRs.getProperties().split(",");
+
+			if (rsAsObj instanceof Map) {
+				final Map rsAsMap = (Map) rsAsObj;
+				for (String property : properties) {
+					final String prop = property.trim();
+					if (!rsAsMap.containsKey(prop)) {
+						throw new TestFailedException(rq.getId(), "Invalid Property in RS Object: [%s]", prop);
+					}
+				}
+			} else {
+				throw new TestFailedException(rq.getId(), "Invalid RS Type for Asserting Properties");
+			}
+		}
 	}
 
 	private void assertCode(XBaseRequest rq, CloseableHttpResponse rs) {

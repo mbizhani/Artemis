@@ -15,6 +15,15 @@ public class XScenario {
 	@XStreamAsAttribute
 	private String name;
 
+	@XStreamAsAttribute
+	private Boolean enabled;
+
 	@XStreamImplicit
 	private List<XBaseRequest> requests;
+
+	// ------------------------------
+
+	public boolean isEnabled() {
+		return getEnabled() == null || getEnabled();
+	}
 }

@@ -13,14 +13,8 @@ public class XAssertRs {
 	private Integer status;
 
 	@XStreamAsAttribute
-	private EContentType type;
+	private ERsBodyType body;
 
 	@XStreamAsAttribute
 	private String properties;
-
-	// ------------------------------
-
-	public boolean isJson() {
-		return type == null || EContentType.json.equals(type);
-	}
 }

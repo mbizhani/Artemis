@@ -31,6 +31,18 @@ public class Context {
 
 	// ---------------
 
+	boolean containsVar(String name) {
+		return vars.containsKey(name);
+	}
+
+	Object getVar(String name) {
+		return vars.get(name);
+	}
+
+	Object removeVar(String name) {
+		return vars.remove(name);
+	}
+
 	void addGlobalVar(String name, Object value) {
 		globalVars.put(name, value);
 		vars.put(name, value);
