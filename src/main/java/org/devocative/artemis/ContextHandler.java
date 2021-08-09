@@ -8,21 +8,35 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 
-import static org.devocative.artemis.ArtemisExecutor.*;
-
 @Slf4j
 public class ContextHandler {
+	private static final String ARTEMIS_PROFILE_ENV = "ARTEMIS_PROFILE";
+	private static final String ARTEMIS_PROFILE_SYS_PROP = "artemis.profile";
+	private static final String ARTEMIS_BASE_URL_ENV = "ARTEMIS_BASE_URL";
+	private static final String ARTEMIS_BASE_URL_SYS_PROP = "artemis.base.url";
+
 	private static final ThreadLocal<Context> CTX = new ThreadLocal<>();
 	private static final SimpleTemplateEngine ENGINE = new SimpleTemplateEngine();
 
 	private static Script MAIN;
+	private static Config CONFIG;
 
 	// ------------------------------
 
-	public static void init(String name) {
+	public static void init(String name, Config config) {
 		final GroovyShell shell = new GroovyShell();
 		MAIN = shell.parse(new InputStreamReader(
 			ContextHandler.class.getResourceAsStream(String.format("/%s.groovy", name))));
+
+		if (config.getProfile() == null) {
+			config.setProfile(findValue(ARTEMIS_PROFILE_ENV, ARTEMIS_PROFILE_SYS_PROP, "local"));
+		}
+
+		if (config.getBaseUrl() == null) {
+			config.setBaseUrl(findValue(ARTEMIS_BASE_URL_ENV, ARTEMIS_BASE_URL_SYS_PROP, "http://localhost:8080"));
+		}
+
+		CONFIG = config;
 	}
 
 	public static synchronized Context get() {
@@ -33,6 +47,10 @@ public class ContextHandler {
 		}
 
 		return ctx;
+	}
+
+	public static void shutdown() {
+		CTX.remove();
 	}
 
 	public static Object eval(String str) {
@@ -53,16 +71,9 @@ public class ContextHandler {
 	// ------------------------------
 
 	private static Context createContext() {
-		final Context ctx = new Context(findValue(ARTEMIS_PROFILE_ENV, ARTEMIS_PROFILE_SYS_PROP, "local"));
-		ctx.setBaseUrl(findValue(ARTEMIS_BASE_URL_ENV, ARTEMIS_BASE_URL_SYS_PROP, "http://localhost:8080"));
-
-		MAIN.invokeMethod("init", new Object[]{ctx});
-		ctx.addVar("_", MAIN);
-
-		log.info("Context Handler: env=[{}] system=[{}]",
-			System.getenv(ARTEMIS_PROFILE_ENV), System.getProperty(ARTEMIS_PROFILE_SYS_PROP));
-		log.info("Context Handler: PROFILE=[{}] BASE_URL=[{}]", ctx.getProfile(), ctx.getBaseUrl());
-
+		final Context ctx = new Context();
+		MAIN.invokeMethod("init", new Object[]{ctx, CONFIG});
+		ctx.addGlobalVar("_", MAIN);
 		return ctx;
 	}
 

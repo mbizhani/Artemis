@@ -1,23 +1,19 @@
 package org.devocative.artemis;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-@Getter
-@RequiredArgsConstructor
 public class Context {
 	private final Map<String, Object> globalVars = new HashMap<>();
 	private final Map<String, Object> vars = new HashMap<>();
-	private final String profile;
-	private String baseUrl;
 
 	// ------------------------------
 
 	public void addVar(String name, Object value) {
+		if (name == null || "_".equals(name)) {
+			throw new RuntimeException("Invalid Var for Context: " + name);
+		}
 		vars.put(name, value);
 	}
 
@@ -25,18 +21,10 @@ public class Context {
 		return Collections.unmodifiableMap(vars);
 	}
 
-	public void setBaseUrl(String baseUrl) {
-		this.baseUrl = baseUrl;
-	}
-
 	// ---------------
 
 	boolean containsVar(String name) {
 		return vars.containsKey(name);
-	}
-
-	Object getVar(String name) {
-		return vars.get(name);
 	}
 
 	Object removeVar(String name) {

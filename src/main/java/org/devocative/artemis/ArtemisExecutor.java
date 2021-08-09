@@ -3,6 +3,7 @@ package org.devocative.artemis;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thoughtworks.xstream.XStream;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
@@ -23,7 +24,6 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,82 +31,84 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class ArtemisExecutor {
-	public static final String ARTEMIS_PROFILE_ENV = "ARTEMIS_PROFILE";
-	public static final String ARTEMIS_PROFILE_SYS_PROP = "artemis.profile";
-
-	public static final String ARTEMIS_BASE_URL_ENV = "ARTEMIS_BASE_URL";
-	public static final String ARTEMIS_BASE_URL_SYS_PROP = "artemis.base.url";
-
-	// ---------------
-
+	private static final String DEFAULT_NAME = "artemis";
 	private static final String THIS = "_this";
 	private static final String PREV = "_prev";
+
 	private final String name;
+	private final Config config;
 	private final ObjectMapper mapper;
 
 	private final CloseableHttpClient httpclient;
 
 	// ------------------------------
 
-	public ArtemisExecutor() {
-		this("artemis");
+	public static void run() {
+		run(DEFAULT_NAME, new Config());
 	}
 
-	public ArtemisExecutor(String name) {
-		this.name = name;
-		mapper = new ObjectMapper();
-		ContextHandler.init(name);
-		httpclient = HttpClients.createDefault();
+	public static void run(Config config) {
+		run(DEFAULT_NAME, config);
+	}
+
+	// Main
+	public static void run(String name, Config config) {
+		new ArtemisExecutor(name, config).execute();
 	}
 
 	// ------------------------------
 
-	public void execute(String... specificScenarios) {
-		final XStream xStream = new XStream();
-		XStream.setupDefaultSecurity(xStream);
-		xStream.processAnnotations(new Class[]{XArtemis.class, XGet.class, XPost.class, XPut.class, XDelete.class});
-		xStream.allowTypesByWildcard(new String[]{"org.devocative.artemis.xml.**"});
+	private ArtemisExecutor(String name, Config config) {
+		this.name = name;
+		this.config = config;
+		this.mapper = new ObjectMapper();
+		this.httpclient = HttpClients.createDefault();
+	}
 
-		final XArtemis artemis = (XArtemis) xStream.fromXML(
-			ArtemisExecutor.class.getResourceAsStream(String.format("/%s.xml", name)));
-		final XArtemis proxy = Proxy.create(artemis);
+	// ------------------------------
 
-		final Context ctx = ContextHandler.get();
-		proxy.getVars().forEach(var -> {
-			final String value = var.getTheValue();
-			ctx.addGlobalVar(var.getName(), value);
-			log.info("Global Var: name=[{}} value=[{}]", var.getName(), value);
-		});
+	@SneakyThrows
+	private void execute() {
+		try {
+			ContextHandler.init(name, config);
 
-		final List<String> filter = specificScenarios.length == 0 ? null : Arrays.asList(specificScenarios);
-		proxy
-			.getScenarios()
-			.stream()
-			.filter(scenario -> scenario.isEnabled() && (filter == null || filter.contains(scenario.getName())))
-			.forEach(scenario -> {
-				log.info("** SCENARIO ** => {}", scenario.getName());
+			final XStream xStream = new XStream();
+			XStream.setupDefaultSecurity(xStream);
+			xStream.processAnnotations(new Class[]{XArtemis.class, XGet.class, XPost.class, XPut.class, XDelete.class});
+			xStream.allowTypesByWildcard(new String[]{"org.devocative.artemis.xml.**"});
 
-				int idx = 1;
-				for (XBaseRequest rq : scenario.getRequests()) {
-					initRq(rq, idx++);
-					sendRq(rq);
-				}
+			final XArtemis artemis = (XArtemis) xStream.fromXML(
+				ArtemisExecutor.class.getResourceAsStream(String.format("/%s.xml", name)));
+			final XArtemis proxy = Proxy.create(artemis);
 
-				ctx.clearVars();
+			final Context ctx = ContextHandler.get();
+			proxy.getVars().forEach(var -> {
+				final String value = var.getTheValue();
+				ctx.addGlobalVar(var.getName(), value);
+				log.info("Global Var: name=[{}} value=[{}]", var.getName(), value);
 			});
 
-		try {
+			proxy
+				.getScenarios()
+				.stream()
+				.filter(scenario -> scenario.isEnabled() &&
+					(config.getOnlyScenarios().isEmpty() || config.getOnlyScenarios().contains(scenario.getName())))
+				.forEach(scenario -> {
+					log.info("** SCENARIO ** => {}", scenario.getName());
+
+					int idx = 1;
+					for (XBaseRequest rq : scenario.getRequests()) {
+						initRq(rq, idx++);
+						sendRq(rq);
+					}
+
+					ctx.clearVars();
+				});
+		} finally {
+			ContextHandler.shutdown();
 			httpclient.close();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
 		}
 	}
-
-	public String getProfile() {
-		return ContextHandler.get().getProfile();
-	}
-
-	// ------------------------------
 
 	private void initRq(XBaseRequest rq, int idx) {
 		rq.setWithId(rq.getId() != null);
@@ -238,8 +240,7 @@ public class ArtemisExecutor {
 	// ---------------
 
 	private URI createURI(XBaseRequest rq) {
-		final Context ctx = ContextHandler.get();
-		final String url = ctx.getBaseUrl() + rq.getUrl(); //TODO
+		final String url = config.getBaseUrl() + rq.getUrl();
 		final List<XParam> params = rq.getParams();
 
 		final URI uri;
