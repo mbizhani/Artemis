@@ -10,9 +10,6 @@ import org.devocative.artemis.xml.method.XBody;
 
 import java.util.List;
 
-import static org.devocative.artemis.xml.EMethod.POST;
-import static org.devocative.artemis.xml.EMethod.PUT;
-
 @Getter
 @Setter
 @ToString(of = "url")
@@ -33,7 +30,9 @@ public abstract class XBaseRequest {
 
 	private XBody body;
 
-	private List<XParam> params;
+	private List<XParam> urlParams;
+
+	private List<XParam> formParams;
 
 	private XAssertRs assertRs;
 
@@ -46,10 +45,6 @@ public abstract class XBaseRequest {
 	// ------------------------------
 
 	public abstract EMethod getMethod();
-
-	public boolean shouldHaveBody() {
-		return getMethod() == POST || getMethod() == PUT;
-	}
 
 	public Boolean isWithId() {
 		return withId;

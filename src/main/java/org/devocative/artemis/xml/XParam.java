@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 @XStreamAlias("param")
 @XStreamConverter(value = ToAttributedValueConverter.class, strings = "content")
-public class XParam {
+public class XParam implements INameTheValue {
 	@XStreamAsAttribute
 	private String name;
 

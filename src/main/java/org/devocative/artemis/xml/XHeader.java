@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 @XStreamAlias("header")
 @XStreamConverter(value = ToAttributedValueConverter.class, strings = "content")
-public class XHeader {
+public class XHeader implements INameTheValue {
 	@XStreamAsAttribute
 	private String name;
 

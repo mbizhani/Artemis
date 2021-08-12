@@ -8,6 +8,14 @@ public class Context {
 	private final Map<String, Object> globalVars = new HashMap<>();
 	private final Map<String, Object> vars = new HashMap<>();
 
+	private final String profile;
+
+	// ------------------------------
+
+	public Context(String profile) {
+		this.profile = profile;
+	}
+
 	// ------------------------------
 
 	public void addVar(String name, Object value) {
@@ -19,6 +27,10 @@ public class Context {
 
 	public Map<String, Object> getVars() {
 		return Collections.unmodifiableMap(vars);
+	}
+
+	public String getProfile() {
+		return profile;
 	}
 
 	// ---------------

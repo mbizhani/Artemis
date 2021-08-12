@@ -1,13 +1,10 @@
-import org.devocative.artemis.Config
 import org.devocative.artemis.Context
 
 import java.text.DecimalFormat
 
 // Called by ContextHandler Initialization
-def init(Context ctx, Config cfg) {
-	if (cfg.profile == "test") {
-		cfg.baseUrl = "http://localhost:8888"
-	}
+def init(Context ctx) {
+	println("Inside artemis.groovy: profile=${ctx.profile}")
 }
 
 def generate(int n, List<String>... alphaSet) {

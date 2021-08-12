@@ -3,33 +3,18 @@ package org.devocative.artemis;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thoughtworks.xstream.XStream;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.client5.http.HttpHostConnectException;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
-import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.io.entity.StringEntity;
-import org.apache.hc.core5.http.message.BasicNameValuePair;
-import org.apache.hc.core5.net.URIBuilder;
+import org.devocative.artemis.http.HttpFactory;
+import org.devocative.artemis.http.HttpRequest;
+import org.devocative.artemis.http.HttpResponse;
 import org.devocative.artemis.xml.*;
 import org.devocative.artemis.xml.method.*;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Slf4j
 public class ArtemisExecutor {
 	private static final String DEFAULT_NAME = "artemis";
 	private static final String THIS = "_this";
@@ -38,8 +23,7 @@ public class ArtemisExecutor {
 	private final String name;
 	private final Config config;
 	private final ObjectMapper mapper;
-
-	private final CloseableHttpClient httpclient;
+	private final HttpFactory httpFactory;
 
 	// ------------------------------
 
@@ -62,16 +46,15 @@ public class ArtemisExecutor {
 		this.name = name;
 		this.config = config;
 		this.mapper = new ObjectMapper();
-		this.httpclient = HttpClients.createDefault();
+
+		ContextHandler.init(name, config);
+		this.httpFactory = new HttpFactory(config.getBaseUrl());
 	}
 
 	// ------------------------------
 
-	@SneakyThrows
 	private void execute() {
 		try {
-			ContextHandler.init(name, config);
-
 			final XStream xStream = new XStream();
 			XStream.setupDefaultSecurity(xStream);
 			xStream.processAnnotations(new Class[]{XArtemis.class, XGet.class, XPost.class, XPut.class, XDelete.class});
@@ -85,7 +68,7 @@ public class ArtemisExecutor {
 			proxy.getVars().forEach(var -> {
 				final String value = var.getTheValue();
 				ctx.addGlobalVar(var.getName(), value);
-				log.info("Global Var: name=[{}} value=[{}]", var.getName(), value);
+				ALog.info("Global Var: name=[{}} value=[{}]", var.getName(), value);
 			});
 
 			proxy
@@ -94,7 +77,7 @@ public class ArtemisExecutor {
 				.filter(scenario -> scenario.isEnabled() &&
 					(config.getOnlyScenarios().isEmpty() || config.getOnlyScenarios().contains(scenario.getName())))
 				.forEach(scenario -> {
-					log.info("** SCENARIO ** => {}", scenario.getName());
+					ALog.info("*** SCENARIO *** => {}", scenario.getName());
 
 					int idx = 1;
 					for (XBaseRequest rq : scenario.getRequests()) {
@@ -106,7 +89,7 @@ public class ArtemisExecutor {
 				});
 		} finally {
 			ContextHandler.shutdown();
-			httpclient.close();
+			httpFactory.shutdown();
 		}
 	}
 
@@ -127,19 +110,17 @@ public class ArtemisExecutor {
 			addVars++;
 		}
 		if (addVars > 0) {
-			log.info("RQ({}) - [{}] var(s) added to context", rq.getId(), addVars);
+			ALog.info("RQ({}) - [{}] var(s) added to context", rq.getId(), addVars);
 		}
 
 		if (rq.getCall() != null) {
 			ContextHandler.invoke(rq.getCall());
-			log.info("RQ({}) - call: {}", rq.getId(), rq.getCall());
+			ALog.info("RQ({}) - call: {}", rq.getId(), rq.getCall());
 		}
 	}
 
 	private void sendRq(XBaseRequest rq) {
 		final Context ctx = ContextHandler.get();
-
-		final HttpUriRequestBase httpRq = new HttpUriRequestBase(rq.getMethod().name(), createURI(rq));
 
 		final Map<String, Object> rqAndRs = new HashMap<>();
 		ctx.addVar(THIS, rqAndRs);
@@ -147,65 +128,30 @@ public class ArtemisExecutor {
 			ctx.addVar(rq.getId(), rqAndRs);
 		}
 
-		final StringBuilder builder = new StringBuilder();
+		final HttpRequest httpRq = httpFactory.create(
+			rq.getId(), rq.getMethod().name(), rq.getUrl(), asMap(rq.getUrlParams()));
 
-		if (rq.shouldHaveBody()) {
-			final XBody body = rq.getBody();
-			final List<XParam> params = rq.getParams();
+		httpRq.setHeaders(asMap(rq.getHeaders()));
 
-			if (body != null) {
-				final String content = body.getContent().trim();
-				httpRq.setEntity(new StringEntity(content, ContentType.APPLICATION_JSON, "UTF-8", false));
-				builder
-					.append("\n")
-					.append(content);
-			} else if (!params.isEmpty()) {
-				final List<BasicNameValuePair> httpParams = params.stream()
-					.map(p -> new BasicNameValuePair(p.getName(), p.getTheValue()))
-					.collect(Collectors.toList());
-				httpRq.setEntity(new UrlEncodedFormEntity(httpParams));
-				//rqAndRs.put("rq", params.stream().collect(Collectors.toMap(XParam::getName, XParam::getValue)));
-
-				builder.append("\n");
-				params.forEach(p -> builder.append(p.getName()).append(" = ").append(p.getTheValue()));
-			} else {
-				log.warn("RQ({}): Sending POST/PUT without body or any param", rq.getId());
-			}
+		final XBody body = rq.getBody();
+		if (body != null) {
+			httpRq.setBody(body.getContent().trim());
 		}
 
-		rq.getHeaders().forEach(h -> httpRq.addHeader(h.getName(), h.getTheValue()));
+		httpRq.setFormParams(asMap(rq.getFormParams()));
 
-		log.info("RQ({}): {} - {}{}", rq.getId(), rq.getMethod(), rq.getUrl(), builder.toString());
-
-		final long start = System.currentTimeMillis();
-		try (final CloseableHttpResponse rs = httpclient.execute(httpRq)) {
-			processRs(rs, rq, rqAndRs, start);
-		} catch (HttpHostConnectException e) {
-			throw new TestFailedException(rq.getId(), "Unknown Host");
-		} catch (IOException e) {
-			throw new TestFailedException(rq.getId(), e.getMessage());
-		}
+		httpRq.send(rs -> processRs(rs, rq, rqAndRs));
 	}
 
-	private void processRs(CloseableHttpResponse rs, XBaseRequest rq, Map<String, Object> rqAndRs, long start) throws IOException {
-		final long duration = System.currentTimeMillis() - start;
+	private void processRs(HttpResponse rs, XBaseRequest rq, Map<String, Object> rqAndRs) {
 
 		if (rq.getAssertRs() == null) {
-			log.warn("RQ({}) - No <assertRs/>!", rq.getId());
+			ALog.warn("RQ({}) - No <assertRs/>!", rq.getId());
 			rq.setAssertRs(new XAssertRs());
 		}
 
 		final XAssertRs assertRs = rq.getAssertRs();
 		assertCode(rq, rs);
-
-		final String rsBodyAsStr = new BufferedReader(new InputStreamReader(rs.getEntity().getContent(), StandardCharsets.UTF_8))
-			.lines()
-			.collect(Collectors.joining("\n"));
-
-		final String contentType = rs.getEntity().getContentType();
-
-		log.info("RS({}): {} ({}) - {} [{} ms]\n\tContentType: {}\n\t{}",
-			rq.getId(), rq.getMethod(), rs.getCode(), rq.getUrl(), duration, contentType, rsBodyAsStr);
 
 		if (assertRs.getProperties() != null) {
 			if (assertRs.getBody() == null) {
@@ -215,6 +161,7 @@ public class ArtemisExecutor {
 			}
 		}
 
+		final String rsBodyAsStr = rs.getBody();
 		if (assertRs.getBody() != null) {
 			switch (assertRs.getBody()) {
 				case json:
@@ -239,26 +186,6 @@ public class ArtemisExecutor {
 
 	// ---------------
 
-	private URI createURI(XBaseRequest rq) {
-		final String url = config.getBaseUrl() + rq.getUrl();
-		final List<XParam> params = rq.getParams();
-
-		final URI uri;
-		if (rq.shouldHaveBody() || params.isEmpty()) {
-			uri = URI.create(url);
-		} else {
-			try {
-				final URIBuilder builder = new URIBuilder(url);
-				params.forEach(p -> builder.addParameter(p.getName(), p.getTheValue()));
-				uri = builder.build();
-			} catch (URISyntaxException e) {
-				throw new TestFailedException(rq.getId(), "Invalid URI to Build");
-			}
-		}
-
-		return uri;
-	}
-
 	private void assertProperties(XBaseRequest rq, Object rsAsObj) {
 		final XAssertRs assertRs = rq.getAssertRs();
 
@@ -279,7 +206,7 @@ public class ArtemisExecutor {
 		}
 	}
 
-	private void assertCode(XBaseRequest rq, CloseableHttpResponse rs) {
+	private void assertCode(XBaseRequest rq, HttpResponse rs) {
 		final XAssertRs assertRs = rq.getAssertRs();
 		if (assertRs.getStatus() != null && !assertRs.getStatus().equals(rs.getCode())) {
 			throw new TestFailedException(rq.getId(), "Invalid RS Code: expected %s, got %s",
@@ -293,5 +220,12 @@ public class ArtemisExecutor {
 		} catch (JsonProcessingException e) {
 			throw new TestFailedException(id, "Invalid JSON Format:\n%s", content);
 		}
+	}
+
+	private Map<String, String> asMap(List<? extends INameTheValue> list) {
+		return list == null ? Collections.emptyMap() :
+			list
+				.stream()
+				.collect(Collectors.toMap(INameTheValue::getName, INameTheValue::getTheValue));
 	}
 }

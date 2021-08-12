@@ -1,6 +1,7 @@
 package org.devocative.artemis.test;
 
 import io.javalin.Javalin;
+import io.javalin.core.validation.Validator;
 import org.devocative.artemis.ArtemisExecutor;
 import org.devocative.artemis.Config;
 import org.junit.jupiter.api.Test;
@@ -26,10 +27,12 @@ public class TestArtemis {
 		configure(app);
 
 		ArtemisExecutor.run();
+
+		app.stop();
 	}
 
 	@Test
-	public void test_customBaseUrl() {
+	public void test_setBaseUrlViaConfig() {
 		final Javalin app = Javalin
 			.create()
 			.start(7777);
@@ -37,18 +40,22 @@ public class TestArtemis {
 		configure(app);
 
 		ArtemisExecutor.run(new Config().setBaseUrl("http://localhost:7777"));
+
+		app.stop();
 	}
 
 	@Test
-	public void test_customProfile() {
+	public void test_setBaseUrlViaSysProp() {
 		final Javalin app = Javalin
 			.create()
 			.start(8888);
 
 		configure(app);
 
-		// 'baseUrl' is set inside artemis.groovy:init()
-		ArtemisExecutor.run(new Config().setProfile("test"));
+		System.setProperty("artemis.base.url", "http://localhost:8888");
+		ArtemisExecutor.run();
+
+		app.stop();
 	}
 
 	// ------------------------------
@@ -56,8 +63,18 @@ public class TestArtemis {
 	private void configure(Javalin app) {
 		app
 			.post("/registrations", ctx -> {
+				final Validator<String> _p = ctx
+					.queryParam("_p", String.class)
+					.check(s -> s.length() == 3);
+				final Validator<Integer> p1 = ctx.queryParam("p1", Integer.class)
+					.check(i -> i > 0);
+
 				final Map<String, String> data = ctx.bodyAsClass(Map.class);
-				log("Register (Sending SMS) - {}", data);
+				log("Register (Sending SMS) - {}, _p={}, p1={}", data, _p.get(), p1.get());
+
+				if (_p.hasError() || p1.hasError()) {
+					ctx.status(400);
+				}
 			})
 			.get("/registrations/:cell", ctx -> {
 				final String cell = ctx.pathParam("cell");
@@ -78,9 +95,17 @@ public class TestArtemis {
 					));
 			})
 			.put("/users/:id", ctx -> {
-				final Map<String, String> data = ctx.bodyAsClass(Map.class);
-				log("UpdateProfile - id=[{}] data={} authHeader=[{}]",
-					ctx.pathParam("id"), data, ctx.header("Authorization"));
+				final Validator<String> city = ctx.formParam("city", String.class)
+					.check(s -> s.length() == 4);
+				final Validator<String> email = ctx.formParam("email", String.class)
+					.check(s -> s.matches("\\w+@(\\w+\\.)+\\w+"));
+
+				log("UpdateProfile - id=[{}], authHeader=[{}], city={}, email={}",
+					ctx.pathParam("id"), ctx.header("Authorization"), city.get(), email.get());
+
+				if (city.hasError() || email.hasError()) {
+					ctx.status(400);
+				}
 			});
 
 		app

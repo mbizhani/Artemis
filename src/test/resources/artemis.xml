@@ -7,10 +7,20 @@
 	<vars>
 		<var name="cell" value="09${_.generate(9, '0'..'9')}"/>
 		<var name="password" value="${_.generate(9, '0'..'9', 'a'..'z')}"/>
+		<var name="city" value="${_.generate(4, 'a'..'z')}"/>
 	</vars>
 
 	<scenario name="RegisterUser">
-		<post url="/registrations">
+		<post url="/registrations?_p=${rand}">
+			<vars>
+				<var name="rand" value="${_.generate(3, '0'..'9', 'a'..'z')}"/>
+				<var name="randInt" value="${_.generate(3, '1'..'9')}"/>
+			</vars>
+
+			<urlParams>
+				<param name="p1" value="${randInt}"/>
+			</urlParams>
+
 			<body type="json"><![CDATA[
 {
 	"name": "Foo\\nBar",
@@ -41,18 +51,16 @@
 				<header name="Authorization" value="${verify.rs.token}"/>
 			</headers>
 
-			<body><![CDATA[
-{
-	"city": "Tehran",
-	"email": "a@a.com"
-}
-			]]></body>
+			<formParams>
+				<param name="city" value="${city}"/>
+				<param name="email" value="a@a.com"/>
+			</formParams>
 
 			<assertRs status="200"/>
 		</put>
 	</scenario>
 
-	<scenario name="ProductCRUD">
+	<scenario name="Login">
 		<get url="/login/${cell}">
 			<assertRs status="200" properties="smsCode"/>
 		</get>
