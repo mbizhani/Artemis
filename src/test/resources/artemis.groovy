@@ -3,8 +3,10 @@ import org.devocative.artemis.Context
 import java.text.DecimalFormat
 
 // Called by ContextHandler Initialization
-def init(Context ctx) {
+def before(Context ctx) {
 	println("Inside artemis.groovy: profile=${ctx.profile}")
+
+	ctx.addVar("password", generate(9, '0'..'9', 'a'..'z'))
 }
 
 def generate(int n, List<String>... alphaSet) {

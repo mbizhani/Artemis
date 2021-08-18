@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.devocative.artemis.EVarScope.Request;
+import static org.devocative.artemis.EVarScope.Scenario;
+
 public class ArtemisExecutor {
 	private static final String DEFAULT_NAME = "artemis";
 	private static final String THIS = "_this";
@@ -67,7 +70,7 @@ public class ArtemisExecutor {
 			final Context ctx = ContextHandler.get();
 			proxy.getVars().forEach(var -> {
 				final String value = var.getTheValue();
-				ctx.addGlobalVar(var.getName(), value);
+				ctx.addVarByScope(var.getName(), value, EVarScope.Global);
 				ALog.info("Global Var: name=[{}} value=[{}]", var.getName(), value);
 			});
 
@@ -78,14 +81,16 @@ public class ArtemisExecutor {
 					(config.getOnlyScenarios().isEmpty() || config.getOnlyScenarios().contains(scenario.getName())))
 				.forEach(scenario -> {
 					ALog.info("*** SCENARIO *** => {}", scenario.getName());
+					scenario.getVars().forEach(v -> ctx.addVarByScope(v.getName(), v.getTheValue(), Scenario));
 
 					int idx = 1;
 					for (XBaseRequest rq : scenario.getRequests()) {
 						initRq(rq, idx++);
 						sendRq(rq);
+						ctx.clearVars(EVarScope.Request);
 					}
 
-					ctx.clearVars();
+					ctx.clearVars(Scenario);
 				});
 		} finally {
 			ContextHandler.shutdown();
@@ -100,13 +105,13 @@ public class ArtemisExecutor {
 		}
 
 		final Context ctx = ContextHandler.get();
-		if (ctx.containsVar(THIS)) {
-			ctx.addVar(PREV, ctx.removeVar(THIS));
+		if (ctx.containsVar(THIS, Scenario)) {
+			ctx.addVarByScope(PREV, ctx.removeVar(THIS, Scenario), Scenario);
 		}
 
 		int addVars = 0;
 		for (XVar var : rq.getVars()) {
-			ctx.addVar(var.getName(), var.getTheValue());
+			ctx.addVarByScope(var.getName(), var.getTheValue(), Request);
 			addVars++;
 		}
 		if (addVars > 0) {
@@ -123,9 +128,9 @@ public class ArtemisExecutor {
 		final Context ctx = ContextHandler.get();
 
 		final Map<String, Object> rqAndRs = new HashMap<>();
-		ctx.addVar(THIS, rqAndRs);
+		ctx.addVarByScope(THIS, rqAndRs, Scenario);
 		if (rq.isWithId()) {
-			ctx.addVar(rq.getId(), rqAndRs);
+			ctx.addVarByScope(rq.getId(), rqAndRs, Scenario);
 		}
 
 		final HttpRequest httpRq = httpFactory.create(

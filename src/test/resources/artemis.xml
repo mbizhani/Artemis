@@ -6,15 +6,18 @@
 <artemis>
 	<vars>
 		<var name="cell" value="09${_.generate(9, '0'..'9')}"/>
-		<var name="password" value="${_.generate(9, '0'..'9', 'a'..'z')}"/>
+		<!-- 'password' is set in artemis.groovy's 'before()' method -->
 		<var name="city" value="${_.generate(4, 'a'..'z')}"/>
 	</vars>
 
 	<scenario name="RegisterUser">
+		<vars>
+			<var name="randInt" value="${_.generate(3, '1'..'9')}"/>
+		</vars>
+
 		<post url="/registrations?_p=${rand}">
 			<vars>
 				<var name="rand" value="${_.generate(3, '0'..'9', 'a'..'z')}"/>
-				<var name="randInt" value="${_.generate(3, '1'..'9')}"/>
 			</vars>
 
 			<urlParams>
@@ -32,6 +35,10 @@
 		</post>
 
 		<get url="/registrations/${cell}">
+			<urlParams>
+				<param name="p1" value="${randInt}"/>
+			</urlParams>
+
 			<assertRs status="200" properties="smsCode"/>
 		</get>
 

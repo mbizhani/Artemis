@@ -80,9 +80,16 @@ public class TestArtemis {
 				final String cell = ctx.pathParam("cell");
 				log("Query (Sent SMS) - {}", cell);
 
-				ctx.json(asMap(
-					pair("smsCode", Math.abs(cell.hashCode()))
-				));
+				final Validator<Integer> p1 = ctx.queryParam("p1", Integer.class)
+					.check(i -> i > 0);
+
+				if (p1.hasError()) {
+					ctx.status(400);
+				} else {
+					ctx.json(asMap(
+						pair("smsCode", Math.abs(cell.hashCode()))
+					));
+				}
 			})
 			.put("/registrations", ctx -> {
 				final Map<String, String> data = ctx.bodyAsClass(Map.class);

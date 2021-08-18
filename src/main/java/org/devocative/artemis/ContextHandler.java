@@ -72,8 +72,10 @@ public class ContextHandler {
 
 	private static Context createContext() {
 		final Context ctx = new Context(CONFIG.getProfile());
-		MAIN.invokeMethod("init", new Object[]{ctx});
-		ctx.addGlobalVar("_", MAIN);
+		ctx.addVarByScope("_", MAIN, EVarScope.Global);
+
+		ctx.runAtScope(EVarScope.Global, () -> MAIN.invokeMethod("before", new Object[]{ctx}));
+
 		return ctx;
 	}
 

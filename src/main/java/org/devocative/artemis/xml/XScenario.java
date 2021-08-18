@@ -18,6 +18,8 @@ public class XScenario {
 	@XStreamAsAttribute
 	private Boolean enabled;
 
+	private List<XVar> vars;
+
 	@XStreamImplicit
 	private List<XBaseRequest> requests;
 
