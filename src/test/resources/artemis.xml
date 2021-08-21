@@ -3,7 +3,7 @@
 <!DOCTYPE artemis PUBLIC "-//Devocative.Org//Artemis 1.0//EN"
 		"https://devocative.org/dtd/artemis-1.0.dtd">
 
-<artemis>
+<artemis loop="5" parallel="8">
 	<vars>
 		<var name="cell" value="09${_.generate(9, '0'..'9')}"/>
 		<!-- 'password' is set in artemis.groovy's 'before()' method -->

@@ -15,8 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.devocative.artemis.EVarScope.Request;
-import static org.devocative.artemis.EVarScope.Scenario;
+import static org.devocative.artemis.EVarScope.*;
 
 public class ArtemisExecutor {
 	private static final String DEFAULT_NAME = "artemis";
@@ -58,43 +57,53 @@ public class ArtemisExecutor {
 
 	private void execute() {
 		try {
-			final XStream xStream = new XStream();
-			XStream.setupDefaultSecurity(xStream);
-			xStream.processAnnotations(new Class[]{XArtemis.class, XGet.class, XPost.class, XPut.class, XDelete.class});
-			xStream.allowTypesByWildcard(new String[]{"org.devocative.artemis.xml.**"});
+			final XArtemis artemis = createXArtemis();
 
-			final XArtemis artemis = (XArtemis) xStream.fromXML(
-				ArtemisExecutor.class.getResourceAsStream(String.format("/%s.xml", name)));
-			final XArtemis proxy = Proxy.create(artemis);
+			final List<XScenario> scenarios = artemis
+				.getScenarios()
+				.stream()
+				.filter(scenario -> scenario.isEnabled() &&
+					(config.getOnlyScenarios().isEmpty() || config.getOnlyScenarios().contains(scenario.getName())))
+				.collect(Collectors.toList());
 
+			final Runnable runnable = () ->
+				run(scenarios, artemis.getVars(), artemis.getLoop() != null ? artemis.getLoop() : 1);
+
+			final Map<String, Throwable> result = Parallel.execute(artemis.getParallel() != null ? artemis.getParallel() : 1, runnable);
+			if (!result.isEmpty()) {
+				throw new RuntimeException(result.toString());
+			}
+		} finally {
+			httpFactory.shutdown();
+		}
+	}
+
+	private void run(List<XScenario> scenarios, List<XVar> globalVars, int loopMax) {
+		for (int i = 0; i < loopMax; i++) {
 			final Context ctx = ContextHandler.get();
-			proxy.getVars().forEach(var -> {
+			globalVars.forEach(var -> {
 				final String value = var.getTheValue();
 				ctx.addVarByScope(var.getName(), value, EVarScope.Global);
 				ALog.info("Global Var: name=[{}} value=[{}]", var.getName(), value);
 			});
 
-			proxy
-				.getScenarios()
-				.stream()
-				.filter(scenario -> scenario.isEnabled() &&
-					(config.getOnlyScenarios().isEmpty() || config.getOnlyScenarios().contains(scenario.getName())))
-				.forEach(scenario -> {
-					ALog.info("*** SCENARIO *** => {}", scenario.getName());
-					scenario.getVars().forEach(v -> ctx.addVarByScope(v.getName(), v.getTheValue(), Scenario));
+			final String loopVar = Integer.toString(i);
+			scenarios.forEach(scenario -> {
+				ctx.addVarByScope("_loop", loopVar, Global);
 
-					int idx = 1;
-					for (XBaseRequest rq : scenario.getRequests()) {
-						initRq(rq, idx++);
-						sendRq(rq);
-						ctx.clearVars(EVarScope.Request);
-					}
+				ALog.info("*** SCENARIO *** => {}", scenario.getName());
+				scenario.getVars().forEach(v -> ctx.addVarByScope(v.getName(), v.getTheValue(), Scenario));
 
-					ctx.clearVars(Scenario);
-				});
-		} finally {
+				int idx = 1;
+				for (XBaseRequest rq : scenario.getRequests()) {
+					initRq(rq, idx++);
+					sendRq(rq);
+					ctx.clearVars(EVarScope.Request);
+				}
+
+				ctx.clearVars(Scenario);
+			});
 			ContextHandler.shutdown();
-			httpFactory.shutdown();
 		}
 	}
 
@@ -190,6 +199,17 @@ public class ArtemisExecutor {
 	}
 
 	// ---------------
+
+	private XArtemis createXArtemis() {
+		final XStream xStream = new XStream();
+		XStream.setupDefaultSecurity(xStream);
+		xStream.processAnnotations(new Class[]{XArtemis.class, XGet.class, XPost.class, XPut.class, XDelete.class});
+		xStream.allowTypesByWildcard(new String[]{"org.devocative.artemis.xml.**"});
+
+		final XArtemis artemis = (XArtemis) xStream.fromXML(
+			ArtemisExecutor.class.getResourceAsStream(String.format("/%s.xml", name)));
+		return Proxy.create(artemis);
+	}
 
 	private void assertProperties(XBaseRequest rq, Object rsAsObj) {
 		final XAssertRs assertRs = rq.getAssertRs();
