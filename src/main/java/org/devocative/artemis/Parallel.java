@@ -1,25 +1,41 @@
 package org.devocative.artemis;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Parallel {
 
-	public static Map<String, Throwable> execute(int degree, Runnable runnable) {
-		final Map<String, Throwable> result = new HashMap<>();
+	public static Result execute(int degree, Runnable runnable) {
+		final Result result;
+
 		if (degree <= 1) {
+			String errStr = null;
+
 			try {
 				runnable.run();
 			} catch (Exception e) {
-				result.put(Thread.currentThread().getName(), e);
+				errStr = e.getMessage();
 			}
+
+			result = new Result(errStr == null ? 0 : 1)
+				.setErrors(errStr);
 		} else {
+			final AtomicInteger counter = new AtomicInteger(0);
+			final StringBuilder builder = new StringBuilder();
 			final List<Thread> list = new ArrayList<>();
 			for (int i = 0; i < degree; i++) {
-				final Thread t = new Thread(runnable);
-				t.setUncaughtExceptionHandler((t1, e) -> result.put(t1.getName(), e));
+				final Thread t = new Thread(runnable, String.format("artemis-%02d", i + 1));
+				t.setUncaughtExceptionHandler((t1, e) -> {
+					counter.incrementAndGet();
+					synchronized (builder) {
+						builder
+							.append("\n")
+							.append(t1.getName())
+							.append(": ")
+							.append(e.getMessage());
+					}
+				});
 				t.start();
 				list.add(t);
 			}
@@ -31,8 +47,10 @@ public class Parallel {
 					throw new RuntimeException(e);
 				}
 			}
+
+			result = new Result(counter.get())
+				.setErrors(builder.toString());
 		}
 		return result;
 	}
-
 }

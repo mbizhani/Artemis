@@ -69,9 +69,9 @@ public class ArtemisExecutor {
 			final Runnable runnable = () ->
 				run(scenarios, artemis.getVars(), artemis.getLoop() != null ? artemis.getLoop() : 1);
 
-			final Map<String, Throwable> result = Parallel.execute(artemis.getParallel() != null ? artemis.getParallel() : 1, runnable);
-			if (!result.isEmpty()) {
-				throw new RuntimeException(result.toString());
+			final Result result = Parallel.execute(artemis.getParallelDegree(), runnable);
+			if (result.hasError()) {
+				throw new RuntimeException(result.getErrors());
 			}
 		} finally {
 			httpFactory.shutdown();

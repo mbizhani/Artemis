@@ -22,4 +22,10 @@ public class XArtemis {
 
 	@XStreamImplicit
 	private List<XScenario> scenarios;
+
+	// ------------------------------
+
+	public int getParallelDegree() {
+		return getParallel() != null ? getParallel() : 1;
+	}
 }
