@@ -72,7 +72,7 @@ public class ArtemisExecutor {
 			final Runnable runnable = () ->
 				run(scenarios, artemis.getVars(), artemis.getLoop() != null ? artemis.getLoop() : 1);
 
-			final Result result = Parallel.execute(artemis.getParallelDegree(), runnable);
+			final Result result = Parallel.execute(name, artemis.getParallelDegree(), runnable);
 			if (result.hasError()) {
 				throw new RuntimeException(result.getErrors());
 			}
