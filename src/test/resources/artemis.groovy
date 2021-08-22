@@ -4,7 +4,7 @@ import java.text.DecimalFormat
 
 // Called by ContextHandler Initialization
 def before(Context ctx) {
-	println("Inside artemis.groovy: profile=${ctx.profile}")
+	Artemis.log("Inside artemis.groovy: profile=${ctx.profile}")
 
 	ctx.addVar("password", generate(9, '0'..'9', 'a'..'z'))
 }

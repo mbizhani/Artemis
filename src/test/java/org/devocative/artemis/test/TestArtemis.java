@@ -103,7 +103,7 @@ public class TestArtemis {
 			})
 			.put("/users/:id", ctx -> {
 				final Validator<String> city = ctx.formParam("city", String.class)
-					.check(s -> s.length() == 4);
+					.check(s -> s.startsWith("artemis-") || s.equals("main"));
 				final Validator<String> email = ctx.formParam("email", String.class)
 					.check(s -> s.matches("\\w+@(\\w+\\.)+\\w+"));
 

@@ -3,11 +3,11 @@
 <!DOCTYPE artemis PUBLIC "-//Devocative.Org//Artemis 1.0//EN"
 		"https://devocative.org/dtd/artemis-1.0.dtd">
 
-<artemis loop="5" parallel="8">
+<artemis parallel="8">
 	<vars>
 		<var name="cell" value="09${_.generate(9, '0'..'9')}"/>
 		<!-- 'password' is set in artemis.groovy's 'before()' method -->
-		<var name="city" value="${_.generate(4, 'a'..'z')}"/>
+		<var name="city" value="${Thread.currentThread().getName()}"/>
 	</vars>
 
 	<scenario name="RegisterUser">

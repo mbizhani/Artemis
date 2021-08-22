@@ -2,6 +2,7 @@ package groovy.lang;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.devocative.artemis.ALog;
 
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -63,5 +64,9 @@ public class Artemis {
 		} catch (JsonProcessingException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static void log(String log) {
+		ALog.info("[Groovy] - " + log);
 	}
 }

@@ -8,6 +8,7 @@ import org.devocative.artemis.http.HttpRequest;
 import org.devocative.artemis.http.HttpResponse;
 import org.devocative.artemis.xml.*;
 import org.devocative.artemis.xml.method.*;
+import org.slf4j.MDC;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,6 +40,8 @@ public class ArtemisExecutor {
 
 	// Main
 	public static void run(String name, Config config) {
+		ALog.init();
+
 		new ArtemisExecutor(name, config).execute();
 	}
 
@@ -79,12 +82,14 @@ public class ArtemisExecutor {
 	}
 
 	private void run(List<XScenario> scenarios, List<XVar> globalVars, int loopMax) {
+		MDC.put("threadName", Thread.currentThread().getName());
+
 		for (int i = 0; i < loopMax; i++) {
 			final Context ctx = ContextHandler.get();
 			globalVars.forEach(var -> {
 				final String value = var.getTheValue();
 				ctx.addVarByScope(var.getName(), value, EVarScope.Global);
-				ALog.info("Global Var: name=[{}} value=[{}]", var.getName(), value);
+				ALog.info("Global Var: name=[{}] value=[{}]", var.getName(), value);
 			});
 
 			final String loopVar = Integer.toString(i);
@@ -105,6 +110,8 @@ public class ArtemisExecutor {
 			});
 			ContextHandler.shutdown();
 		}
+
+		MDC.remove("threadName");
 	}
 
 	private void initRq(XBaseRequest rq, int idx) {
