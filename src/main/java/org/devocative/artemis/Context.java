@@ -15,6 +15,10 @@ public class Context {
 
 	// ------------------------------
 
+	public Context() {
+		this("default");
+	}
+
 	public Context(String profile) {
 		this.profile = profile;
 	}

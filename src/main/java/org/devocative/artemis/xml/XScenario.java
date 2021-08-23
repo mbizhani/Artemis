@@ -28,4 +28,16 @@ public class XScenario {
 	public boolean isEnabled() {
 		return getEnabled() == null || getEnabled();
 	}
+
+	public void updateRequestsIds() {
+		int idx = 1;
+		for (XBaseRequest rq : requests) {
+			if (rq.isWithId() == null) {
+				rq.setWithId(rq.getId() != null);
+				if (rq.getId() == null) {
+					rq.setId(String.format("step #%s", idx++));
+				}
+			}
+		}
+	}
 }

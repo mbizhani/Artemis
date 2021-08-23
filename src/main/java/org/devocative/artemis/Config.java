@@ -13,5 +13,6 @@ import java.util.List;
 public class Config {
 	private String profile;
 	private String baseUrl;
+	private Boolean devMode;
 	private List<String> onlyScenarios = Collections.emptyList();
 }

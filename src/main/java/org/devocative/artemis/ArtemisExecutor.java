@@ -1,14 +1,12 @@
 package org.devocative.artemis;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thoughtworks.xstream.XStream;
 import org.devocative.artemis.http.HttpFactory;
 import org.devocative.artemis.http.HttpRequest;
 import org.devocative.artemis.http.HttpResponse;
 import org.devocative.artemis.xml.*;
 import org.devocative.artemis.xml.method.*;
-import org.slf4j.MDC;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,15 +15,16 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.devocative.artemis.EVarScope.*;
+import static org.devocative.artemis.Memory.EStep.*;
 
 public class ArtemisExecutor {
 	private static final String DEFAULT_NAME = "artemis";
 	private static final String THIS = "_this";
 	private static final String PREV = "_prev";
+	private static final String LOOP_VAR = "_loop";
 
 	private final String name;
 	private final Config config;
-	private final ObjectMapper mapper;
 	private final HttpFactory httpFactory;
 
 	// ------------------------------
@@ -40,7 +39,7 @@ public class ArtemisExecutor {
 
 	// Main
 	public static void run(String name, Config config) {
-		ALog.init();
+		ALog.init(name);
 
 		new ArtemisExecutor(name, config).execute();
 	}
@@ -50,7 +49,6 @@ public class ArtemisExecutor {
 	private ArtemisExecutor(String name, Config config) {
 		this.name = name;
 		this.config = config;
-		this.mapper = new ObjectMapper();
 
 		ContextHandler.init(name, config);
 		this.httpFactory = new HttpFactory(config.getBaseUrl());
@@ -62,19 +60,18 @@ public class ArtemisExecutor {
 		try {
 			final XArtemis artemis = createXArtemis();
 
-			final List<XScenario> scenarios = artemis
-				.getScenarios()
+			final List<XScenario> scenarios = artemis.getScenarios()
 				.stream()
 				.filter(scenario -> scenario.isEnabled() &&
 					(config.getOnlyScenarios().isEmpty() || config.getOnlyScenarios().contains(scenario.getName())))
 				.collect(Collectors.toList());
 
 			final Runnable runnable = () ->
-				run(scenarios, artemis.getVars(), artemis.getLoop() != null ? artemis.getLoop() : 1);
+				run(scenarios, artemis.getVars(), artemis.getLoopDegree());
 
 			final Result result = Parallel.execute(name, artemis.getParallelDegree(), runnable);
 			if (result.hasError()) {
-				throw new RuntimeException(result.getErrors());
+				throw new TestFailedException(result.getErrors());
 			}
 		} finally {
 			httpFactory.shutdown();
@@ -82,7 +79,13 @@ public class ArtemisExecutor {
 	}
 
 	private void run(List<XScenario> scenarios, List<XVar> globalVars, int loopMax) {
-		MDC.put("threadName", Thread.currentThread().getName());
+		ALog.info("*---------*---------*");
+		ALog.info("|   A R T E M I S   |");
+		if (config.getDevMode()) {
+			ALog.info("*-------D E V-------*");
+		} else {
+			ALog.info("*---------*---------*");
+		}
 
 		for (int i = 0; i < loopMax; i++) {
 			final Context ctx = ContextHandler.get();
@@ -94,36 +97,46 @@ public class ArtemisExecutor {
 
 			final String loopVar = Integer.toString(i);
 			scenarios.forEach(scenario -> {
-				ctx.addVarByScope("_loop", loopVar, Global);
+				ctx.addVarByScope(LOOP_VAR, loopVar, Global);
+
+				ContextHandler.updateMemory(m -> m
+					.clear()
+					.setScenarioName(scenario.getName()));
 
 				ALog.info("*** SCENARIO *** => {}", scenario.getName());
-				scenario.getVars().forEach(v -> ctx.addVarByScope(v.getName(), v.getTheValue(), Scenario));
+				try {
+					scenario.getVars()
+						.forEach(v -> ctx.addVarByScope(v.getName(), v.getTheValue(), Scenario));
 
-				int idx = 1;
-				for (XBaseRequest rq : scenario.getRequests()) {
-					initRq(rq, idx++);
-					sendRq(rq);
-					ctx.clearVars(EVarScope.Request);
+					scenario.updateRequestsIds();
+
+					for (XBaseRequest rq : scenario.getRequests()) {
+						initRq(rq);
+						sendRq(rq);
+						ctx.clearVars(EVarScope.Request);
+					}
+
+					ctx.clearVars(Scenario);
+				} catch (RuntimeException e) {
+					ContextHandler.memorize();
+					throw e;
 				}
-
-				ctx.clearVars(Scenario);
 			});
 			ContextHandler.shutdown();
 		}
-
-		MDC.remove("threadName");
 	}
 
-	private void initRq(XBaseRequest rq, int idx) {
-		rq.setWithId(rq.getId() != null);
-		if (rq.getId() == null) {
-			rq.setId(String.format("step #%s", idx));
-		}
-
+	private void initRq(XBaseRequest rq) {
 		final Context ctx = ContextHandler.get();
+
 		if (ctx.containsVar(THIS, Scenario)) {
 			ctx.addVarByScope(PREV, ctx.removeVar(THIS, Scenario), Scenario);
 		}
+
+		ContextHandler.updateMemory(m -> m
+			.clear()
+			.setRqId(rq.getId())
+			.addStep(RqVars));
 
 		int addVars = 0;
 		for (XVar var : rq.getVars()) {
@@ -134,13 +147,16 @@ public class ArtemisExecutor {
 			ALog.info("RQ({}) - [{}] var(s) added to context", rq.getId(), addVars);
 		}
 
+		ContextHandler.updateMemory(m -> m.addStep(RqCall));
 		if (rq.getCall() != null) {
-			ContextHandler.invoke(rq.getCall());
+			ctx.runAtScope(Request, () -> ContextHandler.invoke(rq.getCall()));
 			ALog.info("RQ({}) - call: {}", rq.getId(), rq.getCall());
 		}
 	}
 
 	private void sendRq(XBaseRequest rq) {
+		ContextHandler.updateMemory(m -> m.addStep(RqSend));
+
 		final Context ctx = ContextHandler.get();
 
 		final Map<String, Object> rqAndRs = new HashMap<>();
@@ -215,6 +231,50 @@ public class ArtemisExecutor {
 
 		final XArtemis artemis = (XArtemis) xStream.fromXML(
 			ArtemisExecutor.class.getResourceAsStream(String.format("/%s.xml", name)));
+
+		if (config.getDevMode()) {
+			artemis.setLoop(1);
+			artemis.setParallel(1);
+
+			final Memory memory = ContextHandler.getMEMORY();
+			ALog.info("DEV MODE - Memory: {} -> {}, {}", memory.getScenarioName(), memory.getRqId(), memory.getSteps());
+
+			if (memory.getScenarioName() != null) {
+				artemis.setVars(Collections.emptyList());
+
+				while (!memory.getScenarioName().equals(artemis.getScenarios().get(0).getName())) {
+					final XScenario removed = artemis.getScenarios().remove(0);
+					ALog.info("DEV MODE - Removed Scenario: {}", removed.getName());
+				}
+
+				final XScenario scenario = artemis.getScenarios().get(0);
+				scenario.updateRequestsIds();
+
+				final List<Memory.EStep> steps = memory.getSteps();
+
+				if (steps.contains(RqVars)) {
+					ALog.info("DEV MODE - Clear Scenario Vars: {}", scenario.getName());
+					scenario.setVars(Collections.emptyList());
+
+					while (!memory.getRqId().equals(scenario.getRequests().get(0).getId())) {
+						final XBaseRequest removed = scenario.getRequests().remove(0);
+						ALog.info("DEV MODE - Remove Scenario Rq: {} -> {}", scenario.getName(), removed.getId());
+					}
+
+					final XBaseRequest rq = scenario.getRequests().get(0);
+					if (steps.contains(RqCall)) {
+						ALog.info("DEV MODE - Clear Rq Vars: {} -> {}", scenario.getName(), rq.getId());
+						rq.setVars(Collections.emptyList());
+
+						if (steps.contains(RqSend)) {
+							ALog.info("DEV MODE - Clear Rq Call: {} -> {}", scenario.getName(), rq.getId());
+							rq.setCall(null);
+						}
+					}
+				}
+			}
+		}
+
 		return Proxy.create(artemis);
 	}
 
@@ -248,7 +308,7 @@ public class ArtemisExecutor {
 
 	private Object json(String id, String content) {
 		try {
-			return mapper.readValue(content, Object.class);
+			return ContextHandler.fromJson(content, Object.class);
 		} catch (JsonProcessingException e) {
 			throw new TestFailedException(id, "Invalid JSON Format:\n%s", content);
 		}

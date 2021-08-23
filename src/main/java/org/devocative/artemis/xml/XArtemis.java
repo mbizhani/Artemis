@@ -25,7 +25,11 @@ public class XArtemis {
 
 	// ------------------------------
 
+	public int getLoopDegree() {
+		return getLoop() == null || getLoop() < 1 ? 1 : getLoop();
+	}
+
 	public int getParallelDegree() {
-		return getParallel() != null ? getParallel() : 1;
+		return getParallel() == null || getParallel() < 1 ? 1 : getParallel();
 	}
 }
