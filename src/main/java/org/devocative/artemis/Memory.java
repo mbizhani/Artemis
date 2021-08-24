@@ -1,5 +1,6 @@
 package org.devocative.artemis;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,5 +36,10 @@ public class Memory {
 		steps.clear();
 
 		return this;
+	}
+
+	@JsonIgnore
+	public boolean isEmpty() {
+		return scenarioName == null && context == null;
 	}
 }

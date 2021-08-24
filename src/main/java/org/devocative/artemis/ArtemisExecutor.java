@@ -90,7 +90,7 @@ public class ArtemisExecutor {
 		for (int i = 0; i < loopMax; i++) {
 			final Context ctx = ContextHandler.get();
 			globalVars.forEach(var -> {
-				final String value = var.getTheValue();
+				final String value = var.getValue();
 				ctx.addVarByScope(var.getName(), value, EVarScope.Global);
 				ALog.info("Global Var: name=[{}] value=[{}]", var.getName(), value);
 			});
@@ -106,7 +106,7 @@ public class ArtemisExecutor {
 				ALog.info("*** SCENARIO *** => {}", scenario.getName());
 				try {
 					scenario.getVars()
-						.forEach(v -> ctx.addVarByScope(v.getName(), v.getTheValue(), Scenario));
+						.forEach(v -> ctx.addVarByScope(v.getName(), v.getValue(), Scenario));
 
 					scenario.updateRequestsIds();
 
@@ -140,7 +140,7 @@ public class ArtemisExecutor {
 
 		int addVars = 0;
 		for (XVar var : rq.getVars()) {
-			ctx.addVarByScope(var.getName(), var.getTheValue(), Request);
+			ctx.addVarByScope(var.getName(), var.getValue(), Request);
 			addVars++;
 		}
 		if (addVars > 0) {
@@ -237,10 +237,19 @@ public class ArtemisExecutor {
 			artemis.setParallel(1);
 
 			final Memory memory = ContextHandler.getMEMORY();
-			ALog.info("DEV MODE - Memory: {} -> {}, {}", memory.getScenarioName(), memory.getRqId(), memory.getSteps());
+			if (memory.isEmpty()) {
+				ALog.info("DEV MODE - Empty Memory");
+			} else {
+				ALog.info("DEV MODE - Memory: {} -> {}, {}", memory.getScenarioName(), memory.getRqId(), memory.getSteps());
+			}
 
 			if (memory.getScenarioName() != null) {
 				artemis.setVars(Collections.emptyList());
+
+				final Context ctx = memory.getContext();
+				if (ctx.containsVar(PREV, Scenario)) {
+					ctx.addVarByScope(THIS, ctx.removeVar(PREV, Scenario), Scenario);
+				}
 
 				while (!memory.getScenarioName().equals(artemis.getScenarios().get(0).getName())) {
 					final XScenario removed = artemis.getScenarios().remove(0);
@@ -253,21 +262,21 @@ public class ArtemisExecutor {
 				final List<Memory.EStep> steps = memory.getSteps();
 
 				if (steps.contains(RqVars)) {
-					ALog.info("DEV MODE - Clear Scenario Vars: {}", scenario.getName());
+					ALog.info("DEV MODE - Removed Scenario Vars: {}", scenario.getName());
 					scenario.setVars(Collections.emptyList());
 
 					while (!memory.getRqId().equals(scenario.getRequests().get(0).getId())) {
 						final XBaseRequest removed = scenario.getRequests().remove(0);
-						ALog.info("DEV MODE - Remove Scenario Rq: {} -> {}", scenario.getName(), removed.getId());
+						ALog.info("DEV MODE - Removed Rq: {} ({})", removed.getId(), scenario.getName());
 					}
 
 					final XBaseRequest rq = scenario.getRequests().get(0);
 					if (steps.contains(RqCall)) {
-						ALog.info("DEV MODE - Clear Rq Vars: {} -> {}", scenario.getName(), rq.getId());
+						ALog.info("DEV MODE - Removed Rq Vars: {} ({})", rq.getId(), scenario.getName());
 						rq.setVars(Collections.emptyList());
 
 						if (steps.contains(RqSend)) {
-							ALog.info("DEV MODE - Clear Rq Call: {} -> {}", scenario.getName(), rq.getId());
+							ALog.info("DEV MODE - Removed Rq Call: {} ({})", rq.getId(), scenario.getName());
 							rq.setCall(null);
 						}
 					}
@@ -318,6 +327,6 @@ public class ArtemisExecutor {
 		return list == null ? Collections.emptyMap() :
 			list
 				.stream()
-				.collect(Collectors.toMap(INameTheValue::getName, INameTheValue::getTheValue));
+				.collect(Collectors.toMap(INameTheValue::getName, INameTheValue::getValue));
 	}
 }

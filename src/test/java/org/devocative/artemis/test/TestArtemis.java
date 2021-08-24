@@ -39,7 +39,9 @@ public class TestArtemis {
 
 		configure(app);
 
-		ArtemisExecutor.run(new Config().setBaseUrl("http://localhost:7777"));
+		ArtemisExecutor.run(new Config()
+			.setDevMode(true)
+			.setBaseUrl("http://localhost:7777"));
 
 		app.stop();
 	}

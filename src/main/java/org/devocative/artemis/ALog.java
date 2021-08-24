@@ -8,8 +8,7 @@ import ch.qos.logback.classic.sift.MDCBasedDiscriminator;
 import ch.qos.logback.classic.sift.SiftingAppender;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.rolling.RollingFileAppender;
-import ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP;
-import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
+import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy;
 import ch.qos.logback.core.util.FileSize;
 import org.slf4j.LoggerFactory;
 
@@ -35,30 +34,22 @@ public class ALog {
 		sa.setDiscriminator(discriminator);
 		sa.setAppenderFactory((context, discriminatingValue) -> {
 			final PatternLayoutEncoder ple = new PatternLayoutEncoder();
-			ple.setContext(lc);
+			ple.setContext(context);
 			ple.setPattern("%date - %msg%n");
 			ple.start();
 
 			final RollingFileAppender<ILoggingEvent> appender = new RollingFileAppender<>();
-			appender.setContext(lc);
-			appender.setName("File-" + discriminatingValue);
+			appender.setContext(context);
+			appender.setName(discriminatingValue);
 			appender.setFile("logs/" + discriminatingValue + ".log");
 			appender.setEncoder(ple);
 
-			final TimeBasedRollingPolicy<ILoggingEvent> policy = new TimeBasedRollingPolicy<>();
+			final SizeAndTimeBasedRollingPolicy<ILoggingEvent> policy = new SizeAndTimeBasedRollingPolicy<>();
 			policy.setContext(context);
-			policy.setMaxHistory(5);
-			policy.setFileNamePattern("logs/" + discriminatingValue + "-%d{yyyy-MM-dd-HH-mm}-%i.log");
 			policy.setParent(appender);
-			policy.start();
-
-			final SizeAndTimeBasedFNATP<ILoggingEvent> innerPolicy = new SizeAndTimeBasedFNATP<>();
-			innerPolicy.setContext(context);
-			innerPolicy.setMaxFileSize(FileSize.valueOf("2MB"));
-			innerPolicy.setTimeBasedRollingPolicy(policy);
-			innerPolicy.start();
-
-			policy.setTimeBasedFileNamingAndTriggeringPolicy(innerPolicy);
+			policy.setMaxHistory(5);
+			policy.setFileNamePattern("logs/" + discriminatingValue + "-%d{yyyy-MM-dd-HH}-%i.log");
+			policy.setMaxFileSize(FileSize.valueOf("5mb"));
 			policy.start();
 
 			appender.setRollingPolicy(policy);

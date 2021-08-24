@@ -5,14 +5,12 @@ import com.thoughtworks.xstream.annotations.XStreamOmitField;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import org.devocative.artemis.xml.method.XBody;
 
 import java.util.List;
 
 @Getter
 @Setter
-@ToString(of = "url")
 public abstract class XBaseRequest {
 
 	@XStreamAsAttribute
@@ -48,5 +46,10 @@ public abstract class XBaseRequest {
 
 	public Boolean isWithId() {
 		return withId;
+	}
+
+	@Override
+	public String toString() {
+		return String.format("Rq(%s): %s - %s", getId(), getMethod(), getUrl());
 	}
 }

@@ -67,7 +67,7 @@ public class ContextHandler {
 				ctx.addVarByScope(SCRIPT_VAR, MAIN, Global);
 				CTX.set(ctx);
 			} catch (IOException e) {
-				throw new RuntimeException(e);
+				throw new RuntimeException(String.format("Invalid '%s' as JSON file, you may need to delete it!", MEM_FILE), e);
 			}
 		} else {
 			MEMORY = new Memory();
@@ -88,6 +88,11 @@ public class ContextHandler {
 
 	public static void shutdown() {
 		CTX.remove();
+
+		final File file = new File(MEM_FILE);
+		if (file.exists()) {
+			file.delete();
+		}
 	}
 
 	public static Object eval(String str) {
@@ -96,7 +101,7 @@ public class ContextHandler {
 				.createTemplate(str)
 				.make(new HashMap<>(get().getVars()))
 				.toString();
-		} catch (Exception e) {
+		} catch (ClassNotFoundException | IOException e) {
 			throw new RuntimeException(e);
 		}
 	}

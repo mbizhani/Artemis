@@ -1,5 +1,7 @@
 package org.devocative.artemis;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,6 +13,7 @@ public class Context {
 
 	private final String profile;
 
+	@JsonIgnore
 	private EVarScope scope;
 
 	// ------------------------------

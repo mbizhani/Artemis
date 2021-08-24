@@ -10,19 +10,26 @@ import lombok.Setter;
 @Getter
 @Setter
 @XStreamAlias("param")
-@XStreamConverter(value = ToAttributedValueConverter.class, strings = "content")
+@XStreamConverter(value = ToAttributedValueConverter.class, strings = "valueAsBody")
 public class XParam implements INameTheValue {
 	@XStreamAsAttribute
 	private String name;
 
+	@XStreamAlias("value")
 	@XStreamAsAttribute
-	private String value;
+	private String valueAsAttr;
 
-	private String content;
+	private String valueAsBody;
 
 	// ------------------------------
 
-	public String getTheValue() {
-		return !getContent().isEmpty() ? getContent() : getValue();
+	@Override
+	public String getValue() {
+		return !getValueAsBody().isEmpty() ? getValueAsBody() : getValueAsAttr();
+	}
+
+	@Override
+	public String toString() {
+		return String.format("Param: '%s' = '%s'", getName(), getValue());
 	}
 }

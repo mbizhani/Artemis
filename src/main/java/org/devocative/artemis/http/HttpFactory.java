@@ -32,6 +32,8 @@ public class HttpFactory {
 		final String finalUrl;
 		if (url.startsWith("http://") || url.startsWith("https://")) {
 			finalUrl = url;
+		} else if (!url.matches("^[/?].*")) {
+			throw new TestFailedException(rqId, "Invalid URL: '%s'", url);
 		} else {
 			finalUrl = baseUrl + url;
 		}

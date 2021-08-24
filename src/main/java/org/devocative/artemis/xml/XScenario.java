@@ -35,9 +35,10 @@ public class XScenario {
 			if (rq.isWithId() == null) {
 				rq.setWithId(rq.getId() != null);
 				if (rq.getId() == null) {
-					rq.setId(String.format("step #%s", idx++));
+					rq.setId(String.format("step #%s", idx));
 				}
 			}
+			idx++;
 		}
 	}
 }

@@ -72,9 +72,9 @@ public class HttpRequest {
 			responseConsumer.accept(new HttpResponse(code, contentType, body));
 
 		} catch (HttpHostConnectException e) {
-			throw new TestFailedException(rqId, "Unknown Host");
+			throw new TestFailedException(rqId, String.format("Unknown Host (%s)", getUri()));
 		} catch (IOException e) {
-			throw new TestFailedException(rqId, e.getMessage());
+			throw new TestFailedException(rqId, String.format("%s (%s)", e.getMessage(), getUri()));
 		}
 	}
 

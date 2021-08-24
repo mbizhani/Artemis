@@ -17,4 +17,11 @@ public class XBody {
 	private ERqBodyType type = ERqBodyType.json;
 
 	private String content;
+
+	// ------------------------------
+
+	@Override
+	public String toString() {
+		return "<body>";
+	}
 }
