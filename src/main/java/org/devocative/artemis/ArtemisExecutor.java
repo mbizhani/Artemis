@@ -149,8 +149,13 @@ public class ArtemisExecutor {
 
 		ContextHandler.updateMemory(m -> m.addStep(RqCall));
 		if (rq.getCall() != null) {
-			ctx.runAtScope(Request, () -> ContextHandler.invoke(rq.getCall()));
-			ALog.info("RQ({}) - call: {}", rq.getId(), rq.getCall());
+			try {
+				ctx.runAtScope(Request, () -> ContextHandler.invoke(rq.getCall()));
+				ALog.info("RQ({}) - call: {}", rq.getId(), rq.getCall());
+			} catch (RuntimeException e) {
+				ALog.error("ERROR: RQ({}) - calling: {}", rq.getId(), rq.getCall());
+				throw e;
+			}
 		}
 	}
 

@@ -25,7 +25,6 @@ public class ContextHandler {
 	private static final String ARTEMIS_DEV_MODE_ENV = "ARTEMIS_DEV_MODE";
 	private static final String ARTEMIS_DEV_MODE_SYS_PROP = "artemis.dev.mode";
 
-	private static final String MEM_FILE = ".artemis.updateMemory.json";
 	private static final String SCRIPT_VAR = "_";
 
 	private static final ThreadLocal<Context> CTX = new ThreadLocal<>();
@@ -35,6 +34,7 @@ public class ContextHandler {
 
 	private static Script MAIN;
 	private static Config CONFIG;
+	private static String MEM_FILE;
 	private static Memory MEMORY;
 
 	// ------------------------------
@@ -59,6 +59,7 @@ public class ContextHandler {
 			config.setDevMode(Boolean.valueOf(findValue(ARTEMIS_DEV_MODE_ENV, ARTEMIS_DEV_MODE_SYS_PROP, "false")));
 		}
 
+		MEM_FILE = String.format(".%s.memory.json", name);
 		final File file = new File(MEM_FILE);
 		if (config.getDevMode() && file.exists()) {
 			try {

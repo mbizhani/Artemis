@@ -74,4 +74,8 @@ public class ALog {
 	public static void warn(String s, Object... params) {
 		log.warn(s, params);
 	}
+
+	public static void error(String s, Object... params) {
+		log.error(s, params);
+	}
 }
