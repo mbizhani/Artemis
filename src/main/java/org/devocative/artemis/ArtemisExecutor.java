@@ -210,6 +210,13 @@ public class ArtemisExecutor {
 					final Object obj = json(rq.getId(), rsBodyAsStr);
 					rqAndRs.put("rs", obj);
 					assertProperties(rq, obj);
+					if (assertRs.getStore() != null) {
+						if (rq.isWithId()) {
+							storeProperties(rq.getId(), assertRs.getStore(), obj);
+						} else {
+							throw new TestFailedException(rq.getId(), "Id Not Found to Store: %s", assertRs.getStore());
+						}
+					}
 					break;
 				case text:
 					if (rsBodyAsStr.trim().isEmpty()) {
@@ -309,6 +316,45 @@ public class ArtemisExecutor {
 			} else {
 				throw new TestFailedException(rq.getId(), "Invalid RS Type for Asserting Properties");
 			}
+		}
+	}
+
+	private void storeProperties(String id, String properties, Object rsAsObj) {
+		if (rsAsObj instanceof Map) {
+			final Map rsAsMap = (Map) rsAsObj;
+			final Map<String, Object> rs = new HashMap<>();
+			final String[] props = properties.split(",");
+
+			for (String prop : props) {
+				final String[] parts = prop.trim().split("[.]");
+				rs.put(parts[0], findValue(parts, 0, rsAsMap));
+			}
+
+			Map<String, Object> store = new HashMap<>();
+			store.put("rs", rs);
+			ContextHandler.get().addVarByScope(id, store, Global);
+		}
+	}
+
+	private Object findValue(String[] parts, int idx, Map rsAsMap) {
+		final Object obj = rsAsMap.get(parts[idx]);
+
+		if (obj == null) {
+			throw new RuntimeException(String.format("Prop Not Found: %s (%s)",
+				parts[idx],
+				String.join(".", parts)));
+		}
+
+		if (idx == parts.length - 1) {
+			return obj;
+		} else {
+			final Map<String, Object> result = new HashMap<>();
+			if (!(obj instanceof Map)) {
+				throw new RuntimeException(String.format("Invalid Prop as Map: %s (%s)",
+					parts[idx], String.join(".", parts)));
+			}
+			result.put(parts[idx], findValue(parts, idx + 1, (Map) obj));
+			return result;
 		}
 	}
 

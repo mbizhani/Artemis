@@ -50,7 +50,7 @@
 }
 			]]></body>
 
-			<assertRs status="201" properties="token,userId"/>
+			<assertRs status="201" properties="token,userId" store="token"/>
 		</put>
 
 		<put url="/users/${verify.rs.userId}">
@@ -69,6 +69,10 @@
 
 	<scenario name="Login">
 		<get url="/login/${cell}">
+			<headers>
+				<header name="Authorization" value="${verify.rs.token}"/>
+			</headers>
+
 			<assertRs status="200" properties="smsCode"/>
 		</get>
 

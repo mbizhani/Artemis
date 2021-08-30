@@ -17,4 +17,7 @@ public class XAssertRs {
 
 	@XStreamAsAttribute
 	private String properties;
+
+	@XStreamAsAttribute
+	private String store;
 }
