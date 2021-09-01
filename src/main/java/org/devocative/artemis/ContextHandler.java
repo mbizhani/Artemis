@@ -1,8 +1,13 @@
 package org.devocative.artemis;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import groovy.lang.GString;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import groovy.text.SimpleTemplateEngine;
@@ -46,6 +51,15 @@ public class ContextHandler {
 
 		MAPPER.setVisibility(MAPPER.getSerializationConfig().getDefaultVisibilityChecker()
 			.withFieldVisibility(JsonAutoDetect.Visibility.ANY));
+
+		final SimpleModule grv = new SimpleModule();
+		grv.addSerializer(new StdSerializer<GString>(GString.class) {
+			@Override
+			public void serialize(GString gString, JsonGenerator generator, SerializerProvider provider) throws IOException {
+				generator.writeString(gString.toString());
+			}
+		});
+		MAPPER.registerModule(grv);
 
 		if (config.getProfile() == null) {
 			config.setProfile(findValue(ARTEMIS_PROFILE_ENV, ARTEMIS_PROFILE_SYS_PROP, "local"));

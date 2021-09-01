@@ -5,7 +5,7 @@
 
 <artemis parallel="8">
 	<vars>
-		<var name="cell" value="09${_.generate(9, '0'..'9')}"/>
+		<!-- 'cell'     is set in artemis.groovy's 'storeCell()' method-->
 		<!-- 'password' is set in artemis.groovy's 'before()' method -->
 		<var name="city" value="${Thread.currentThread().getName()}"/>
 	</vars>
@@ -15,7 +15,7 @@
 			<var name="randInt" value="${_.generate(3, '1'..'9')}"/>
 		</vars>
 
-		<post url="/registrations?_p=${rand}">
+		<post id="registration" url="/registrations?_p=${rand}" call="storeCell">
 			<vars>
 				<var name="rand" value="${_.generate(3, '0'..'9', 'a'..'z')}"/>
 			</vars>

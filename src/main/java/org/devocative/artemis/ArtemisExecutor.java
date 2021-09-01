@@ -118,6 +118,7 @@ public class ArtemisExecutor {
 
 					ctx.clearVars(Scenario);
 				} catch (RuntimeException e) {
+					ALog.error(e.getMessage());
 					ContextHandler.memorize();
 					throw e;
 				}

@@ -29,11 +29,24 @@ public class Context {
 	// ------------------------------
 
 	public void addVar(String name, Object value) {
+		addVar(name, value, false);
+	}
+
+	public void addVar(String name, Object value, boolean store) {
 		if (vars.containsKey(name)) {
 			throw new RuntimeException("Duplicate Var for Context: " + name);
 		}
 
-		addVarByScope(name, value, scope);
+		if (scope == null) {
+			throw new RuntimeException("Null scope in 'addVar'");
+		}
+
+		if (store) {
+			ALog.warn("[Groovy] Added Var Globally: {}", name);
+			addVarByScope(name, value, EVarScope.Global);
+		} else {
+			addVarByScope(name, value, scope);
+		}
 	}
 
 	public Map<String, Object> getVars() {

@@ -35,7 +35,7 @@ public class ALog {
 		sa.setAppenderFactory((context, discriminatingValue) -> {
 			final PatternLayoutEncoder ple = new PatternLayoutEncoder();
 			ple.setContext(context);
-			ple.setPattern("%date - %msg%n");
+			ple.setPattern("%date %-5level - %msg%n");
 			ple.start();
 
 			final RollingFileAppender<ILoggingEvent> appender = new RollingFileAppender<>();
