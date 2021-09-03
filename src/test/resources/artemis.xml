@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!DOCTYPE artemis PUBLIC "-//Devocative.Org//Artemis 1.0//EN"
-		"https://devocative.org/dtd/artemis-1.0.dtd">
+		"http://localhost:4000/dtd/artemis-1.0.dtd">
 
 <artemis parallel="8">
 	<vars>
@@ -15,7 +15,7 @@
 			<var name="randInt" value="${_.generate(3, '1'..'9')}"/>
 		</vars>
 
-		<post id="registration" url="/registrations?_p=${rand}" call="storeCell">
+		<post id="registration" url="/registrations?_p=${rand}" call="true">
 			<vars>
 				<var name="rand" value="${_.generate(3, '0'..'9', 'a'..'z')}"/>
 			</vars>

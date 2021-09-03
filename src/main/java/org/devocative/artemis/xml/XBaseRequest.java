@@ -20,7 +20,7 @@ public abstract class XBaseRequest {
 	private String url;
 
 	@XStreamAsAttribute
-	private String call;
+	private Boolean call;
 
 	private List<XVar> vars;
 

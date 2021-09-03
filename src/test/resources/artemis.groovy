@@ -14,6 +14,6 @@ def generate(int n, List<String>... alphaSet) {
 	}
 }
 
-def storeCell(Context ctx) {
+def registration(Context ctx) {
 	ctx.addVar("cell", "09${generate(9, '0'..'9')}", true);
 }

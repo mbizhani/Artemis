@@ -149,12 +149,15 @@ public class ArtemisExecutor {
 		}
 
 		ContextHandler.updateMemory(m -> m.addStep(RqCall));
-		if (rq.getCall() != null) {
+		if (rq.getCall() != null && rq.getCall()) {
+			if (!rq.isWithId()) {
+				throw new TestFailedException(rq.getId(), "No id for Request to Call");
+			}
 			try {
-				ctx.runAtScope(Request, () -> ContextHandler.invoke(rq.getCall()));
-				ALog.info("RQ({}) - call: {}", rq.getId(), rq.getCall());
+				ctx.runAtScope(Request, () -> ContextHandler.invoke(rq.getId()));
+				ALog.info("RQ({}) - call: {}(Context)", rq.getId(), rq.getId());
 			} catch (RuntimeException e) {
-				ALog.error("ERROR: RQ({}) - calling: {}", rq.getId(), rq.getCall());
+				ALog.error("ERROR: RQ({}) - calling: {}(Context)", rq.getId(), rq.getId());
 				throw e;
 			}
 		}
