@@ -19,7 +19,7 @@ import java.nio.file.Paths;
 public class ArtemisCreateMavenPlugin extends AbstractMojo {
 	private static final Logger logger = LoggerFactory.getLogger(ArtemisCreateMavenPlugin.class);
 
-	@Parameter(defaultValue = "artemis")
+	@Parameter(property = "name", defaultValue = "artemis")
 	private String name;
 
 	@Parameter(defaultValue = "${project}", readonly = true)

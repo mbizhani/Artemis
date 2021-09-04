@@ -20,13 +20,13 @@ import java.util.List;
 public class ArtemisRunMavenPlugin extends AbstractMojo {
 	private static final Logger logger = LoggerFactory.getLogger(ArtemisRunMavenPlugin.class);
 
-	@Parameter(defaultValue = "artemis")
+	@Parameter(property = "name", defaultValue = "artemis")
 	private String name;
 
-	@Parameter(defaultValue = "http://localhost:8080")
+	@Parameter(property = "baseUrl", defaultValue = "http://localhost:8080")
 	private String baseUrl;
 
-	@Parameter(defaultValue = "false")
+	@Parameter(property = "devMode", defaultValue = "false")
 	private Boolean devMode;
 
 	@Parameter(defaultValue = "${project}", readonly = true)
