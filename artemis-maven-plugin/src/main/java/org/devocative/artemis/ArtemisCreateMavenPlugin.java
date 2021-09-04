@@ -37,8 +37,8 @@ public class ArtemisCreateMavenPlugin extends AbstractMojo {
 			logger.info("Directory Created: {}", testResourceDir.getAbsolutePath());
 		}
 
-		final InputStream xmlIS = ArtemisCreateMavenPlugin.class.getResourceAsStream("/artemis.xml");
-		final InputStream groovyIS = ArtemisCreateMavenPlugin.class.getResourceAsStream("/artemis.groovy");
+		final InputStream xmlIS = ArtemisCreateMavenPlugin.class.getResourceAsStream("/_template_.xml");
+		final InputStream groovyIS = ArtemisCreateMavenPlugin.class.getResourceAsStream("/_template_.groovy");
 
 		try {
 			final Path xmlPath = Paths.get(testResourceDir.getAbsolutePath(), name + ".xml");
