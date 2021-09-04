@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!DOCTYPE artemis PUBLIC "-//Devocative.Org//Artemis 1.0//EN"
+		"https://devocative.org/dtd/artemis-1.0.dtd">
+
+<artemis parallel="1">
+
+	<!-- Global Variable Scope -->
+	<vars>
+		<var name="" value=""/>
+	</vars>
+
+	<scenario name="">
+
+		<!-- Scenario-base Variable Scope -->
+		<vars>
+			<var name="" value=""/>
+		</vars>
+
+		<get id="" url="/">
+			<!-- Request-base Variable Scope -->
+			<vars>
+				<var name="" value=""/>
+			</vars>
+
+			<assertRs status="" properties=""/>
+		</get>
+
+		<post id="" url="/">
+			<body><![CDATA[
+{
+	"": ""
+}
+			]]></body>
+
+			<assertRs status=""/>
+		</post>
+
+	</scenario>
+
+</artemis>
