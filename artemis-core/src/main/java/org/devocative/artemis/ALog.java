@@ -4,28 +4,38 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
-import ch.qos.logback.classic.sift.MDCBasedDiscriminator;
 import ch.qos.logback.classic.sift.SiftingAppender;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy;
+import ch.qos.logback.core.sift.AbstractDiscriminator;
+import ch.qos.logback.core.sift.Discriminator;
 import ch.qos.logback.core.util.FileSize;
-import org.slf4j.LoggerFactory;
 
 public class ALog {
+	private static final LoggerContext lc = new LoggerContext();
 	private static Logger log = null;
 
 	public synchronized static void init(String name) {
+		Thread.currentThread().setName(name);
+
 		if (log != null) {
 			return;
 		}
 
-		final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+		lc.start();
 
-		final MDCBasedDiscriminator discriminator = new MDCBasedDiscriminator();
-		discriminator.setContext(lc);
-		discriminator.setKey("threadName");
-		discriminator.setDefaultValue(name);
+		final Discriminator<ILoggingEvent> discriminator = new AbstractDiscriminator<ILoggingEvent>() {
+			@Override
+			public String getDiscriminatingValue(ILoggingEvent iLoggingEvent) {
+				return Thread.currentThread().getName();
+			}
+
+			@Override
+			public String getKey() {
+				return null;
+			}
+		};
 		discriminator.start();
 
 		final SiftingAppender sa = new SiftingAppender();

@@ -2,9 +2,6 @@ package org.devocative.artemis.test;
 
 import io.javalin.Javalin;
 import io.javalin.core.validation.Validator;
-import org.devocative.artemis.ArtemisExecutor;
-import org.devocative.artemis.Config;
-import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,55 +12,18 @@ import java.util.stream.Collectors;
 
 import static org.devocative.artemis.test.Pair.pair;
 
-public class TestArtemis {
-	private static final Logger log = LoggerFactory.getLogger(TestArtemis.class);
+public class TestServer {
+	private static final Logger log = LoggerFactory.getLogger(TestServer.class);
 
-	@Test
-	public void test_defaultConfig() {
+	public static void main(String[] args) {
 		final Javalin app = Javalin
 			.create()
 			.start(8080);
 
 		configure(app);
-
-		ArtemisExecutor.run();
-
-		app.stop();
 	}
 
-	@Test
-	public void test_setBaseUrlViaConfig() {
-		final Javalin app = Javalin
-			.create()
-			.start(7777);
-
-		configure(app);
-
-		ArtemisExecutor.run(new Config()
-			.setDevMode(true)
-			.setBaseUrl("http://localhost:7777"));
-
-		app.stop();
-	}
-
-	@Test
-	public void test_setBaseUrlViaSysProp() {
-		final Javalin app = Javalin
-			.create()
-			.start(8888);
-
-		configure(app);
-
-		System.setProperty("artemis.base.url", "http://localhost:8888");
-		ArtemisExecutor.run();
-		System.clearProperty("artemis.base.url");
-
-		app.stop();
-	}
-
-	// ------------------------------
-
-	private void configure(Javalin app) {
+	private static void configure(Javalin app) {
 		app
 			.post("/registrations", ctx -> {
 				final Validator<String> _p = ctx

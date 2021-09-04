@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!DOCTYPE artemis PUBLIC "-//Devocative.Org//Artemis 1.0//EN"
+		"http://localhost:4000/dtd/artemis-1.0.dtd">
+
+<artemis parallel="8">
+	<vars>
+		<!-- 'cell'     is set in artemis.groovy's 'storeCell()' method-->
+		<!-- 'password' is set in artemis.groovy's 'before()' method -->
+		<var name="city" value="${Thread.currentThread().getName()}"/>
+	</vars>
+
+	<scenario name="RegisterUser">
+		<vars>
+			<var name="randInt" value="${_.generate(3, '1'..'9')}"/>
+		</vars>
+
+		<post id="registration" url="/registrations?_p=${rand}" call="true">
+			<vars>
+				<var name="rand" value="${_.generate(3, '0'..'9', 'a'..'z')}"/>
+			</vars>
+
+			<urlParams>
+				<param name="p1" value="${randInt}"/>
+			</urlParams>
+
+			<body type="json"><![CDATA[
+{
+	"name": "Foo\\nBar",
+	"cell": "${cell}"
+}
+			]]></body>
+
+			<assertRs status="200" body="empty"/>
+		</post>
+
+		<get url="/registrations/${cell}">
+			<urlParams>
+				<param name="p1" value="${randInt}"/>
+			</urlParams>
+
+			<assertRs status="200" properties="smsCode"/>
+		</get>
+
+		<put url="/registrations" id="verify">
+			<body><![CDATA[
+{
+	"smsCode": "${_prev.rs.smsCode}",
+	"password": "${password}"
+}
+			]]></body>
+
+			<assertRs status="201" properties="token,userId" store="token"/>
+		</put>
+
+		<put url="/users/${verify.rs.userId}">
+			<headers>
+				<header name="Authorization" value="${verify.rs.token}"/>
+			</headers>
+
+			<formParams>
+				<param name="city" value="${city}"/>
+				<param name="email" value="a@a.com"/>
+			</formParams>
+
+			<assertRs status="200"/>
+		</put>
+	</scenario>
+
+	<scenario name="Login">
+		<get url="/login/${cell}">
+			<headers>
+				<header name="Authorization" value="${verify.rs.token}"/>
+			</headers>
+
+			<assertRs status="200" properties="smsCode"/>
+		</get>
+
+		<post id="login" url="/login">
+			<body><![CDATA[
+{
+	"cell": "${cell}",
+	"password": "${password}",
+	"smsCode": "${_prev.rs.smsCode}"
+}
+			]]></body>
+
+			<assertRs status="200" properties="token"/>
+		</post>
+	</scenario>
+</artemis>

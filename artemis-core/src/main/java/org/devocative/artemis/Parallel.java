@@ -1,7 +1,5 @@
 package org.devocative.artemis;
 
-import org.slf4j.MDC;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -9,20 +7,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Parallel {
 
 	public static Result execute(String name, int degree, Runnable runnable) {
-		final Runnable finalRunnable = () -> {
-			MDC.put("threadName", Thread.currentThread().getName());
-			runnable.run();
-			MDC.remove("threadName");
-		};
-
 		final Result result;
 
 		if (degree <= 1) {
 			String errStr = null;
 
 			try {
-				Thread.currentThread().setName(name);
-				finalRunnable.run();
+				runnable.run();
 			} catch (Exception e) {
 				errStr = e.getMessage();
 			}
@@ -34,7 +25,7 @@ public class Parallel {
 			final StringBuilder builder = new StringBuilder();
 			final List<Thread> list = new ArrayList<>();
 			for (int i = 0; i < degree; i++) {
-				final Thread t = new Thread(finalRunnable, String.format("%s-th-%02d", name, i + 1));
+				final Thread t = new Thread(runnable, String.format("%s-th-%02d", name, i + 1));
 				t.setUncaughtExceptionHandler((t1, e) -> {
 					counter.incrementAndGet();
 					synchronized (builder) {
