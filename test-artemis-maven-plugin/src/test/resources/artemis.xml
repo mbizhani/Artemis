@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!DOCTYPE artemis PUBLIC "-//Devocative.Org//Artemis 1.0//EN"
-		"http://localhost:4000/dtd/artemis-1.0.dtd">
+		"https://devocative.org/dtd/artemis-1.0.dtd">
 
 <artemis parallel="8">
 	<vars>
