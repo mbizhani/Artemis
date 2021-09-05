@@ -1,2 +1,2 @@
 # Artemis
-Easy Integration Test of your Rest API
+Easy and Simple Rest API Test Tool
