@@ -57,7 +57,7 @@ public class HttpRequest {
 	}
 
 	public void send(Consumer<HttpResponse> responseConsumer) {
-		ALog.info("RQ({}): {} - {}{}", rqId, request.getMethod(), getUri(), builder.toString());
+		ALog.info("RQ: {} - {}{}", request.getMethod(), getUri(), builder.toString());
 
 		final long start = System.currentTimeMillis();
 		try (final CloseableHttpResponse rs = httpClient.execute(request)) {
@@ -65,8 +65,8 @@ public class HttpRequest {
 			final String contentType = rs.getEntity().getContentType();
 			final String body = getBody(rs);
 
-			ALog.info("RS({}): {} ({}) - {} [{} ms]\n\tContentType: {}\n\t{}",
-				rqId, request.getMethod(), code, request.getRequestUri(),
+			ALog.info("RS: {} ({}) - {} [{} ms]\n\tContentType: {}\n\t{}",
+				request.getMethod(), code, request.getRequestUri(),
 				System.currentTimeMillis() - start, contentType, body);
 
 			responseConsumer.accept(new HttpResponse(code, contentType, body));

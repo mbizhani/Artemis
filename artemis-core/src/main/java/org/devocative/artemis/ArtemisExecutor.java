@@ -78,7 +78,7 @@ public class ArtemisExecutor {
 		}
 	}
 
-	private void run(List<XScenario> scenarios, List<XVar> globalVars, int loopMax) {
+	private void run(final List<XScenario> scenarios, final List<XVar> globalVars, final int loopMax) {
 		ALog.info("*---------*---------*");
 		ALog.info("|   A R T E M I S   |");
 		if (config.getDevMode()) {
@@ -88,6 +88,8 @@ public class ArtemisExecutor {
 		}
 
 		for (int i = 0; i < loopMax; i++) {
+			final long start = System.currentTimeMillis();
+
 			final Context ctx = ContextHandler.get();
 			globalVars.forEach(var -> {
 				final String value = var.getValue();
@@ -103,7 +105,7 @@ public class ArtemisExecutor {
 					.clear()
 					.setScenarioName(scenario.getName()));
 
-				ALog.info("*** SCENARIO *** => {}", scenario.getName());
+				ALog.info("=============== [{}] ===============", scenario.getName());
 				try {
 					scenario.getVars()
 						.forEach(v -> ctx.addVarByScope(v.getName(), v.getValue(), Scenario));
@@ -124,10 +126,20 @@ public class ArtemisExecutor {
 				}
 			});
 			ContextHandler.shutdown();
+
+			if (loopMax == 1) {
+				ALog.info("***** PASSED SUCCESSFULLY in {} ms *****",
+					System.currentTimeMillis() - start);
+			} else {
+				ALog.info("***** PASSED SUCCESSFULLY in {} ms, loopIdx=[{}] *****",
+					System.currentTimeMillis() - start, i);
+			}
 		}
 	}
 
 	private void initRq(XBaseRequest rq) {
+		ALog.info("--------------- [{}] ---------------", rq.getId());
+
 		final Context ctx = ContextHandler.get();
 
 		if (ctx.containsVar(THIS, Scenario)) {
@@ -145,7 +157,7 @@ public class ArtemisExecutor {
 			addVars++;
 		}
 		if (addVars > 0) {
-			ALog.info("RQ({}) - [{}] var(s) added to context", rq.getId(), addVars);
+			ALog.info("[{}] var(s) added to context", addVars);
 		}
 
 		ContextHandler.updateMemory(m -> m.addStep(RqCall));
@@ -155,7 +167,7 @@ public class ArtemisExecutor {
 			}
 			try {
 				ctx.runAtScope(Request, () -> ContextHandler.invoke(rq.getId()));
-				ALog.info("RQ({}) - call: {}(Context)", rq.getId(), rq.getId());
+				ALog.info("Call - {}(Context)", rq.getId());
 			} catch (RuntimeException e) {
 				ALog.error("ERROR: RQ({}) - calling: {}(Context)", rq.getId(), rq.getId());
 				throw e;
