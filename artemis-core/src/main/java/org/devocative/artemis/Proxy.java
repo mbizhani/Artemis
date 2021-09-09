@@ -5,8 +5,9 @@ import groovy.lang.GroovyRuntimeException;
 import groovy.lang.MissingMethodException;
 import groovy.lang.MissingPropertyException;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.cglib.proxy.Enhancer;
-import net.sf.cglib.proxy.MethodInterceptor;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.implementation.InvocationHandlerAdapter;
+import net.bytebuddy.matcher.ElementMatchers;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -27,32 +28,39 @@ public class Proxy {
 	// ------------------------------
 
 	public Object get() {
-		final Enhancer enhancer = new Enhancer();
-		enhancer.setSuperclass(target.getClass());
-		enhancer.setCallback((MethodInterceptor) (obj, method, vars, proxy) -> {
-			final Object result = proxy.invoke(target, vars);
+		try {
+			return new ByteBuddy()
+				.subclass(target.getClass())
+				.method(ElementMatchers.any())
+				.intercept(InvocationHandlerAdapter.of((proxy, method, args) -> {
+					final Object result = method.invoke(target, args);
 
-			log.debug("{}.{} -> {}", target.getClass().getSimpleName(), method.getName(), result);
-
-			if (result != null) {
-				if (result instanceof List) {
-					return ((List<?>) result).stream()
-						.filter(Objects::nonNull)
-						.map(item -> doProxify(item) ? create(item) : item)
-						.collect(Collectors.toList());
-				} else if (result instanceof String) {
-					final String str = (String) result;
-					return str.contains("${") ? eval(str, method) : str;
-				} else if (doProxify(result)) {
-					return create(result);
-				}
-				return result;
-			} else if (method.getReturnType().equals(List.class)) {
-				return Collections.emptyList();
-			}
-			return null;
-		});
-		return enhancer.create();
+					if (result != null) {
+						if (result instanceof List) {
+							return ((List<?>) result).stream()
+								.filter(Objects::nonNull)
+								.map(item -> doProxify(item) ? create(item) : item)
+								.collect(Collectors.toList());
+						} else if (result instanceof String) {
+							final String str = (String) result;
+							return str.contains("${") ? eval(str, method) : str;
+						} else if (doProxify(result)) {
+							return create(result);
+						}
+						return result;
+					} else if (method.getReturnType().equals(List.class)) {
+						return Collections.emptyList();
+					}
+					return null;
+				}))
+				.make()
+				.load(Proxy.class.getClassLoader())
+				.getLoaded()
+				.getDeclaredConstructor()
+				.newInstance();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	// ------------------------------
