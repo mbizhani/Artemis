@@ -13,9 +13,7 @@ import groovy.lang.Script;
 import groovy.text.SimpleTemplateEngine;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
@@ -44,10 +42,11 @@ public class ContextHandler {
 
 	// ------------------------------
 
-	public static void init(String name, Config config) {
+	public static void init(Config config) {
+		CONFIG = config;
+
 		final GroovyShell shell = new GroovyShell();
-		MAIN = shell.parse(new InputStreamReader(
-			ContextHandler.class.getResourceAsStream(String.format("/%s.groovy", name))));
+		MAIN = shell.parse(new InputStreamReader(loadGroovyFile()));
 
 		MAPPER.setVisibility(MAPPER.getSerializationConfig().getDefaultVisibilityChecker()
 			.withFieldVisibility(JsonAutoDetect.Visibility.ANY));
@@ -73,7 +72,7 @@ public class ContextHandler {
 			config.setDevMode(Boolean.valueOf(findValue(ARTEMIS_DEV_MODE_ENV, ARTEMIS_DEV_MODE_SYS_PROP, "false")));
 		}
 
-		MEM_FILE = String.format(".%s.memory.json", name);
+		MEM_FILE = String.format(".%s.memory.json", config.getName());
 		final File file = new File(MEM_FILE);
 		if (config.getDevMode() && file.exists()) {
 			try {
@@ -87,8 +86,6 @@ public class ContextHandler {
 		} else {
 			MEMORY = new Memory();
 		}
-
-		CONFIG = config;
 	}
 
 	public static synchronized Context get() {
@@ -154,6 +151,18 @@ public class ContextHandler {
 		}
 	}
 
+	public static InputStream loadXmlFile() {
+		if (CONFIG.getBaseDir() == null) {
+			return ContextHandler.class.getResourceAsStream(String.format("/%s.xml", CONFIG.getName()));
+		} else {
+			try {
+				return new FileInputStream(String.format("%s/%s.xml", CONFIG.getBaseDir(), CONFIG.getName()));
+			} catch (FileNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
 	// ------------------------------
 
 	private static Context createContext() {
@@ -172,5 +181,20 @@ public class ContextHandler {
 			return System.getProperty(sysVar);
 		}
 		return def;
+	}
+
+	private static InputStream loadGroovyFile() {
+		if (CONFIG.getBaseDir() == null) {
+			return ContextHandler.class.getResourceAsStream(String.format("/%s.groovy", CONFIG.getName()));
+		} else {
+			final File baseDir = new File(CONFIG.getBaseDir());
+			log.info("Artemis Base Dir to Load Files: {}", baseDir.getAbsolutePath());
+
+			try {
+				return new FileInputStream(String.format("%s/%s.groovy", CONFIG.getBaseDir(), CONFIG.getName()));
+			} catch (FileNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		}
 	}
 }

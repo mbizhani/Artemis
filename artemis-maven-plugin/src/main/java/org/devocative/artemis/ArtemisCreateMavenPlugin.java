@@ -4,7 +4,6 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.MavenProject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,16 +21,11 @@ public class ArtemisCreateMavenPlugin extends AbstractMojo {
 	@Parameter(property = "name", defaultValue = "artemis")
 	private String name;
 
-	@Parameter(defaultValue = "${project}", readonly = true)
-	private MavenProject project;
-
 	// ------------------------------
 
 	@Override
 	public void execute() throws MojoExecutionException {
-		final File basedir = project.getBasedir();
-
-		final File testResourceDir = new File(basedir.getAbsolutePath() + "/src/test/resources/");
+		final File testResourceDir = new File("/src/test/resources/");
 		if (!testResourceDir.exists()) {
 			testResourceDir.mkdirs();
 			logger.info("Directory Created: {}", testResourceDir.getAbsolutePath());

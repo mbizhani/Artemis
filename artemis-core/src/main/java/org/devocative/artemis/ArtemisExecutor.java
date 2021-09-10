@@ -18,39 +18,32 @@ import static org.devocative.artemis.EVarScope.*;
 import static org.devocative.artemis.Memory.EStep.*;
 
 public class ArtemisExecutor {
-	private static final String DEFAULT_NAME = "artemis";
 	private static final String THIS = "_this";
 	private static final String PREV = "_prev";
 	private static final String LOOP_VAR = "_loop";
 
-	private final String name;
 	private final Config config;
 	private final HttpFactory httpFactory;
 
 	// ------------------------------
 
 	public static void run() {
-		run(DEFAULT_NAME, new Config());
-	}
-
-	public static void run(Config config) {
-		run(DEFAULT_NAME, config);
+		run(new Config());
 	}
 
 	// Main
-	public static void run(String name, Config config) {
-		ALog.init(name);
+	public static void run(Config config) {
+		ALog.init(config.getName());
 
-		new ArtemisExecutor(name, config).execute();
+		new ArtemisExecutor(config).execute();
 	}
 
 	// ------------------------------
 
-	private ArtemisExecutor(String name, Config config) {
-		this.name = name;
+	private ArtemisExecutor(Config config) {
 		this.config = config;
 
-		ContextHandler.init(name, config);
+		ContextHandler.init(config);
 		this.httpFactory = new HttpFactory(config.getBaseUrl());
 	}
 
@@ -69,7 +62,7 @@ public class ArtemisExecutor {
 			final Runnable runnable = () ->
 				run(scenarios, artemis.getVars(), artemis.getLoopDegree());
 
-			final Result result = Parallel.execute(name, artemis.getParallelDegree(), runnable);
+			final Result result = Parallel.execute(config.getName(), artemis.getParallelDegree(), runnable);
 			if (result.hasError()) {
 				throw new TestFailedException(result.getErrors());
 			}
@@ -257,8 +250,7 @@ public class ArtemisExecutor {
 		xStream.processAnnotations(new Class[]{XArtemis.class, XGet.class, XPost.class, XPut.class, XDelete.class});
 		xStream.allowTypesByWildcard(new String[]{"org.devocative.artemis.xml.**"});
 
-		final XArtemis artemis = (XArtemis) xStream.fromXML(
-			ArtemisExecutor.class.getResourceAsStream(String.format("/%s.xml", name)));
+		final XArtemis artemis = (XArtemis) xStream.fromXML(ContextHandler.loadXmlFile());
 
 		if (config.getDevMode()) {
 			artemis.setLoop(1);

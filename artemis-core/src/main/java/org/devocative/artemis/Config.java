@@ -11,8 +11,20 @@ import java.util.List;
 @Setter
 @Accessors(chain = true)
 public class Config {
+	private final String name;
 	private String profile;
 	private String baseUrl;
 	private Boolean devMode;
 	private List<String> onlyScenarios = Collections.emptyList();
+	private String baseDir;
+
+	// ------------------------------
+
+	public Config() {
+		this("artemis");
+	}
+
+	public Config(String name) {
+		this.name = name;
+	}
 }
