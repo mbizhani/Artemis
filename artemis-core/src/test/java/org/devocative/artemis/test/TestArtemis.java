@@ -8,10 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.devocative.artemis.test.Pair.pair;
 
@@ -102,7 +101,8 @@ public class TestArtemis {
 				ctx.status(201)
 					.json(asMap(
 						pair("token", UUID.randomUUID().toString()),
-						pair("userId", UUID.randomUUID().toString())
+						pair("userId", UUID.randomUUID().toString()),
+						pair("nullProp", null)
 					));
 			})
 			.put("/users/:id", ctx -> {
@@ -139,7 +139,11 @@ public class TestArtemis {
 	}
 
 	private static Map<String, Object> asMap(Pair... pairs) {
-		return Arrays.stream(pairs).collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+		final Map<String, Object> result = new HashMap<>();
+		for (Pair pair : pairs) {
+			result.put(pair.getKey(), pair.getValue());
+		}
+		return result;
 	}
 
 	private static void log(String str, Object... vars) {

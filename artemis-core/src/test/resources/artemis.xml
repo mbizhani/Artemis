@@ -50,7 +50,7 @@
 }
 			]]></body>
 
-			<assertRs status="201" properties="token,userId" store="token"/>
+			<assertRs status="201" properties="token,userId,nullProp" store="token" call="true"/>
 		</put>
 
 		<put url="/users/${verify.rs.userId}">

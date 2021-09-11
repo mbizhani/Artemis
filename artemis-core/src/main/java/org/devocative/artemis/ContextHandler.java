@@ -122,6 +122,10 @@ public class ContextHandler {
 		MAIN.invokeMethod(method, new Object[]{get()});
 	}
 
+	public static void invoke(String method, Object var2) {
+		MAIN.invokeMethod(method, new Object[]{get(), var2});
+	}
+
 	public static <T> T fromJson(String json, Class<T> cls) throws JsonProcessingException {
 		return MAPPER.readValue(json, cls);
 	}

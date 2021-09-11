@@ -20,4 +20,7 @@ public class XAssertRs {
 
 	@XStreamAsAttribute
 	private String store;
+
+	@XStreamAsAttribute
+	private Boolean call;
 }

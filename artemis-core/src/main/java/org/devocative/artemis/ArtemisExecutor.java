@@ -208,7 +208,8 @@ public class ArtemisExecutor {
 			if (assertRs.getBody() == null) {
 				assertRs.setBody(ERsBodyType.json);
 			} else if (assertRs.getBody() != ERsBodyType.json) {
-				throw new TestFailedException(rq.getId(), "Invalid Assert Rs Definition: properties defined for non-json body");
+				throw new TestFailedException(rq.getId(),
+					"Invalid <assertRs/> Definition: properties defined for non-json body");
 			}
 		}
 
@@ -225,6 +226,26 @@ public class ArtemisExecutor {
 						} else {
 							throw new TestFailedException(rq.getId(), "Id Not Found to Store: %s", assertRs.getStore());
 						}
+					}
+
+					if (assertRs.getCall() != null && assertRs.getCall()) {
+						if (rq.isWithId()) {
+							final String methodName = String.format("assertRs_%s", rq.getId());
+							if (obj instanceof Map) {
+								ALog.info("AssertRs Call: {}(ctx, Map)", methodName);
+								ContextHandler.get().runAtScope(Assert, () ->
+									ContextHandler.invoke(methodName, Immutable.create((Map) obj)));
+							} else if (obj instanceof List) {
+								ALog.info("AssertRs Call: {}(ctx, List)", methodName);
+								ContextHandler.get().runAtScope(Assert, () ->
+									ContextHandler.invoke(methodName, Immutable.create((List) obj)));
+							} else {
+								throw new TestFailedException(rq.getId(), "Unsupported Response Body Type");
+							}
+						} else {
+							throw new TestFailedException(rq.getId(), "Id Not Found to Call Assert");
+						}
+
 					}
 					break;
 				case text:

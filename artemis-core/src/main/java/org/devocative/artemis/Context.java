@@ -40,6 +40,10 @@ public class Context {
 			throw new RuntimeException("Null scope in 'addVar'");
 		}
 
+		if (scope == EVarScope.Assert) {
+			throw new RuntimeException("Can't 'addVar' in <assertRs/> call");
+		}
+
 		if (store) {
 			ALog.warn("[Groovy] Added Var Globally: {}", name);
 			addVarByScope(name, value, EVarScope.Global);
