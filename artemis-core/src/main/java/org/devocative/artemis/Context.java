@@ -2,7 +2,6 @@ package org.devocative.artemis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,7 +49,7 @@ public class Context {
 	}
 
 	public Map<String, Object> getVars() {
-		return Collections.unmodifiableMap(vars);
+		return Immutable.create(vars);
 	}
 
 	public String getProfile() {
