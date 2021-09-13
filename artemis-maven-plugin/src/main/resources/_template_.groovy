@@ -24,6 +24,14 @@ def generate(int n, List<String>... alphaSet) {
 // set call="true" for the request
 
 /*
-def REQUEST_ID(Context ctx) {
+def REQUESTID(Context ctx) {
+}
+
+// if the response body is an object
+def assertRs_REQUESTID(Context ctx, Map responseBody){
+}
+
+// if the response body is an array
+def assertRs_REQUESTID(Context ctx, List responseBody){
 }
 */

@@ -5,25 +5,28 @@
 
 <artemis parallel="1">
 
-	<!-- Global Variable Scope -->
+	<!-- Global-Scope Variable -->
 	<vars>
 		<var name="" value=""/>
 	</vars>
 
 	<scenario name="">
 
-		<!-- Scenario-base Variable Scope -->
+		<!-- Scenario-Scope Variable -->
 		<vars>
 			<var name="" value=""/>
 		</vars>
 
-		<get id="" url="/">
-			<!-- Request-base Variable Scope -->
+		<!-- Method `REQUESTID(Context)` is called in associative groovy -->
+		<get id="" url="/" call="true">
+
+			<!-- Request-Scope Variable -->
 			<vars>
 				<var name="" value=""/>
 			</vars>
 
-			<assertRs status="" properties=""/>
+			<!-- Method `assertRs_REQUESTID(Context, Map|List)` is called in associative groovy -->
+			<assertRs status="" properties="" call="true"/>
 		</get>
 
 		<post id="" url="/">
