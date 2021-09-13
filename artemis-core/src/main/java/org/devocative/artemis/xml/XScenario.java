@@ -38,6 +38,8 @@ public class XScenario {
 					rq.setId(String.format("step #%s", idx));
 				}
 			}
+
+			rq.setGlobalId(getName() + "." + rq.getId());
 			idx++;
 		}
 	}

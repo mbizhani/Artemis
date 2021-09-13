@@ -10,6 +10,7 @@ import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.devocative.artemis.ALog;
+import org.devocative.artemis.StatisticsContext;
 import org.devocative.artemis.TestFailedException;
 
 import java.io.BufferedReader;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class HttpRequest {
 	private final String rqId;
+	private final String rqGlobalId;
 	private final HttpUriRequestBase request;
 	private final CloseableHttpClient httpClient;
 
@@ -61,13 +63,16 @@ public class HttpRequest {
 
 		final long start = System.currentTimeMillis();
 		try (final CloseableHttpResponse rs = httpClient.execute(request)) {
+			final long duration = System.currentTimeMillis() - start;
 			final int code = rs.getCode();
 			final String contentType = rs.getEntity().getContentType();
 			final String body = getBody(rs);
 
 			ALog.info("RS: {} ({}) - {} [{} ms]\n\tContentType: {}\n\t{}",
 				request.getMethod(), code, request.getRequestUri(),
-				System.currentTimeMillis() - start, contentType, body);
+				duration, contentType, body);
+
+			StatisticsContext.add(rqGlobalId, request.getMethod(), request.getRequestUri(), code, duration);
 
 			responseConsumer.accept(new HttpResponse(code, contentType, body));
 

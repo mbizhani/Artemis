@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import static org.devocative.artemis.EVarScope.*;
 import static org.devocative.artemis.Memory.EStep.*;
+import static org.devocative.artemis.Util.asMap;
 
 public class ArtemisExecutor {
 	private static final String THIS = "_this";
@@ -65,6 +66,8 @@ public class ArtemisExecutor {
 			final Result result = Parallel.execute(config.getName(), artemis.getParallelDegree(), runnable);
 			if (result.hasError()) {
 				throw new TestFailedException(result.getErrors());
+			} else {
+				StatisticsContext.print();
 			}
 		} finally {
 			httpFactory.shutdown();
@@ -121,6 +124,8 @@ public class ArtemisExecutor {
 			ContextHandler.shutdown();
 
 			if (loopMax == 1) {
+				ALog.info("***** STATISTICS *****");
+				StatisticsContext.printThis();
 				ALog.info("***** PASSED SUCCESSFULLY in {} ms *****",
 					System.currentTimeMillis() - start);
 			} else {
@@ -179,8 +184,7 @@ public class ArtemisExecutor {
 			ctx.addVarByScope(rq.getId(), rqAndRs, Scenario);
 		}
 
-		final HttpRequest httpRq = httpFactory.create(
-			rq.getId(), rq.getMethod().name(), rq.getUrl(), asMap(rq.getUrlParams()));
+		final HttpRequest httpRq = httpFactory.create(rq);
 
 		httpRq.setHeaders(asMap(rq.getHeaders()));
 
@@ -230,18 +234,7 @@ public class ArtemisExecutor {
 
 					if (assertRs.getCall() != null && assertRs.getCall()) {
 						if (rq.isWithId()) {
-							final String methodName = String.format("assertRs_%s", rq.getId());
-							if (obj instanceof Map) {
-								ALog.info("AssertRs Call: {}(ctx, Map)", methodName);
-								ContextHandler.get().runAtScope(Assert, () ->
-									ContextHandler.invoke(methodName, Immutable.create((Map) obj)));
-							} else if (obj instanceof List) {
-								ALog.info("AssertRs Call: {}(ctx, List)", methodName);
-								ContextHandler.get().runAtScope(Assert, () ->
-									ContextHandler.invoke(methodName, Immutable.create((List) obj)));
-							} else {
-								throw new TestFailedException(rq.getId(), "Unsupported Response Body Type");
-							}
+							assertCall(rq, obj);
 						} else {
 							throw new TestFailedException(rq.getId(), "Id Not Found to Call Assert");
 						}
@@ -365,6 +358,21 @@ public class ArtemisExecutor {
 		}
 	}
 
+	private void assertCall(XBaseRequest rq, Object obj) {
+		final String methodName = String.format("assertRs_%s", rq.getId());
+		if (obj instanceof Map) {
+			ALog.info("AssertRs Call: {}(ctx, Map)", methodName);
+			ContextHandler.get().runAtScope(Assert, () ->
+				ContextHandler.invoke(methodName, Immutable.create((Map) obj)));
+		} else if (obj instanceof List) {
+			ALog.info("AssertRs Call: {}(ctx, List)", methodName);
+			ContextHandler.get().runAtScope(Assert, () ->
+				ContextHandler.invoke(methodName, Immutable.create((List) obj)));
+		} else {
+			throw new TestFailedException(rq.getId(), "Unsupported Response Body Type");
+		}
+	}
+
 	private Object findValue(String[] parts, int idx, Map rsAsMap) {
 		final Object obj = rsAsMap.get(parts[idx]);
 
@@ -401,12 +409,5 @@ public class ArtemisExecutor {
 		} catch (JsonProcessingException e) {
 			throw new TestFailedException(id, "Invalid JSON Format:\n%s", content);
 		}
-	}
-
-	private Map<String, String> asMap(List<? extends INameTheValue> list) {
-		return list == null ? Collections.emptyMap() :
-			list
-				.stream()
-				.collect(Collectors.toMap(INameTheValue::getName, INameTheValue::getValue));
 	}
 }

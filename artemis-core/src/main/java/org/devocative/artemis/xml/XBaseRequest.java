@@ -40,6 +40,9 @@ public abstract class XBaseRequest {
 	@XStreamOmitField
 	private Boolean withId;
 
+	@XStreamOmitField
+	private String globalId;
+
 	// ------------------------------
 
 	public abstract EMethod getMethod();
