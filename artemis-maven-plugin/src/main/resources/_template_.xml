@@ -17,7 +17,7 @@
 			<var name="" value=""/>
 		</vars>
 
-		<!-- Method `REQUESTID(Context)` is called in associative groovy -->
+		<!-- Method `REQUESTID(Context)` is called in associated groovy file -->
 		<get id="" url="/" call="true">
 
 			<!-- Request-Scope Variable -->
@@ -25,7 +25,7 @@
 				<var name="" value=""/>
 			</vars>
 
-			<!-- Method `assertRs_REQUESTID(Context, Map|List)` is called in associative groovy -->
+			<!-- Method `assertRs_REQUESTID(Context, Map|List)` is called in associated groovy file -->
 			<assertRs status="" properties="" call="true"/>
 		</get>
 

@@ -361,11 +361,11 @@ public class ArtemisExecutor {
 	private void assertCall(XBaseRequest rq, Object obj) {
 		final String methodName = String.format("assertRs_%s", rq.getId());
 		if (obj instanceof Map) {
-			ALog.info("AssertRs Call: {}(ctx, Map)", methodName);
+			ALog.info("AssertRs Call: {}(Context, Map)", methodName);
 			ContextHandler.get().runAtScope(Assert, () ->
 				ContextHandler.invoke(methodName, Immutable.create((Map) obj)));
 		} else if (obj instanceof List) {
-			ALog.info("AssertRs Call: {}(ctx, List)", methodName);
+			ALog.info("AssertRs Call: {}(Context, List)", methodName);
 			ContextHandler.get().runAtScope(Assert, () ->
 				ContextHandler.invoke(methodName, Immutable.create((List) obj)));
 		} else {

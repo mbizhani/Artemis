@@ -25,7 +25,7 @@ public class ArtemisCreateMavenPlugin extends AbstractMojo {
 
 	@Override
 	public void execute() throws MojoExecutionException {
-		final File testResourceDir = new File("/src/test/resources/");
+		final File testResourceDir = new File("src/test/resources/");
 		if (!testResourceDir.exists()) {
 			testResourceDir.mkdirs();
 			logger.info("Directory Created: {}", testResourceDir.getAbsolutePath());
