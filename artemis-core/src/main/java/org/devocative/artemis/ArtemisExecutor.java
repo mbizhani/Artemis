@@ -124,12 +124,12 @@ public class ArtemisExecutor {
 			ContextHandler.shutdown();
 
 			if (loopMax == 1) {
-				ALog.info("***** STATISTICS *****");
+				ALog.info("***** [STATISTICS] *****");
 				StatisticsContext.printThis();
-				ALog.info("***** PASSED SUCCESSFULLY in {} ms *****",
+				ALog.info("***** [PASSED SUCCESSFULLY in {} ms] *****",
 					System.currentTimeMillis() - start);
 			} else {
-				ALog.info("***** PASSED SUCCESSFULLY in {} ms, loopIdx=[{}] *****",
+				ALog.info("***** [PASSED SUCCESSFULLY in {} ms, loopIdx={}] *****",
 					System.currentTimeMillis() - start, i);
 			}
 		}

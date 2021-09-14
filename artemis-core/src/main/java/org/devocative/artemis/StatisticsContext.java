@@ -24,10 +24,12 @@ public class StatisticsContext {
 		if (ALL_LISTS.size() > 1) {
 			printAll();
 		}
+		ALL_LISTS.clear();
 	}
 
 	public static void printThis() {
 		printOne(CTX.get());
+		CTX.remove();
 	}
 
 	// ------------------------------
@@ -71,16 +73,17 @@ public class StatisticsContext {
 			}
 		}
 
-		final Tabular t = new Tabular("ID", "Status", "Avg", "Min", "Min(th)", "Max", "Max(th)");
+		final Tabular t = new Tabular("ID", "Status", "Avg", "Count", "Min", "Min(th)", "Max", "Max(th)");
 		map.values().forEach(sr ->
 			t.addRow(
 				sr.id,
 				String.valueOf(sr.status),
 				String.format("%.2f", sr.durSum / sr.count),
+				String.valueOf(sr.count),
 				String.valueOf(sr.min),
-				String.valueOf(sr.minName),
+				String.format("[%s]", sr.minName),
 				String.valueOf(sr.max),
-				String.valueOf(sr.maxName)
+				String.format("[%s]", sr.maxName)
 			));
 		t.print();
 	}
@@ -98,8 +101,8 @@ public class StatisticsContext {
 	}
 
 	private static class StatRecord {
-		private String id;
-		private int status;
+		private final String id;
+		private final int status;
 		private double durSum;
 		private int count = 1;
 		private long max;
