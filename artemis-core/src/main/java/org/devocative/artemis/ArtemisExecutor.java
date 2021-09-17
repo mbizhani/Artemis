@@ -260,8 +260,8 @@ public class ArtemisExecutor {
 
 	private XArtemis createXArtemis() {
 		final XStream xStream = new XStream();
-		XStream.setupDefaultSecurity(xStream);
-		xStream.processAnnotations(new Class[]{XArtemis.class, XGet.class, XPost.class, XPut.class, XDelete.class});
+		xStream.processAnnotations(new Class[]{XArtemis.class, XGet.class,
+			XPost.class, XPut.class, XPatch.class, XDelete.class});
 		xStream.allowTypesByWildcard(new String[]{"org.devocative.artemis.xml.**"});
 
 		final XArtemis artemis = (XArtemis) xStream.fromXML(ContextHandler.loadXmlFile());

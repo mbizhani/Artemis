@@ -38,6 +38,7 @@ def REQUESTID(Context ctx) {
   // If the response body is an object
 def assertRs_REQUESTID(Context ctx, Map responseBody){
 	// For example:
+	// Assertions.assertEquals(ctx.vars.cell, responseBody.cell)
 	// Assertions.assertNotNull(responseBody.token)
 	// Assertions.assertNotNull(responseBody.userId)
 }

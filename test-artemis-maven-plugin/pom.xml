@@ -46,7 +46,7 @@
 			<plugin>
 				<groupId>org.devocative.artemis</groupId>
 				<artifactId>artemis-maven-plugin</artifactId>
-				<version>1.1-SNAPSHOT</version>
+				<version>1.2-SNAPSHOT</version>
 			</plugin>
 
 			<plugin>
