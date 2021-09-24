@@ -12,6 +12,7 @@ import java.util.List;
 @Getter
 @Setter
 public abstract class XBaseRequest {
+	public static final String BREAK_POINT_ID = "_BREAK_POINT_";
 
 	@XStreamAsAttribute
 	private String id;

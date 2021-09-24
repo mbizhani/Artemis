@@ -22,6 +22,8 @@ public class Memory {
 
 	private String scenarioName;
 	private String rqId;
+	@Setter(AccessLevel.NONE)
+	private String lastSuccessfulRqId;
 	private Context context;
 
 	// ------------------------------
@@ -32,6 +34,7 @@ public class Memory {
 	}
 
 	public Memory clear() {
+		lastSuccessfulRqId = rqId;
 		rqId = null;
 		steps.clear();
 

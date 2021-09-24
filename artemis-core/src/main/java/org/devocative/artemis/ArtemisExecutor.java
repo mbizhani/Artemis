@@ -77,11 +77,9 @@ public class ArtemisExecutor {
 	private void run(final List<XScenario> scenarios, final List<XVar> globalVars, final int loopMax) {
 		ALog.info("*---------*---------*");
 		ALog.info("|   A R T E M I S   |");
-		if (config.getDevMode()) {
-			ALog.info("*-------D E V-------*");
-		} else {
-			ALog.info("*---------*---------*");
-		}
+		ALog.info(config.getDevMode() ?
+			"*-------D E V-------*" :
+			"*---------*---------*");
 
 		for (int i = 0; i < loopMax; i++) {
 			final long start = System.currentTimeMillis();
@@ -109,9 +107,21 @@ public class ArtemisExecutor {
 					scenario.updateRequestsIds();
 
 					for (XBaseRequest rq : scenario.getRequests()) {
-						initRq(rq);
-						sendRq(rq);
-						ctx.clearVars(EVarScope.Request);
+						ALog.info("--------------- [{}] ---------------", rq.getId());
+
+						ContextHandler.updateMemory(m -> m
+							.clear()
+							.setRqId(rq.getId()));
+
+						if (!XBaseRequest.BREAK_POINT_ID.equals(rq.getId())) {
+							initRq(rq);
+							sendRq(rq);
+							ctx.clearVars(EVarScope.Request);
+						} else if (config.getDevMode()) {
+							throw new TestFailedException("Reached Break Point!");
+						} else {
+							ALog.warn("Passing <break-point/> in Main Mode!");
+						}
 					}
 
 					ctx.clearVars(Scenario);
@@ -136,18 +146,13 @@ public class ArtemisExecutor {
 	}
 
 	private void initRq(XBaseRequest rq) {
-		ALog.info("--------------- [{}] ---------------", rq.getId());
-
 		final Context ctx = ContextHandler.get();
 
 		if (ctx.containsVar(THIS, Scenario)) {
 			ctx.addVarByScope(PREV, ctx.removeVar(THIS, Scenario), Scenario);
 		}
 
-		ContextHandler.updateMemory(m -> m
-			.clear()
-			.setRqId(rq.getId())
-			.addStep(RqVars));
+		ContextHandler.updateMemory(m -> m.addStep(RqVars));
 
 		int addVars = 0;
 		for (XVar var : rq.getVars()) {
@@ -261,7 +266,7 @@ public class ArtemisExecutor {
 	private XArtemis createXArtemis() {
 		final XStream xStream = new XStream();
 		xStream.processAnnotations(new Class[]{XArtemis.class, XGet.class,
-			XPost.class, XPut.class, XPatch.class, XDelete.class});
+			XPost.class, XPut.class, XPatch.class, XDelete.class, XBreakPoint.class});
 		xStream.allowTypesByWildcard(new String[]{"org.devocative.artemis.xml.**"});
 
 		final XArtemis artemis = (XArtemis) xStream.fromXML(ContextHandler.loadXmlFile());
@@ -280,11 +285,6 @@ public class ArtemisExecutor {
 			if (memory.getScenarioName() != null) {
 				artemis.setVars(Collections.emptyList());
 
-				final Context ctx = memory.getContext();
-				if (ctx.containsVar(PREV, Scenario)) {
-					ctx.addVarByScope(THIS, ctx.removeVar(PREV, Scenario), Scenario);
-				}
-
 				while (!memory.getScenarioName().equals(artemis.getScenarios().get(0).getName())) {
 					final XScenario removed = artemis.getScenarios().remove(0);
 					ALog.info("DEV MODE - Removed Scenario: {}", removed.getName());
@@ -296,6 +296,11 @@ public class ArtemisExecutor {
 				final List<Memory.EStep> steps = memory.getSteps();
 
 				if (steps.contains(RqVars)) {
+					final Context ctx = memory.getContext();
+					if (ctx.containsVar(PREV, Scenario)) {
+						ctx.addVarByScope(THIS, ctx.removeVar(PREV, Scenario), Scenario);
+					}
+
 					ALog.info("DEV MODE - Removed Scenario Vars: {}", scenario.getName());
 					scenario.setVars(Collections.emptyList());
 
@@ -312,6 +317,15 @@ public class ArtemisExecutor {
 						if (steps.contains(RqSend)) {
 							ALog.info("DEV MODE - Removed Rq Call: {} ({})", rq.getId(), scenario.getName());
 							rq.setCall(null);
+						}
+					}
+				} else if (steps.isEmpty() && XBaseRequest.BREAK_POINT_ID.equals(memory.getRqId())) {
+					while (!scenario.getRequests().isEmpty()) {
+						final XBaseRequest removed = scenario.getRequests().remove(0);
+						ALog.info("DEV MODE - Removed Rq: {} ({})", removed.getId(), scenario.getName());
+
+						if (memory.getLastSuccessfulRqId().equals(removed.getId())) {
+							break;
 						}
 					}
 				}
