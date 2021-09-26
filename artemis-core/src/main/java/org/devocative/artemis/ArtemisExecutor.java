@@ -297,6 +297,8 @@ public class ArtemisExecutor {
 
 				final XScenario scenario = artemis.getScenarios().get(0);
 				scenario.updateRequestsIds();
+				ALog.info("DEV MODE - Removed Scenario Vars: {}", scenario.getName());
+				scenario.setVars(Collections.emptyList());
 
 				final List<Memory.EStep> steps = memory.getSteps();
 
@@ -305,9 +307,6 @@ public class ArtemisExecutor {
 					if (ctx.containsVar(PREV, Scenario)) {
 						ctx.addVarByScope(THIS, ctx.removeVar(PREV, Scenario), Scenario);
 					}
-
-					ALog.info("DEV MODE - Removed Scenario Vars: {}", scenario.getName());
-					scenario.setVars(Collections.emptyList());
 
 					while (!memory.getRqId().equals(scenario.getRequests().get(0).getId())) {
 						final XBaseRequest removed = scenario.getRequests().remove(0);
@@ -324,7 +323,11 @@ public class ArtemisExecutor {
 							rq.setCall(null);
 						}
 					}
-				} else if (steps.isEmpty() && XBaseRequest.BREAK_POINT_ID.equals(memory.getRqId())) {
+				} else if (
+					steps.isEmpty() &&
+						XBaseRequest.BREAK_POINT_ID.equals(memory.getRqId()) &&
+						memory.getLastSuccessfulRqId() != null) {
+
 					while (!scenario.getRequests().isEmpty()) {
 						final XBaseRequest removed = scenario.getRequests().remove(0);
 						ALog.info("DEV MODE - Removed Rq: {} ({})", removed.getId(), scenario.getName());
