@@ -34,7 +34,11 @@ public class ArtemisExecutor {
 
 	// Main
 	public static void run(Config config) {
-		ALog.init(config.getName());
+		config.init();
+
+		ALog.init(config.getName(), config.getConsoleLog() != null ?
+			config.getConsoleLog() :
+			config.getDevMode() || config.getParallel() == 1);
 
 		new ArtemisExecutor(config).execute();
 	}
@@ -61,9 +65,9 @@ public class ArtemisExecutor {
 				.collect(Collectors.toList());
 
 			final Runnable runnable = () ->
-				run(scenarios, artemis.getVars(), artemis.getLoopDegree());
+				run(scenarios, artemis.getVars(), config.getLoop());
 
-			final Result result = Parallel.execute(config.getName(), artemis.getParallelDegree(), runnable);
+			final Result result = Parallel.execute(config.getName(), config.getParallel(), runnable);
 			if (result.hasError()) {
 				throw new TestFailedException(result.getErrors());
 			} else {
@@ -272,8 +276,9 @@ public class ArtemisExecutor {
 		final XArtemis artemis = (XArtemis) xStream.fromXML(ContextHandler.loadXmlFile());
 
 		if (config.getDevMode()) {
-			artemis.setLoop(1);
-			artemis.setParallel(1);
+			config
+				.setLoop(1)
+				.setParallel(1);
 
 			final Memory memory = ContextHandler.getMEMORY();
 			if (memory.isEmpty()) {

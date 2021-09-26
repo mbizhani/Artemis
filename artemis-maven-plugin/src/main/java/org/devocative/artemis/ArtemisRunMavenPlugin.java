@@ -1,7 +1,6 @@
 package org.devocative.artemis;
 
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.slf4j.Logger;
@@ -23,15 +22,24 @@ public class ArtemisRunMavenPlugin extends AbstractMojo {
 	@Parameter(property = "baseDir", defaultValue = "src/test/resources")
 	private String baseDir;
 
+	@Parameter(property = "parallel", defaultValue = "1")
+	private Integer parallel;
+
+	@Parameter(property = "loop", defaultValue = "1")
+	private Integer loop;
+
 	// ------------------------------
 
 	@Override
-	public void execute() throws MojoExecutionException {
-		logger.info("Run Artemis: Name=[{}], DevMode=[{}], BaseUrl=[{}]", name, devMode, baseUrl);
+	public void execute() {
+		logger.info("Run Artemis: Name=[{}], DevMode=[{}], Parallel=[{}], BaseUrl=[{}]",
+			name, devMode, parallel, baseUrl);
 
 		ArtemisExecutor.run(new Config(name)
 			.setBaseUrl(baseUrl)
 			.setBaseDir(baseDir)
-			.setDevMode(devMode));
+			.setDevMode(devMode)
+			.setParallel(parallel)
+			.setLoop(loop));
 	}
 }

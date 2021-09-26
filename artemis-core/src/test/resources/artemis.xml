@@ -3,7 +3,7 @@
 <!DOCTYPE artemis PUBLIC "-//Devocative.Org//Artemis 1.0//EN"
 		"https://devocative.org/dtd/artemis-1.0.dtd">
 
-<artemis parallel="8">
+<artemis>
 	<vars>
 		<!-- 'cell'     is set in artemis.groovy's 'storeCell()' method-->
 		<!-- 'password' is set in artemis.groovy's 'before()' method -->

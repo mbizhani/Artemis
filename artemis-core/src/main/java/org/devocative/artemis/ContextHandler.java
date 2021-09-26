@@ -21,13 +21,6 @@ import static org.devocative.artemis.EVarScope.Global;
 
 @Slf4j
 public class ContextHandler {
-	private static final String ARTEMIS_PROFILE_ENV = "ARTEMIS_PROFILE";
-	private static final String ARTEMIS_PROFILE_SYS_PROP = "artemis.profile";
-	private static final String ARTEMIS_BASE_URL_ENV = "ARTEMIS_BASE_URL";
-	private static final String ARTEMIS_BASE_URL_SYS_PROP = "artemis.base.url";
-	private static final String ARTEMIS_DEV_MODE_ENV = "ARTEMIS_DEV_MODE";
-	private static final String ARTEMIS_DEV_MODE_SYS_PROP = "artemis.dev.mode";
-
 	private static final String SCRIPT_VAR = "_";
 
 	private static final ThreadLocal<Context> CTX = new ThreadLocal<>();
@@ -59,18 +52,6 @@ public class ContextHandler {
 			}
 		});
 		MAPPER.registerModule(grv);
-
-		if (config.getProfile() == null) {
-			config.setProfile(findValue(ARTEMIS_PROFILE_ENV, ARTEMIS_PROFILE_SYS_PROP, "local"));
-		}
-
-		if (config.getBaseUrl() == null) {
-			config.setBaseUrl(findValue(ARTEMIS_BASE_URL_ENV, ARTEMIS_BASE_URL_SYS_PROP, "http://localhost:8080"));
-		}
-
-		if (config.getDevMode() == null) {
-			config.setDevMode(Boolean.valueOf(findValue(ARTEMIS_DEV_MODE_ENV, ARTEMIS_DEV_MODE_SYS_PROP, "false")));
-		}
 
 		MEM_FILE = String.format(".%s.memory.json", config.getName());
 		final File file = new File(MEM_FILE);
@@ -176,15 +157,6 @@ public class ContextHandler {
 		ctx.runAtScope(Global, () -> MAIN.invokeMethod("before", new Object[]{ctx}));
 
 		return ctx;
-	}
-
-	private static String findValue(String envVar, String sysVar, String def) {
-		if (System.getenv(envVar) != null) {
-			return System.getenv(envVar);
-		} else if (System.getProperty(sysVar) != null) {
-			return System.getProperty(sysVar);
-		}
-		return def;
 	}
 
 	private static InputStream loadGroovyFile() {

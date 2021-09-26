@@ -25,7 +25,8 @@ public class TestArtemis {
 
 		configure(app);
 
-		ArtemisExecutor.run();
+		ArtemisExecutor.run(new Config()
+			.setParallel(5));
 
 		app.stop();
 	}
@@ -40,6 +41,7 @@ public class TestArtemis {
 
 		ArtemisExecutor.run(new Config()
 			.setDevMode(true)
+			.setConsoleLog(false)
 			.setBaseUrl("http://localhost:7777")
 			.setBaseDir("src/test/resources"));
 
@@ -55,7 +57,8 @@ public class TestArtemis {
 		configure(app);
 
 		System.setProperty("artemis.base.url", "http://localhost:8888");
-		ArtemisExecutor.run();
+		ArtemisExecutor.run(new Config()
+			.setParallel(8));
 		System.clearProperty("artemis.base.url");
 
 		app.stop();
