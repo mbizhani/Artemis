@@ -99,9 +99,7 @@ public class ArtemisExecutor {
 			scenarios.forEach(scenario -> {
 				ctx.addVarByScope(LOOP_VAR, loopVar, Global);
 
-				ContextHandler.updateMemory(m -> m
-					.clear()
-					.setScenarioName(scenario.getName()));
+				ContextHandler.updateMemory(m -> m.setScenarioName(scenario.getName()));
 
 				ALog.info("=============== [{}] ===============", scenario.getName());
 				try {
@@ -113,13 +111,13 @@ public class ArtemisExecutor {
 					for (XBaseRequest rq : scenario.getRequests()) {
 						ALog.info("--------------- [{}] ---------------", rq.getId());
 
-						ContextHandler.updateMemory(m -> m
-							.clear()
-							.setRqId(rq.getId()));
+						ContextHandler.updateMemory(m -> m.setRqId(rq.getId()));
 
 						if (!XBaseRequest.BREAK_POINT_ID.equals(rq.getId())) {
 							initRq(rq);
 							sendRq(rq);
+
+							ContextHandler.updateMemory(Memory::clear);
 							ctx.clearVars(EVarScope.Request);
 						} else if (config.getDevMode()) {
 							throw new TestFailedException("Reached Break Point!");
@@ -129,6 +127,7 @@ public class ArtemisExecutor {
 					}
 
 					ctx.clearVars(Scenario);
+					ContextHandler.updateMemory(Memory::clearAll);
 				} catch (RuntimeException e) {
 					ALog.error(e.getMessage());
 					ContextHandler.memorize();
@@ -232,6 +231,9 @@ public class ArtemisExecutor {
 				case json:
 					final Object obj = json(rq.getId(), rsBodyAsStr);
 					rqAndRs.put("rs", obj);
+					if (obj instanceof Map) {
+						ALog.info("RS Properties = {}", ((Map) obj).keySet());
+					}
 					assertProperties(rq, obj);
 					if (assertRs.getStore() != null) {
 						if (rq.isWithId()) {

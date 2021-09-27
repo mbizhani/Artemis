@@ -1,48 +1,82 @@
 package org.devocative.artemis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Getter
-@Setter
-@Accessors(chain = true)
 public class Memory {
 	public enum EStep {
 		RqVars, RqCall, RqSend
 	}
 
-	@Setter(AccessLevel.NONE)
 	private final List<EStep> steps = new ArrayList<>();
 
 	private String scenarioName;
 	private String rqId;
-	@Setter(AccessLevel.NONE)
 	private String lastSuccessfulRqId;
 	private Context context;
 
 	// ------------------------------
 
-	public Memory addStep(EStep step) {
-		steps.add(step);
-		return this;
+	List<EStep> getSteps() {
+		return steps;
 	}
 
-	public Memory clear() {
-		lastSuccessfulRqId = rqId;
+	String getScenarioName() {
+		return scenarioName;
+	}
+
+	void setScenarioName(String scenarioName) {
+		this.scenarioName = scenarioName;
+	}
+
+	String getRqId() {
+		return rqId;
+	}
+
+	void setRqId(String rqId) {
+		this.rqId = rqId;
+	}
+
+	String getLastSuccessfulRqId() {
+		return lastSuccessfulRqId;
+	}
+
+	void setLastSuccessfulRqId(String lastSuccessfulRqId) {
+		this.lastSuccessfulRqId = lastSuccessfulRqId;
+	}
+
+	Context getContext() {
+		return context;
+	}
+
+	void setContext(Context context) {
+		this.context = context;
+	}
+
+	// ---------------
+
+	void addStep(EStep step) {
+		steps.add(step);
+	}
+
+	void clear() {
+		if (rqId != null) {
+			lastSuccessfulRqId = rqId;
+			rqId = null;
+		}
+		steps.clear();
+	}
+
+	void clearAll() {
+		lastSuccessfulRqId = null;
 		rqId = null;
 		steps.clear();
-
-		return this;
 	}
 
 	@JsonIgnore
-	public boolean isEmpty() {
+	boolean isEmpty() {
 		return scenarioName == null && context == null;
 	}
 }

@@ -61,6 +61,8 @@ public class ContextHandler {
 				final Context ctx = MEMORY.getContext();
 				ctx.addVarByScope(SCRIPT_VAR, MAIN, Global);
 				CTX.set(ctx);
+
+				NEW_MEMORY.setLastSuccessfulRqId(MEMORY.getLastSuccessfulRqId());
 			} catch (IOException e) {
 				throw new RuntimeException(String.format("Invalid '%s' as JSON file, you may need to delete it!", MEM_FILE), e);
 			}
