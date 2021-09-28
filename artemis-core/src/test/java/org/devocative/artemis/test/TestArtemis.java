@@ -81,6 +81,7 @@ public class TestArtemis {
 				if (_p.hasError() || p1.hasError()) {
 					ctx.status(400);
 				}
+				ctx.contentType("");
 			})
 			.get("/registrations/:cell", ctx -> {
 				final String cell = ctx.pathParam("cell");

@@ -63,7 +63,7 @@
 				<param name="email" value="a@a.com"/>
 			</formParams>
 
-			<assertRs status="200"/>
+			<assertRs status="200" body="empty"/>
 		</put>
 	</scenario>
 

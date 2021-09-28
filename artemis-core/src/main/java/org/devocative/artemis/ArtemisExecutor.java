@@ -214,56 +214,52 @@ public class ArtemisExecutor {
 		}
 
 		final XAssertRs assertRs = rq.getAssertRs();
+		if (assertRs.getBody() == null) {
+			assertRs.setBody(ERsBodyType.json);
+		}
 		assertCode(rq, rs);
 
-		if (assertRs.getProperties() != null) {
-			if (assertRs.getBody() == null) {
-				assertRs.setBody(ERsBodyType.json);
-			} else if (assertRs.getBody() != ERsBodyType.json) {
-				throw new TestFailedException(rq.getId(),
-					"Invalid <assertRs/> Definition: properties defined for non-json body");
-			}
+		if (assertRs.getProperties() != null && assertRs.getBody() != ERsBodyType.json) {
+			throw new TestFailedException(rq.getId(),
+				"Invalid <assertRs/> Definition: properties defined for non-json body");
 		}
 
 		final String rsBodyAsStr = rs.getBody();
-		if (assertRs.getBody() != null) {
-			switch (assertRs.getBody()) {
-				case json:
-					final Object obj = json(rq.getId(), rsBodyAsStr);
-					rqAndRs.put("rs", obj);
-					if (obj instanceof Map) {
-						ALog.info("RS Properties = {}", ((Map) obj).keySet());
+		switch (assertRs.getBody()) {
+			case json:
+				final Object obj = json(rq.getId(), rsBodyAsStr);
+				rqAndRs.put("rs", obj);
+				if (obj instanceof Map) {
+					ALog.info("RS Properties = {}", ((Map) obj).keySet());
+				}
+				assertProperties(rq, obj);
+				if (assertRs.getStore() != null) {
+					if (rq.isWithId()) {
+						storeProperties(rq.getId(), assertRs.getStore(), obj);
+					} else {
+						throw new TestFailedException(rq.getId(), "Id Not Found to Store: %s", assertRs.getStore());
 					}
-					assertProperties(rq, obj);
-					if (assertRs.getStore() != null) {
-						if (rq.isWithId()) {
-							storeProperties(rq.getId(), assertRs.getStore(), obj);
-						} else {
-							throw new TestFailedException(rq.getId(), "Id Not Found to Store: %s", assertRs.getStore());
-						}
-					}
+				}
 
-					if (assertRs.getCall() != null && assertRs.getCall()) {
-						if (rq.isWithId()) {
-							assertCall(rq, obj);
-						} else {
-							throw new TestFailedException(rq.getId(), "Id Not Found to Call Assert");
-						}
-
+				if (assertRs.getCall() != null && assertRs.getCall()) {
+					if (rq.isWithId()) {
+						assertCall(rq, obj);
+					} else {
+						throw new TestFailedException(rq.getId(), "Id Not Found to Call Assert");
 					}
-					break;
-				case text:
-					if (rsBodyAsStr.trim().isEmpty()) {
-						throw new TestFailedException(rq.getId(), "Invalid Rs Body: expecting text, got empty");
-					}
-					rqAndRs.put("rs", rsBodyAsStr);
-					break;
-				case empty:
-					if (!rsBodyAsStr.trim().isEmpty()) {
-						throw new TestFailedException(rq.getId(), "Invalid Rs Body: expecting empty, got text");
-					}
-					break;
-			}
+				}
+				break;
+			case text:
+				if (rsBodyAsStr.trim().isEmpty()) {
+					throw new TestFailedException(rq.getId(), "Invalid Rs Body: expecting text, got empty");
+				}
+				rqAndRs.put("rs", rsBodyAsStr);
+				break;
+			case empty:
+				if (!rsBodyAsStr.trim().isEmpty()) {
+					throw new TestFailedException(rq.getId(), "Invalid Rs Body: expecting empty, got text");
+				}
+				break;
 		}
 	}
 

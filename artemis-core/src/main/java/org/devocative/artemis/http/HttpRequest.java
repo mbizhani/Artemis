@@ -68,9 +68,15 @@ public class HttpRequest {
 			final String contentType = rs.getEntity().getContentType();
 			final String body = getBody(rs);
 
-			ALog.info("RS: {} ({}) - {} [{} ms]\n\tContentType: {}\n\t{}",
-				request.getMethod(), code, request.getRequestUri(),
-				duration, contentType, body);
+			if (!body.isEmpty()) {
+				ALog.info("RS: {} ({}) - {} [{} ms]\n\tContentType: {}\n\t{}",
+					request.getMethod(), code, request.getRequestUri(),
+					duration, contentType, body);
+			} else {
+				ALog.info("RS: {} ({}) - {} [{} ms]\n\t{} - (EMPTY BODY)",
+					request.getMethod(), code, request.getRequestUri(),
+					duration, contentType != null && !contentType.trim().isEmpty() ? "ContentType: " + contentType : "(No ContentType)");
+			}
 
 			StatisticsContext.add(rqGlobalId, request.getMethod(), request.getRequestUri(), code, duration);
 
