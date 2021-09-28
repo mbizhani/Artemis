@@ -30,6 +30,8 @@ You can integrate Artemis in two ways into your project:
 
 ## An Example
 
+**Note:** You can see the complete example at [OnFood](https://github.com/mbizhani/OnFood).
+
 The following is an `artemis.xml` file:
 
 ```xml
@@ -145,7 +147,6 @@ Parameter  | Default Value           | Description
 First add the following dependency
 
 ```xml
-
 <dependency>
   <groupId>org.devocative.artemis</groupId>
   <artifactId>artemis-core</artifactId>
@@ -157,7 +158,6 @@ First add the following dependency
 and then call the Artemis API such as the following example in a Spring Boot application:
 
 ```java
-
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class OnFoodApplicationTests {
 
@@ -179,7 +179,6 @@ class OnFoodApplicationTests {
 Add the following plugin to your `pom.xml` file. Then you can execute the `artemis:run` goal.
 
 ```xml
-
 <plugin>
   <groupId>org.devocative.artemis</groupId>
   <artifactId>artemis-maven-plugin</artifactId>
