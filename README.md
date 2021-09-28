@@ -34,31 +34,31 @@ The following is an `artemis.xml` file:
 
 ```xml
 <!DOCTYPE artemis PUBLIC "-//Devocative.Org//Artemis 1.0//EN"
-		"https://devocative.org/dtd/artemis-1.0.dtd">
+    "https://devocative.org/dtd/artemis-1.0.dtd">
 
 <artemis>
-	<vars>
-		<var name="cell" value="09${_.generate(9, '0'..'9')}"/>
-		<var name="firstName" value="${_.generate(4, 'a'..'z')}"/>
-		<var name="lastName" value="${_.generate(4, 'a'..'z')}"/>
-		<!-- "password" is generated in before() -->
-	</vars>
+  <vars>
+    <var name="cell" value="09${_.generate(9, '0'..'9')}"/>
+    <var name="firstName" value="${_.generate(4, 'a'..'z')}"/>
+    <var name="lastName" value="${_.generate(4, 'a'..'z')}"/>
+    <!-- "password" is generated in before() -->
+  </vars>
 
-	<scenario name="RegisterRestaurateur">
-		<get url="/restaurateurs/registrations/${cell}">
+  <scenario name="RegisterRestaurateur">
+    <get url="/restaurateurs/registrations/${cell}">
 
-			<!-- `body` can be `empty`, `text` or `json` (default value) -->
-			<assertRs status="200" body="empty"/>
-		</get>
+      <!-- `body` can be `empty`, `text` or `json` (default value) -->
+      <assertRs status="200" body="empty"/>
+    </get>
 
-		<get url="/j4d/registrations/${cell}">
-			<assertRs status="200" properties="code"/>
-		</get>
+    <get url="/j4d/registrations/${cell}">
+      <assertRs status="200" properties="code"/>
+    </get>
 
-		<post url="/restaurateurs/registrations" id="register">
+    <post url="/restaurateurs/registrations" id="register">
 
-			<!-- `_prev.rs` refers to the response body of previous request -->
-			<body><![CDATA[
+      <!-- `_prev.rs` refers to the response body of previous request -->
+      <body><![CDATA[
 {
     "firstName": "${firstName}",
     "lastName": "${lastName}",
@@ -68,22 +68,22 @@ The following is an `artemis.xml` file:
 }
             ]]></body>
 
-			<!-- 
+      <!-- 
         Due to `call="true"`, `assertRs_register(Context, Map)` is called in Groovy file.
         These assert functions must have syntax of `assertRs_ID(Context, Map | List)`, and `ID`
         is the value of XML's `id` attribute.  
       -->
-			<assertRs status="200" properties="userId,token" call="true"/>
-		</post>
+      <assertRs status="200" properties="userId,token" call="true"/>
+    </post>
 
-		<get url="/restaurateurs/${register.rs.userId}">
-			<headers>
-				<header name="Authorization" value="${register.rs.token}"/>
-			</headers>
+    <get url="/restaurateurs/${register.rs.userId}">
+      <headers>
+        <header name="Authorization" value="${register.rs.token}"/>
+      </headers>
 
-			<assertRs status="200" properties="id,firstName,lastName,cell,createdBy,createdDate,version"/>
-		</get>
-	</scenario>
+      <assertRs status="200" properties="id,firstName,lastName,cell,createdBy,createdDate,version"/>
+    </get>
+  </scenario>
 </artemis>
 ```
 
@@ -95,31 +95,31 @@ import org.junit.jupiter.api.Assertions
 
 // Called at the beginning, `before` sending any request
 def before(Context ctx) {
-	def password = generate(5, 'a'..'z')
-	def encPass = Base64.getEncoder().withoutPadding().encodeToString(password.getBytes())
-	ctx.addVar("password", encPass)
+  def password = generate(5, 'a'..'z')
+  def encPass = Base64.getEncoder().withoutPadding().encodeToString(password.getBytes())
+  ctx.addVar("password", encPass)
 
-	// `Artemis` is a utility class with helper functions such as log  
-	Artemis.log("Password: main=${password} enc=${encPass}")
+  // `Artemis` is a utility class with helper functions such as log  
+  Artemis.log("Password: main=${password} enc=${encPass}")
 }
 
 def generate(int n, List<String>... alphaSet) {
-	def list = alphaSet.flatten()
-	new Random().with {
-		(1..n).collect { list[nextInt(list.size())] }.join()
-	}
+  def list = alphaSet.flatten()
+  new Random().with {
+    (1..n).collect { list[nextInt(list.size())] }.join()
+  }
 }
 
 def assertRs_register(Context ctx, Map rsBody) {
-	// `ctx.vars` refers to all defined variables until now  
-	Assertions.assertNotNull(ctx.vars.cell)
-	Assertions.assertNotNull(ctx.vars.firstName)
-	Assertions.assertNotNull(ctx.vars.lastName)
+  // `ctx.vars` refers to all defined variables until now  
+  Assertions.assertNotNull(ctx.vars.cell)
+  Assertions.assertNotNull(ctx.vars.firstName)
+  Assertions.assertNotNull(ctx.vars.lastName)
 
-	// By default, `org.junit.jupiter:junit-jupiter-api` is added to Artemis dependency, to 
-	// call all `Assertions` methods. You can use any assertions library here.   
-	Assertions.assertNotNull(rsBody.userId)
-	Assertions.assertNotNull(rsBody.token)
+  // By default, `org.junit.jupiter:junit-jupiter-api` is added to Artemis dependency, to 
+  // call all `Assertions` methods. You can use any assertions library here.   
+  Assertions.assertNotNull(rsBody.userId)
+  Assertions.assertNotNull(rsBody.token)
 }
 ```
 
@@ -147,10 +147,10 @@ First add the following dependency
 ```xml
 
 <dependency>
-	<groupId>org.devocative.artemis</groupId>
-	<artifactId>artemis-core</artifactId>
-	<version>1.2</version>
-	<scope>test</scope>
+  <groupId>org.devocative.artemis</groupId>
+  <artifactId>artemis-core</artifactId>
+  <version>1.2</version>
+  <scope>test</scope>
 </dependency>
 ```
 
@@ -161,16 +161,16 @@ and then call the Artemis API such as the following example in a Spring Boot app
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class OnFoodApplicationTests {
 
-	@LocalServerPort
-	private int port;
+  @LocalServerPort
+  private int port;
 
-	@Test
-	void contextLoads() {
-		ArtemisExecutor.run(new Config()
-			.setParallel(5)
-			.setBaseUrl(String.format("http://localhost:%s/api", port))
-		);
-	}
+  @Test
+  void contextLoads() {
+    ArtemisExecutor.run(new Config()
+      .setParallel(5)
+      .setBaseUrl(String.format("http://localhost:%s/api", port))
+    );
+  }
 }
 ```
 
@@ -181,13 +181,13 @@ Add the following plugin to your `pom.xml` file. Then you can execute the `artem
 ```xml
 
 <plugin>
-	<groupId>org.devocative.artemis</groupId>
-	<artifactId>artemis-maven-plugin</artifactId>
-	<version>1.2</version>
-	<configuration>
-		<baseUrl>http://localhost:8080/api</baseUrl>
-		<devMode>true</devMode>
-	</configuration>
+  <groupId>org.devocative.artemis</groupId>
+  <artifactId>artemis-maven-plugin</artifactId>
+  <version>1.2</version>
+  <configuration>
+    <baseUrl>http://localhost:8080/api</baseUrl>
+    <devMode>true</devMode>
+  </configuration>
 </plugin>
 ```
 
