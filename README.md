@@ -46,8 +46,8 @@ The following is an `artemis.xml` file:
 
 	<scenario name="RegisterRestaurateur">
 		<get url="/restaurateurs/registrations/${cell}">
-        
-      <!-- `body` can be `empty`, `text` or `json` (default value) -->
+
+			<!-- `body` can be `empty`, `text` or `json` (default value) -->
 			<assertRs status="200" body="empty"/>
 		</get>
 
@@ -57,7 +57,7 @@ The following is an `artemis.xml` file:
 
 		<post url="/restaurateurs/registrations" id="register">
 
-      <!-- `_prev.rs` refers to the response body of previous request -->
+			<!-- `_prev.rs` refers to the response body of previous request -->
 			<body><![CDATA[
 {
     "firstName": "${firstName}",
@@ -68,7 +68,7 @@ The following is an `artemis.xml` file:
 }
             ]]></body>
 
-      <!-- 
+			<!-- 
         Due to `call="true"`, `assertRs_register(Context, Map)` is called in Groovy file.
         These assert functions must have syntax of `assertRs_ID(Context, Map | List)`, and `ID`
         is the value of XML's `id` attribute.  
@@ -98,8 +98,8 @@ def before(Context ctx) {
 	def password = generate(5, 'a'..'z')
 	def encPass = Base64.getEncoder().withoutPadding().encodeToString(password.getBytes())
 	ctx.addVar("password", encPass)
-    
-  // `Artemis` is a utility class with helper functions such as log  
+
+	// `Artemis` is a utility class with helper functions such as log  
 	Artemis.log("Password: main=${password} enc=${encPass}")
 }
 
@@ -111,13 +111,13 @@ def generate(int n, List<String>... alphaSet) {
 }
 
 def assertRs_register(Context ctx, Map rsBody) {
-  // `ctx.vars` refers to all defined variables until now  
+	// `ctx.vars` refers to all defined variables until now  
 	Assertions.assertNotNull(ctx.vars.cell)
 	Assertions.assertNotNull(ctx.vars.firstName)
 	Assertions.assertNotNull(ctx.vars.lastName)
-  
-  // By default, `org.junit.jupiter:junit-jupiter-api` is added to Artemis dependency, to 
-  // call all `Assertions` methods. You can use any assertions library here.   
+
+	// By default, `org.junit.jupiter:junit-jupiter-api` is added to Artemis dependency, to 
+	// call all `Assertions` methods. You can use any assertions library here.   
 	Assertions.assertNotNull(rsBody.userId)
 	Assertions.assertNotNull(rsBody.token)
 }
@@ -157,6 +157,7 @@ First add the following dependency
 and then call the Artemis API such as the following example in a Spring Boot application:
 
 ```java
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class OnFoodApplicationTests {
 
@@ -214,13 +215,13 @@ size. At the end of successful execution, a statistical summary is illustrated.
 2021-09-28 10:04:54,119 INFO  - --------------- [step #1] ---------------
 2021-09-28 10:04:54,135 INFO  - RQ: GET - http://localhost:8080/api/restaurateurs/registrations/09735929444
 2021-09-28 10:04:54,170 INFO  - RS: GET (200) - /api/restaurateurs/registrations/09735929444 [34 ms]
-	ContentType: null
-	
+  ContentType: null
+  
 2021-09-28 10:04:54,183 INFO  - --------------- [step #2] ---------------
 2021-09-28 10:04:54,192 INFO  - RQ: GET - http://localhost:8080/api/j4d/registrations/09735929444
 2021-09-28 10:04:54,199 INFO  - RS: GET (200) - /api/j4d/registrations/09735929444 [6 ms]
-	ContentType: application/json
-	{"code":"3867"}
+  ContentType: application/json
+  {"code":"3867"}
 2021-09-28 10:04:54,232 INFO  - RS Properties = [code]
 2021-09-28 10:04:54,236 INFO  - --------------- [register] ---------------
 2021-09-28 10:04:54,274 INFO  - RQ: POST - http://localhost:8080/api/restaurateurs/registrations
@@ -232,16 +233,16 @@ size. At the end of successful execution, a statistical summary is illustrated.
     "password": "emhrY24"
 }
 2021-09-28 10:04:54,370 INFO  - RS: POST (200) - /api/restaurateurs/registrations [96 ms]
-	ContentType: application/json
-	{"userId":2,"token":"eyJhbGciOiJIUzUxMiJ9.eyJ1aWQiOjIsInN1YiI6IjA5NzM1OTI5NDQ0Iiwicm9sZSI6IlJlc3RhdXJhdGV1ciIsImV4cCI6MTYzMjgxNDQ5NCwiaWF0IjoxNjMyODEwODk0fQ.tEWlnWC908zOj4tdAC0UeS_u8in4JoadjZ2YfIfH3vx5BRSoPGL6F33_wziTFxNQV_2W-LqYYjetBXN-ylvIDg"}
+  ContentType: application/json
+  {"userId":2,"token":"eyJhbGciOiJIUzUxMiJ9.eyJ1aWQiOjIsInN1YiI6IjA5NzM1OTI5NDQ0Iiwicm9sZSI6IlJlc3RhdXJhdGV1ciIsImV4cCI6MTYzMjgxNDQ5NCwiaWF0IjoxNjMyODEwODk0fQ.tEWlnWC908zOj4tdAC0UeS_u8in4JoadjZ2YfIfH3vx5BRSoPGL6F33_wziTFxNQV_2W-LqYYjetBXN-ylvIDg"}
 2021-09-28 10:04:54,382 INFO  - RS Properties = [userId, token]
 2021-09-28 10:04:54,386 INFO  - AssertRs Call: assertRs_register(Context, Map)
 2021-09-28 10:04:54,401 INFO  - --------------- [step #4] ---------------
 2021-09-28 10:04:54,422 INFO  - RQ: GET - http://localhost:8080/api/restaurateurs/2
 HEADERS = {Authorization=eyJhbGciOiJIUzUxMiJ9.eyJ1aWQiOjIsInN1YiI6IjA5NzM1OTI5NDQ0Iiwicm9sZSI6IlJlc3RhdXJhdGV1ciIsImV4cCI6MTYzMjgxNDQ5NCwiaWF0IjoxNjMyODEwODk0fQ.tEWlnWC908zOj4tdAC0UeS_u8in4JoadjZ2YfIfH3vx5BRSoPGL6F33_wziTFxNQV_2W-LqYYjetBXN-ylvIDg}
 2021-09-28 10:04:54,428 INFO  - RS: GET (200) - /api/restaurateurs/2 [6 ms]
-	ContentType: application/json
-	{"firstName":"zevm","lastName":"ttgl","cell":"09735929444","email":null,"id":2,"createdBy":"anonymous","createdDate":{"year":1400,"month":7,"day":6},"lastModifiedBy":"anonymous","lastModifiedDate":{"year":1400,"month":7,"day":6},"version":0}
+  ContentType: application/json
+  {"firstName":"zevm","lastName":"ttgl","cell":"09735929444","email":null,"id":2,"createdBy":"anonymous","createdDate":{"year":1400,"month":7,"day":6},"lastModifiedBy":"anonymous","lastModifiedDate":{"year":1400,"month":7,"day":6},"version":0}
 2021-09-28 10:04:54,438 INFO  - RS Properties = [firstName, lastName, cell, email, id, createdBy, createdDate, lastModifiedBy, lastModifiedDate, version]
 2021-09-28 10:04:54,442 INFO  - ***** [STATISTICS] *****
 2021-09-28 10:04:54,443 INFO  - ID                             URI                                           Method  Status  Duration
