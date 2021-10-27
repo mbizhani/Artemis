@@ -12,6 +12,7 @@ import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import groovy.text.SimpleTemplateEngine;
 import lombok.extern.slf4j.Slf4j;
+import org.devocative.artemis.cfg.Config;
 
 import java.io.*;
 import java.util.HashMap;

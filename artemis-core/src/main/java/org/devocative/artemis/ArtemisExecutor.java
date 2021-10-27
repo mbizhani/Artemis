@@ -2,6 +2,7 @@ package org.devocative.artemis;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.thoughtworks.xstream.XStream;
+import org.devocative.artemis.cfg.Config;
 import org.devocative.artemis.http.HttpFactory;
 import org.devocative.artemis.http.HttpRequest;
 import org.devocative.artemis.http.HttpResponse;
@@ -85,10 +86,12 @@ public class ArtemisExecutor {
 			"*-------D E V-------*" :
 			"*---------*---------*");
 
+		final Context ctx = ContextHandler.get();
+		config.getVars().forEach(v -> ctx.addVarByScope(v.getName(), v.getValue(), Global));
+
 		for (int i = 0; i < loopMax; i++) {
 			final long start = System.currentTimeMillis();
 
-			final Context ctx = ContextHandler.get();
 			globalVars.forEach(var -> {
 				final String value = var.getValue();
 				ctx.addVarByScope(var.getName(), value, EVarScope.Global);

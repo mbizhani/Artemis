@@ -78,7 +78,6 @@
 	</distributionManagement>
 
 	<profiles>
-
 		<profile>
 			<id>Release</id>
 			<build>

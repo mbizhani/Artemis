@@ -1,9 +1,10 @@
-package org.devocative.artemis;
+package org.devocative.artemis.cfg;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,6 +32,7 @@ public class Config {
 	private Integer parallel;
 	private Integer loop = 1;
 	private Boolean consoleLog;
+	private List<Var> vars = new ArrayList<>();
 
 	// ------------------------------
 
@@ -53,6 +55,13 @@ public class Config {
 		this.loop = loop > 0 ? loop : 1;
 		return this;
 	}
+
+	public Config addVar(String name, Object value) {
+		vars.add(new Var(name, value));
+		return this;
+	}
+
+	// ---------------
 
 	public void init() {
 		if (getProfile() == null) {

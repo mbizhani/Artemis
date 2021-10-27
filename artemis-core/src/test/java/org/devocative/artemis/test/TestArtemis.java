@@ -3,7 +3,7 @@ package org.devocative.artemis.test;
 import io.javalin.Javalin;
 import io.javalin.core.validation.Validator;
 import org.devocative.artemis.ArtemisExecutor;
-import org.devocative.artemis.Config;
+import org.devocative.artemis.cfg.Config;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,13 +26,16 @@ public class TestArtemis {
 		configure(app);
 
 		ArtemisExecutor.run(new Config()
-			.setParallel(5));
+			.addVar("backEnd", "http://localhost:8080")
+			.setParallel(1));
 
 		app.stop();
 	}
 
 	@Test
 	public void test_setBaseUrlViaConfig() {
+		final String baseUrl = "http://localhost:7777";
+
 		final Javalin app = Javalin
 			.create()
 			.start(7777);
@@ -42,23 +45,27 @@ public class TestArtemis {
 		ArtemisExecutor.run(new Config()
 			.setDevMode(true)
 			.setConsoleLog(false)
-			.setBaseUrl("http://localhost:7777")
-			.setBaseDir("src/test/resources"));
+			.setBaseUrl(baseUrl)
+			.setBaseDir("src/test/resources")
+			.addVar("backEnd", baseUrl));
 
 		app.stop();
 	}
 
 	@Test
 	public void test_setBaseUrlViaSysProp() {
+		final String baseUrl = "http://localhost:8888";
+
 		final Javalin app = Javalin
 			.create()
 			.start(8888);
 
 		configure(app);
 
-		System.setProperty("artemis.base.url", "http://localhost:8888");
+		System.setProperty("artemis.base.url", baseUrl);
 		ArtemisExecutor.run(new Config()
-			.setParallel(8));
+			.setParallel(8)
+			.addVar("backEnd", baseUrl));
 		System.clearProperty("artemis.base.url");
 
 		app.stop();

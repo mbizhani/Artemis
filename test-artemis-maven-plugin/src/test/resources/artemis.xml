@@ -3,7 +3,7 @@
 <!DOCTYPE artemis PUBLIC "-//Devocative.Org//Artemis 1.0//EN"
 		"https://devocative.org/dtd/artemis-1.0.dtd">
 
-<artemis parallel="8">
+<artemis>
 	<vars>
 		<!-- 'cell'     is set in artemis.groovy's 'storeCell()' method-->
 		<!-- 'password' is set in artemis.groovy's 'before()' method -->
@@ -15,7 +15,7 @@
 			<var name="randInt" value="${_.generate(3, '1'..'9')}"/>
 		</vars>
 
-		<post id="registration" url="/registrations?_p=${rand}" call="true">
+		<post id="registration" url="${backEnd}/registrations?_p=${rand}" call="true">
 			<vars>
 				<var name="rand" value="${_.generate(3, '0'..'9', 'a'..'z')}"/>
 			</vars>
@@ -63,7 +63,7 @@
 				<param name="email" value="a@a.com"/>
 			</formParams>
 
-			<assertRs status="200"/>
+			<assertRs status="200" body="empty"/>
 		</put>
 	</scenario>
 

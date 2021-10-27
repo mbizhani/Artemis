@@ -42,7 +42,7 @@
 			<assertRs status="200" properties="smsCode"/>
 		</get>
 
-		<put url="/registrations" id="verify">
+		<put url="${backEnd}/registrations" id="verify">
 			<body><![CDATA[
 {
 	"smsCode": "${_prev.rs.smsCode}",
@@ -76,7 +76,7 @@
 			<assertRs status="200" properties="smsCode"/>
 		</get>
 
-		<post id="login" url="/login">
+		<post id="login" url="${backEnd}/login">
 			<body><![CDATA[
 {
 	"cell": "${cell}",
