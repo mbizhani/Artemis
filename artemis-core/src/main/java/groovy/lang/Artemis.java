@@ -66,7 +66,25 @@ public class Artemis {
 		}
 	}
 
+	public static Object objectify(String json) {
+		try {
+			return MAPPER.readValue(json, Object.class);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public static void log(String log) {
 		ALog.info("[Groovy] - " + log);
 	}
+
+	public static String uuid() {
+		return UUID.randomUUID().toString();
+	}
+
+	// TODO base64
+
+	// TODO sign
+
+	// TODO http call
 }
