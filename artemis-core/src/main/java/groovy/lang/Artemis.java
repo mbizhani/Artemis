@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.devocative.artemis.ALog;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -14,6 +16,10 @@ public class Artemis {
 	private static final Random RANDOM = new Random();
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
+	private static Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
+
+	// ------------------------------
+
 	static {
 		for (Character c = '0'; c <= '9'; c++) {
 			CHARS.add(c.toString());
@@ -21,6 +27,12 @@ public class Artemis {
 		for (Character c = 'a'; c <= 'z'; c++) {
 			CHARS.add(c.toString());
 		}
+	}
+
+	// ------------------------------
+
+	public static void setDefaultCharset(Charset chs) {
+		DEFAULT_CHARSET = chs;
 	}
 
 	public static String generate(int len) {
@@ -82,9 +94,23 @@ public class Artemis {
 		return UUID.randomUUID().toString();
 	}
 
-	// TODO base64
+	public static String encBase64(String str) {
+		return encBase64(str, true);
+	}
+
+	public static String encBase64(String str, boolean withPadding) {
+		return withPadding ?
+			Base64.getMimeEncoder().encodeToString(str.getBytes(DEFAULT_CHARSET)) :
+			Base64.getMimeEncoder().withoutPadding().encodeToString(str.getBytes(DEFAULT_CHARSET));
+	}
+
+	public static String decBase64(String str) {
+		return new String(Base64.getMimeDecoder().decode(str.getBytes(DEFAULT_CHARSET)), DEFAULT_CHARSET);
+	}
+
+	public static HttpBuilder http() {
+		return HttpBuilder.get();
+	}
 
 	// TODO sign
-
-	// TODO http call
 }
