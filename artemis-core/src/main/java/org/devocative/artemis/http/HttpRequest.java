@@ -6,6 +6,7 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
@@ -61,21 +62,34 @@ public class HttpRequest {
 	public void send(Consumer<HttpResponse> responseConsumer) {
 		ALog.info("RQ: {} - {}{}", request.getMethod(), getUri(), builder.toString());
 
+		final HttpClientContext context = HttpClientContext.create();
 		final long start = System.currentTimeMillis();
-		try (final CloseableHttpResponse rs = httpClient.execute(request)) {
+		try (final CloseableHttpResponse rs = httpClient.execute(request, context)) {
 			final long duration = System.currentTimeMillis() - start;
 			final int code = rs.getCode();
 			final String contentType = rs.getEntity().getContentType();
 			final String body = getBody(rs);
 
-			if (!body.isEmpty()) {
-				ALog.info("RS: {} ({}) - {} [{} ms]\n\tContentType: {}\n\t{}",
-					request.getMethod(), code, request.getRequestUri(),
-					duration, contentType, body);
+			final String cookiesPart;
+			if (context.getCookieStore().getCookies().size() > 0) {
+				final String cookies = context.getCookieStore().getCookies()
+					.stream()
+					.map(cookie -> String.format("%s=%s", cookie.getName(), cookie.getValue()))
+					.collect(Collectors.joining(","));
+				cookiesPart = String.format("\n\tCookies: %s", cookies);
 			} else {
-				ALog.info("RS: {} ({}) - {} [{} ms]\n\t{} - (EMPTY BODY)",
+				cookiesPart = "";
+			}
+
+			if (!body.isEmpty()) {
+				ALog.info("RS: {} ({}) - {} [{} ms]\n\tContentType: {}{}\n\t{}",
 					request.getMethod(), code, request.getRequestUri(),
-					duration, contentType != null && !contentType.trim().isEmpty() ? "ContentType: " + contentType : "(No ContentType)");
+					duration, contentType, cookiesPart, body);
+			} else {
+				ALog.info("RS: {} ({}) - {} [{} ms]\n\t{} - (EMPTY BODY){}",
+					request.getMethod(), code, request.getRequestUri(),
+					duration, contentType != null && !contentType.trim().isEmpty() ? "ContentType: " + contentType : "(No ContentType)",
+					cookiesPart);
 			}
 
 			StatisticsContext.add(rqGlobalId, request.getMethod(), request.getRequestUri(), code, duration);

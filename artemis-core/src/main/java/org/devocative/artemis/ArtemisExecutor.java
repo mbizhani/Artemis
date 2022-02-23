@@ -37,7 +37,7 @@ public class ArtemisExecutor {
 	public static void run(Config config) {
 		config.init();
 
-		ALog.init(config.getName(), config.getConsoleLog() != null ?
+		ALog.init(config.getXmlName(), config.getConsoleLog() != null ?
 			config.getConsoleLog() :
 			config.getDevMode() || config.getParallel() == 1);
 
@@ -56,26 +56,22 @@ public class ArtemisExecutor {
 	// ------------------------------
 
 	private void execute() {
-		try {
-			final XArtemis artemis = createXArtemis();
+		final XArtemis artemis = createXArtemis();
 
-			final List<XScenario> scenarios = artemis.getScenarios()
-				.stream()
-				.filter(scenario -> scenario.isEnabled() &&
-					(config.getOnlyScenarios().isEmpty() || config.getOnlyScenarios().contains(scenario.getName())))
-				.collect(Collectors.toList());
+		final List<XScenario> scenarios = artemis.getScenarios()
+			.stream()
+			.filter(scenario -> scenario.isEnabled() &&
+				(config.getOnlyScenarios().isEmpty() || config.getOnlyScenarios().contains(scenario.getName())))
+			.collect(Collectors.toList());
 
-			final Runnable runnable = () ->
-				run(scenarios, artemis.getVars(), config.getLoop());
+		final Runnable runnable = () ->
+			run(scenarios, artemis.getVars(), config.getLoop());
 
-			final Result result = Parallel.execute(config.getName(), config.getParallel(), runnable);
-			if (result.hasError()) {
-				throw new TestFailedException(result.getErrors());
-			} else {
-				StatisticsContext.print();
-			}
-		} finally {
-			httpFactory.shutdown();
+		final Result result = Parallel.execute(config.getXmlName(), config.getParallel(), runnable);
+		if (result.hasError()) {
+			throw new TestFailedException(result.getErrors());
+		} else {
+			StatisticsContext.print();
 		}
 	}
 
@@ -138,6 +134,7 @@ public class ArtemisExecutor {
 				}
 			});
 			ContextHandler.shutdown();
+			httpFactory.shutdown();
 
 			if (loopMax == 1) {
 				ALog.info("***** [STATISTICS] *****");

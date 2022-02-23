@@ -17,6 +17,12 @@ public class ArtemisRunMavenPlugin extends AbstractMojo {
 	@Parameter(property = "name", defaultValue = "artemis")
 	private String name;
 
+	@Parameter(property = "xmlName")
+	private String xmlName;
+
+	@Parameter(property = "groovyName")
+	private String groovyName;
+
 	@Parameter(property = "baseUrl", defaultValue = "http://localhost:8080")
 	private String baseUrl;
 
@@ -39,10 +45,23 @@ public class ArtemisRunMavenPlugin extends AbstractMojo {
 
 	@Override
 	public void execute() {
-		logger.info("Run Artemis: Name=[{}], DevMode=[{}], Parallel=[{}], BaseUrl=[{}], Vars={}",
-			name, devMode, parallel, baseUrl, Arrays.toString(vars));
+		final Config config;
 
-		final Config config = new Config(name)
+		if (xmlName != null || groovyName != null) {
+			if (xmlName != null && groovyName != null) {
+				logger.info("Run Artemis: XMLName=[{}], GroovyName=[{}] DevMode=[{}], Parallel=[{}], BaseUrl=[{}], Vars={}",
+					xmlName, groovyName, devMode, parallel, baseUrl, Arrays.toString(vars));
+				config = new Config(xmlName, groovyName);
+			} else {
+				throw new RuntimeException("Both 'xmlName' and 'groovyName' are required!");
+			}
+		} else {
+			logger.info("Run Artemis: Name=[{}], DevMode=[{}], Parallel=[{}], BaseUrl=[{}], Vars={}",
+				name, devMode, parallel, baseUrl, Arrays.toString(vars));
+			config = new Config(name);
+		}
+
+		config
 			.setBaseUrl(baseUrl)
 			.setBaseDir(baseDir)
 			.setDevMode(devMode)

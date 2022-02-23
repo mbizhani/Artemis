@@ -23,7 +23,8 @@ public class Config {
 
 	// ------------------------------
 
-	private final String name;
+	private final String xmlName;
+	private final String groovyName;
 	private String profile;
 	private String baseUrl;
 	private Boolean devMode;
@@ -41,7 +42,12 @@ public class Config {
 	}
 
 	public Config(String name) {
-		this.name = name;
+		this(name, name);
+	}
+
+	public Config(String xmlName, String groovyName) {
+		this.xmlName = xmlName;
+		this.groovyName = groovyName;
 	}
 
 	// ------------------------------

@@ -21,6 +21,12 @@ public class ArtemisCreateMavenPlugin extends AbstractMojo {
 	@Parameter(property = "name", defaultValue = "artemis")
 	private String name;
 
+	@Parameter(property = "xmlName", defaultValue = "artemis")
+	private String xmlName;
+
+	@Parameter(property = "groovyName", defaultValue = "artemis")
+	private String groovyName;
+
 	// ------------------------------
 
 	@Override
@@ -35,12 +41,12 @@ public class ArtemisCreateMavenPlugin extends AbstractMojo {
 		final InputStream groovyIS = ArtemisCreateMavenPlugin.class.getResourceAsStream("/_template_.groovy");
 
 		try {
-			final Path xmlPath = Paths.get(testResourceDir.getAbsolutePath(), name + ".xml");
-			final Path groovyPath = Paths.get(testResourceDir.getAbsolutePath(), name + ".groovy");
+			final Path xmlPath = Paths.get(testResourceDir.getAbsolutePath(), (name != null ? name : xmlName) + ".xml");
+			final Path groovyPath = Paths.get(testResourceDir.getAbsolutePath(), (name != null ? name : groovyName) + ".groovy");
 			Files.copy(xmlIS, xmlPath);
-			logger.info("File Created: {}", xmlPath.toString());
+			logger.info("File Created: {}", xmlPath);
 			Files.copy(groovyIS, groovyPath);
-			logger.info("File Created: {}", groovyPath.toString());
+			logger.info("File Created: {}", groovyPath);
 		} catch (IOException e) {
 			throw new MojoExecutionException("Creating File: " + e.getMessage(), e);
 		}

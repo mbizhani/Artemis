@@ -15,17 +15,23 @@ import java.util.Map;
 import static org.devocative.artemis.Util.asMap;
 
 public class HttpFactory {
+	private static final ThreadLocal<CloseableHttpClient> CURRENT_CLIENT = new ThreadLocal<>();
+
 	private final String baseUrl;
-	private final CloseableHttpClient httpclient;
+
+	// ------------------------------
 
 	public HttpFactory(String baseUrl) {
 		this.baseUrl = baseUrl;
-		this.httpclient = HttpClients.createDefault();
 	}
+
+	// ------------------------------
 
 	public void shutdown() {
 		try {
+			final CloseableHttpClient httpclient = CURRENT_CLIENT.get();
 			httpclient.close();
+			CURRENT_CLIENT.remove();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -55,6 +61,12 @@ public class HttpFactory {
 			} catch (URISyntaxException e) {
 				throw new TestFailedException(rq.getId(), "Invalid URI to Build");
 			}
+		}
+
+		CloseableHttpClient httpclient = CURRENT_CLIENT.get();
+		if (httpclient == null) {
+			httpclient = HttpClients.createDefault();
+			CURRENT_CLIENT.set(httpclient);
 		}
 
 		return new HttpRequest(rq.getId(), rq.getGlobalId(), new HttpUriRequestBase(rq.getMethod().name(), uri), httpclient);

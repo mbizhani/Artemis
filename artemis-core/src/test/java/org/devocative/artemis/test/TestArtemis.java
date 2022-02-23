@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.devocative.artemis.test.Pair.pair;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestArtemis {
 	private static final Logger log = LoggerFactory.getLogger(TestArtemis.class);
@@ -77,61 +78,63 @@ public class TestArtemis {
 		app
 			.post("/registrations", ctx -> {
 				final Validator<String> _p = ctx
-					.queryParam("_p", String.class)
-					.check(s -> s.length() == 3);
-				final Validator<Integer> p1 = ctx.queryParam("p1", Integer.class)
-					.check(i -> i > 0);
+					.queryParamAsClass("_p", String.class)
+					.check(s -> s.length() == 3, "Invalid '_p' param length");
+				final Validator<Integer> p1 = ctx.queryParamAsClass("p1", Integer.class)
+					.check(i -> i > 0, "Invalid param 'p1' value, should be greater than 0");
 
 				final Map<String, String> data = ctx.bodyAsClass(Map.class);
 				log("Register (Sending SMS) - {}, _p={}, p1={}", data, _p.get(), p1.get());
 
-				if (_p.hasError() || p1.hasError()) {
-					ctx.status(400);
-				}
 				ctx.contentType("");
 			})
-			.get("/registrations/:cell", ctx -> {
+			.get("/registrations/{cell}", ctx -> {
 				final String cell = ctx.pathParam("cell");
 				log("Query (Sent SMS) - {}", cell);
 
-				final Validator<Integer> p1 = ctx.queryParam("p1", Integer.class)
-					.check(i -> i > 0);
+				final Validator<Integer> p1 = ctx.queryParamAsClass("p1", Integer.class)
+					.check(i -> i > 0, "Invalid param 'p1', should be greater than 0");
 
-				if (p1.hasError()) {
-					ctx.status(400);
-				} else {
-					ctx.json(asMap(
+				ctx
+					.cookie("Cookie1", "11")
+					.cookie("Cookie2", "22")
+					.json(asMap(
 						pair("smsCode", Math.abs(cell.hashCode()))
 					));
-				}
 			})
 			.put("/registrations", ctx -> {
+				assertEquals("11", ctx.cookie("Cookie1"));
+				assertEquals("22", ctx.cookie("Cookie2"));
+
 				final Map<String, String> data = ctx.bodyAsClass(Map.class);
 				log("Verify - {}", data);
 
 				ctx.status(201)
+					.cookie("Cookie1", "111")
 					.json(asMap(
 						pair("token", UUID.randomUUID().toString()),
 						pair("userId", UUID.randomUUID().toString()),
 						pair("nullProp", null)
 					));
 			})
-			.put("/users/:id", ctx -> {
-				final Validator<String> city = ctx.formParam("city", String.class)
-					.check(s -> s.startsWith("artemis"));
-				final Validator<String> email = ctx.formParam("email", String.class)
-					.check(s -> s.matches("\\w+@(\\w+\\.)+\\w+"));
+			.put("/users/{id}", ctx -> {
+				assertEquals("111", ctx.cookie("Cookie1"));
+				assertEquals("22", ctx.cookie("Cookie2"));
+
+				final Validator<String> city = ctx.formParamAsClass("city", String.class)
+					.check(s -> s.startsWith("artemis"), "Invalid param 'city', should starts with 'artemis'");
+				final Validator<String> email = ctx.formParamAsClass("email", String.class)
+					.check(s -> s.matches("\\w+@(\\w+\\.)+\\w+"), "Invalid email format");
 
 				log("UpdateProfile - id=[{}], authHeader=[{}], city={}, email={}",
 					ctx.pathParam("id"), ctx.header("Authorization"), city.get(), email.get());
-
-				if (city.hasError() || email.hasError()) {
-					ctx.status(400);
-				}
 			});
 
 		app
-			.get("/login/:cell", ctx -> {
+			.get("/login/{cell}", ctx -> {
+				assertEquals("111", ctx.cookie("Cookie1"));
+				assertEquals("22", ctx.cookie("Cookie2"));
+
 				final String cell = ctx.pathParam("cell");
 				log("GetLoginCode - cell=[{}]", cell);
 
@@ -140,6 +143,9 @@ public class TestArtemis {
 				));
 			})
 			.post("/login", ctx -> {
+				assertEquals("111", ctx.cookie("Cookie1"));
+				assertEquals("22", ctx.cookie("Cookie2"));
+
 				final Map<String, String> data = ctx.bodyAsClass(Map.class);
 				log("Login - {}", data);
 

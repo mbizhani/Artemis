@@ -54,7 +54,7 @@ public class ContextHandler {
 		});
 		MAPPER.registerModule(grv);
 
-		MEM_FILE = String.format(".%s.memory.json", config.getName());
+		MEM_FILE = String.format(".%s.memory.json", config.getXmlName());
 		final File file = new File(MEM_FILE);
 		if (config.getDevMode() && file.exists()) {
 			try {
@@ -141,10 +141,10 @@ public class ContextHandler {
 
 	public static InputStream loadXmlFile() {
 		if (CONFIG.getBaseDir() == null) {
-			return ContextHandler.class.getResourceAsStream(String.format("/%s.xml", CONFIG.getName()));
+			return ContextHandler.class.getResourceAsStream(String.format("/%s.xml", CONFIG.getXmlName()));
 		} else {
 			try {
-				return new FileInputStream(String.format("%s/%s.xml", CONFIG.getBaseDir(), CONFIG.getName()));
+				return new FileInputStream(String.format("%s/%s.xml", CONFIG.getBaseDir(), CONFIG.getXmlName()));
 			} catch (FileNotFoundException e) {
 				throw new RuntimeException(e);
 			}
@@ -164,13 +164,13 @@ public class ContextHandler {
 
 	private static InputStream loadGroovyFile() {
 		if (CONFIG.getBaseDir() == null) {
-			return ContextHandler.class.getResourceAsStream(String.format("/%s.groovy", CONFIG.getName()));
+			return ContextHandler.class.getResourceAsStream(String.format("/%s.groovy", CONFIG.getGroovyName()));
 		} else {
 			final File baseDir = new File(CONFIG.getBaseDir());
 			log.info("Artemis Base Dir to Load Files: {}", baseDir.getAbsolutePath());
 
 			try {
-				return new FileInputStream(String.format("%s/%s.groovy", CONFIG.getBaseDir(), CONFIG.getName()));
+				return new FileInputStream(String.format("%s/%s.groovy", CONFIG.getBaseDir(), CONFIG.getGroovyName()));
 			} catch (FileNotFoundException e) {
 				throw new RuntimeException(e);
 			}
