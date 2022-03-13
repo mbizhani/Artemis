@@ -31,18 +31,18 @@
 }
 			]]></body>
 
-			<assertRs status="200" body="empty"/>
+			<assertRs status="200" body="empty" call="true"/>
 		</post>
 
-		<get url="/registrations/${cell}">
+		<get id="fetchCode" url="/registrations/${cell}">
 			<urlParams>
 				<param name="p1" value="${randInt}"/>
 			</urlParams>
 
-			<assertRs status="200" properties="smsCode"/>
+			<assertRs status="200" properties="smsCode" cookies="Cookie1,Cookie2" call="true"/>
 		</get>
 
-		<put url="${backEnd}/registrations" id="verify">
+		<put id="verify" url="${backEnd}/registrations">
 			<body><![CDATA[
 {
 	"smsCode": "${_prev.rs.smsCode}",
@@ -85,7 +85,7 @@
 }
 			]]></body>
 
-			<assertRs status="200" properties="token"/>
+			<assertRs status="200" properties="token" call="true"/>
 		</post>
 	</scenario>
 </artemis>

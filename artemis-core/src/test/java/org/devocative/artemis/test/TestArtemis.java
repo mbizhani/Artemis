@@ -128,11 +128,12 @@ public class TestArtemis {
 
 				log("UpdateProfile - id=[{}], authHeader=[{}], city={}, email={}",
 					ctx.pathParam("id"), ctx.header("Authorization"), city.get(), email.get());
+
+				ctx.cookie("Cookie1", "", 0);
 			});
 
 		app
 			.get("/login/{cell}", ctx -> {
-				assertEquals("111", ctx.cookie("Cookie1"));
 				assertEquals("22", ctx.cookie("Cookie2"));
 
 				final String cell = ctx.pathParam("cell");
@@ -143,7 +144,6 @@ public class TestArtemis {
 				));
 			})
 			.post("/login", ctx -> {
-				assertEquals("111", ctx.cookie("Cookie1"));
 				assertEquals("22", ctx.cookie("Cookie2"));
 
 				final Map<String, String> data = ctx.bodyAsClass(Map.class);

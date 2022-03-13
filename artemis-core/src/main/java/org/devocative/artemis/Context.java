@@ -2,6 +2,7 @@ package org.devocative.artemis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,6 +10,8 @@ public class Context {
 	private final Map<String, Object> globalVars = new HashMap<>();
 	private final Map<String, Object> scenarioVars = new HashMap<>();
 	private final Map<String, Object> vars = new HashMap<>();
+
+	private Map<String, String> cookies = Collections.emptyMap();
 
 	private final String profile;
 
@@ -58,6 +61,15 @@ public class Context {
 
 	public String getProfile() {
 		return profile;
+	}
+
+	public Map<String, String> getCookies() {
+		return cookies;
+	}
+
+	public Context setCookies(Map<String, String> cookies) {
+		this.cookies = Collections.unmodifiableMap(cookies);
+		return this;
 	}
 
 	// ---------------

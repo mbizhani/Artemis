@@ -19,6 +19,9 @@ public class XAssertRs {
 	private String properties;
 
 	@XStreamAsAttribute
+	private String cookies;
+
+	@XStreamAsAttribute
 	private String store;
 
 	@XStreamAsAttribute

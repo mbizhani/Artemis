@@ -261,6 +261,8 @@ public class ArtemisExecutor {
 				}
 				break;
 		}
+
+		assertCookies(rs, rq, assertRs);
 	}
 
 	// ---------------
@@ -357,6 +359,17 @@ public class ArtemisExecutor {
 				}
 			} else {
 				throw new TestFailedException(rq.getId(), "Invalid RS Type for Asserting Properties");
+			}
+		}
+	}
+
+	private void assertCookies(HttpResponse rs, XBaseRequest rq, XAssertRs assertRs) {
+		if (!rs.getCookies().isEmpty() && assertRs.getCookies() != null) {
+			final String[] cookieNames = assertRs.getCookies().split(",");
+			for (String cookieName : cookieNames) {
+				if (!rs.getCookies().containsKey(cookieName.trim())) {
+					throw new TestFailedException(rq.getId(), "Cookie Not Found: %s", cookieName);
+				}
 			}
 		}
 	}

@@ -3,6 +3,7 @@ package org.devocative.artemis.http;
 import lombok.RequiredArgsConstructor;
 import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.cookie.Cookie;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
@@ -11,6 +12,7 @@ import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.devocative.artemis.ALog;
+import org.devocative.artemis.ContextHandler;
 import org.devocative.artemis.StatisticsContext;
 import org.devocative.artemis.TestFailedException;
 
@@ -19,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -71,15 +74,21 @@ public class HttpRequest {
 			final String body = getBody(rs);
 
 			final String cookiesPart;
+			final Map<String, String> cookiesMap;
 			if (context.getCookieStore().getCookies().size() > 0) {
 				final String cookies = context.getCookieStore().getCookies()
 					.stream()
 					.map(cookie -> String.format("%s=%s", cookie.getName(), cookie.getValue()))
 					.collect(Collectors.joining(","));
 				cookiesPart = String.format("\n\tCookies: %s", cookies);
+
+				cookiesMap = context.getCookieStore().getCookies().stream()
+					.collect(Collectors.toMap(Cookie::getName, Cookie::getValue));
 			} else {
+				cookiesMap = Collections.emptyMap();
 				cookiesPart = "";
 			}
+			ContextHandler.get().setCookies(cookiesMap);
 
 			if (!body.isEmpty()) {
 				ALog.info("RS: {} ({}) - {} [{} ms]\n\tContentType: {}{}\n\t{}",
@@ -94,7 +103,7 @@ public class HttpRequest {
 
 			StatisticsContext.add(rqGlobalId, request.getMethod(), request.getRequestUri(), code, duration);
 
-			responseConsumer.accept(new HttpResponse(code, contentType, body));
+			responseConsumer.accept(new HttpResponse(code, contentType, body, cookiesMap));
 
 		} catch (HttpHostConnectException e) {
 			throw new TestFailedException(rqId, String.format("Unknown Host (%s)", getUri()));
