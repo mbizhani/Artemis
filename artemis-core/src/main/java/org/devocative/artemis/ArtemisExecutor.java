@@ -5,6 +5,7 @@ import com.thoughtworks.xstream.XStream;
 import org.devocative.artemis.cfg.Config;
 import org.devocative.artemis.http.HttpFactory;
 import org.devocative.artemis.http.HttpRequest;
+import org.devocative.artemis.http.HttpRequestData;
 import org.devocative.artemis.http.HttpResponse;
 import org.devocative.artemis.xml.*;
 import org.devocative.artemis.xml.method.*;
@@ -192,17 +193,24 @@ public class ArtemisExecutor {
 			ctx.addVarByScope(rq.getId(), rqAndRs, Scenario);
 		}
 
-		final HttpRequest httpRq = httpFactory.create(rq);
-
-		httpRq.setHeaders(asMap(rq.getHeaders()));
-
+		final HttpRequestData data = new HttpRequestData();
+		data.setHeaders(asMap(rq.getHeaders()));
 		final XBody body = rq.getBody();
 		if (body != null) {
-			httpRq.setBody(body.getContent().trim());
+			data.setBody(body.getContent().trim());
+		}
+		data.setFormParams(asMap(rq.getFormParams()));
+
+		if (ctx.getConfig().getBeforeSend() != null) {
+			ctx.getConfig().getBeforeSend().accept(data);
 		}
 
-		httpRq.setFormParams(asMap(rq.getFormParams()));
-
+		final HttpRequest httpRq = httpFactory.create(rq);
+		httpRq.setHeaders(data.getHeaders());
+		if (data.getBody() != null) {
+			httpRq.setBody(data.getBody());
+		}
+		httpRq.setFormParams(data.getFormParams());
 		httpRq.send(rs -> processRs(rs, rq, rqAndRs));
 	}
 

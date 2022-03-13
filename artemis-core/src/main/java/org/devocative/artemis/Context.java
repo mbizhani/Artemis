@@ -1,15 +1,20 @@
 package org.devocative.artemis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
+import org.devocative.artemis.http.HttpRequestData;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class Context {
 	private final Map<String, Object> globalVars = new HashMap<>();
 	private final Map<String, Object> scenarioVars = new HashMap<>();
 	private final Map<String, Object> vars = new HashMap<>();
+	private final ContextConfig config = new ContextConfig();
 
 	private Map<String, String> cookies = Collections.emptyMap();
 
@@ -70,6 +75,10 @@ public class Context {
 	public Context setCookies(Map<String, String> cookies) {
 		this.cookies = Collections.unmodifiableMap(cookies);
 		return this;
+	}
+
+	public ContextConfig getConfig() {
+		return config;
 	}
 
 	// ---------------
@@ -133,5 +142,13 @@ public class Context {
 				vars.putAll(scenarioVars);
 				break;
 		}
+	}
+
+	// ------------------------------
+
+	@Getter
+	@Setter
+	public static class ContextConfig {
+		private Consumer<HttpRequestData> beforeSend;
 	}
 }

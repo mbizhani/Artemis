@@ -1,4 +1,5 @@
 import org.devocative.artemis.Context
+import org.devocative.artemis.http.HttpRequestData
 import org.junit.jupiter.api.Assertions
 
 // Called by ContextHandler Initialization
@@ -6,6 +7,10 @@ def before(Context ctx) {
 	Artemis.log("Inside artemis.groovy: profile=${ctx.profile}")
 
 	ctx.addVar("password", generate(9, '0'..'9', 'a'..'z'))
+
+	ctx.config.beforeSend = { HttpRequestData data ->
+		data.headers["randHead"] = generate(3, '1'..'8')
+	}
 }
 
 def generate(int n, List<String>... alphaSet) {

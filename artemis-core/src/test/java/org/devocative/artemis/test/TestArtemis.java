@@ -75,6 +75,10 @@ public class TestArtemis {
 	// ------------------------------
 
 	private void configure(Javalin app) {
+		app.before(context ->
+			context.headerAsClass("randHead", Integer.class)
+				.check(val -> val > 0, "Invalid 'randHead' Header"));
+
 		app
 			.post("/registrations", ctx -> {
 				final Validator<String> _p = ctx
