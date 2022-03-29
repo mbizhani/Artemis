@@ -77,7 +77,20 @@ public class TestArtemis {
 	private void configure(Javalin app) {
 		app.before(context ->
 			context.headerAsClass("randHead", Integer.class)
-				.check(val -> val > 0, "Invalid 'randHead' Header"));
+				.check(val -> {
+					System.out.println("val = " + val);
+					switch (context.method()) {
+						case "POST":
+							return val > 1000 && val < 2000;
+						case "PUT":
+							return val > 2000 && val < 3000;
+						case "GET":
+							return val > 3000 && val < 4000;
+					}
+					return false;
+				}, "Invalid 'randHead' Header")
+				.get()
+		);
 
 		app
 			.post("/registrations", ctx -> {
@@ -96,8 +109,9 @@ public class TestArtemis {
 				final String cell = ctx.pathParam("cell");
 				log("Query (Sent SMS) - {}", cell);
 
-				final Validator<Integer> p1 = ctx.queryParamAsClass("p1", Integer.class)
-					.check(i -> i > 0, "Invalid param 'p1', should be greater than 0");
+				ctx.queryParamAsClass("p1", Integer.class)
+					.check(i -> i > 0, "Invalid param 'p1', should be greater than 0")
+					.get();
 
 				ctx
 					.cookie("Cookie1", "11")

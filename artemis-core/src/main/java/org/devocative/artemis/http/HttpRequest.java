@@ -38,24 +38,24 @@ public class HttpRequest {
 
 	// ------------------------------
 
-	public void setHeaders(Map<String, String> headers) {
+	public void setHeaders(Map<String, CharSequence> headers) {
 		headers.forEach(request::addHeader);
 		if (!headers.isEmpty()) {
 			builder.append("\n").append("HEADERS = ").append(headers);
 		}
 	}
 
-	public void setBody(String body) {
-		request.setEntity(new StringEntity(body, ContentType.APPLICATION_JSON, "UTF-8", false));
+	public void setBody(CharSequence body) {
+		request.setEntity(new StringEntity(body.toString(), ContentType.APPLICATION_JSON, "UTF-8", false));
 		builder.append("\n").append(body);
 	}
 
-	public void setFormParams(Map<String, String> formParams) {
+	public void setFormParams(Map<String, CharSequence> formParams) {
 		if (!formParams.isEmpty()) {
 			final List<BasicNameValuePair> pairs = formParams
 				.entrySet()
 				.stream()
-				.map(e -> new BasicNameValuePair(e.getKey(), e.getValue()))
+				.map(e -> new BasicNameValuePair(e.getKey(), e.getValue().toString()))
 				.collect(Collectors.toList());
 			request.setEntity(new UrlEncodedFormEntity(pairs));
 			builder.append("\n").append("FORM = ").append(formParams);

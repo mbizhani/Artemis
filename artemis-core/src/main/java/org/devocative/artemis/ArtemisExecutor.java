@@ -193,7 +193,7 @@ public class ArtemisExecutor {
 			ctx.addVarByScope(rq.getId(), rqAndRs, Scenario);
 		}
 
-		final HttpRequestData data = new HttpRequestData();
+		final HttpRequestData data = new HttpRequestData(rq.getId(), rq.getUrl(), rq.getMethod().name());
 		data.setHeaders(asMap(rq.getHeaders()));
 		final XBody body = rq.getBody();
 		if (body != null) {
@@ -208,7 +208,7 @@ public class ArtemisExecutor {
 		final HttpRequest httpRq = httpFactory.create(rq);
 		httpRq.setHeaders(data.getHeaders());
 		if (data.getBody() != null) {
-			httpRq.setBody(data.getBody());
+			httpRq.setBody(data.getBody().toString());
 		}
 		httpRq.setFormParams(data.getFormParams());
 		httpRq.send(rs -> processRs(rs, rq, rqAndRs));
@@ -238,7 +238,7 @@ public class ArtemisExecutor {
 				final Object obj = json(rq.getId(), rsBodyAsStr);
 				rqAndRs.put("rs", obj);
 				if (obj instanceof Map) {
-					ALog.info("RS Properties = {}", ((Map) obj).keySet());
+					ALog.info("RS Properties = {}", ((Map<?, ?>) obj).keySet());
 				}
 				assertProperties(rq, obj);
 				if (assertRs.getStore() != null) {
@@ -358,7 +358,7 @@ public class ArtemisExecutor {
 			final String[] properties = assertRs.getProperties().split(",");
 
 			if (rsAsObj instanceof Map) {
-				final Map rsAsMap = (Map) rsAsObj;
+				final Map<?, ?> rsAsMap = (Map<?, ?>) rsAsObj;
 				for (String property : properties) {
 					final String prop = property.trim();
 					if (!rsAsMap.containsKey(prop)) {
@@ -384,7 +384,7 @@ public class ArtemisExecutor {
 
 	private void storeProperties(String id, String properties, Object rsAsObj) {
 		if (rsAsObj instanceof Map) {
-			final Map rsAsMap = (Map) rsAsObj;
+			final Map<?, ?> rsAsMap = (Map<?, ?>) rsAsObj;
 			final Map<String, Object> rs = new HashMap<>();
 			final String[] props = properties.split(",");
 
@@ -408,13 +408,13 @@ public class ArtemisExecutor {
 		} else if (obj instanceof List) {
 			ALog.info("AssertRs Call: {}(Context, List)", methodName);
 			ContextHandler.get().runAtScope(Assert, () ->
-				ContextHandler.invoke(methodName, Immutable.create((List) obj)));
+				ContextHandler.invoke(methodName, Immutable.create((List<?>) obj)));
 		} else {
 			throw new TestFailedException(rq.getId(), "Unsupported Response Body Type");
 		}
 	}
 
-	private Object findValue(String[] parts, int idx, Map rsAsMap) {
+	private Object findValue(String[] parts, int idx, Map<?, ?> rsAsMap) {
 		final Object obj = rsAsMap.get(parts[idx]);
 
 		if (obj == null) {
@@ -431,7 +431,7 @@ public class ArtemisExecutor {
 				throw new RuntimeException(String.format("Invalid Prop as Map: %s (%s)",
 					parts[idx], String.join(".", parts)));
 			}
-			result.put(parts[idx], findValue(parts, idx + 1, (Map) obj));
+			result.put(parts[idx], findValue(parts, idx + 1, (Map<?, ?>) obj));
 			return result;
 		}
 	}

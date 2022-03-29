@@ -8,10 +8,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Util {
-	public static Map<String, String> asMap(List<? extends INameTheValue> list) {
+	public static Map<String, CharSequence> asMap(List<? extends INameTheValue> list) {
 		return list == null ? Collections.emptyMap() :
 			list
 				.stream()
-				.collect(Collectors.toMap(INameTheValue::getName, INameTheValue::getValue));
+				.collect(Collectors.toMap(INameTheValue::getName, nv -> nv.getValue().toString()));
 	}
 }

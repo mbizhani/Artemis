@@ -9,7 +9,17 @@ def before(Context ctx) {
 	ctx.addVar("password", generate(9, '0'..'9', 'a'..'z'))
 
 	ctx.config.beforeSend = { HttpRequestData data ->
-		data.headers["randHead"] = generate(3, '1'..'8')
+		switch (data.method) {
+			case "POST":
+				data.headers["randHead"] = "1${generate(3, '1'..'8')}"
+				break
+			case "PUT":
+				data.headers["randHead"] = "2${generate(3, '1'..'8')}"
+				break
+			case "GET":
+				data.headers["randHead"] = "3${generate(3, '1'..'8')}"
+				break
+		}
 	}
 }
 

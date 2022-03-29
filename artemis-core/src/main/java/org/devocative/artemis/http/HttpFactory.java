@@ -39,7 +39,7 @@ public class HttpFactory {
 
 	public HttpRequest create(XBaseRequest rq) {
 		final String url = rq.getUrl();
-		final Map<String, String> urlParams = asMap(rq.getUrlParams());
+		final Map<String, CharSequence> urlParams = asMap(rq.getUrlParams());
 
 		final String finalUrl;
 		if (url.startsWith("http://") || url.startsWith("https://")) {
@@ -56,7 +56,7 @@ public class HttpFactory {
 		} else {
 			try {
 				final URIBuilder builder = new URIBuilder(finalUrl);
-				urlParams.forEach(builder::addParameter);
+				urlParams.forEach((name, value) -> builder.addParameter(name, value.toString()));
 				uri = builder.build();
 			} catch (URISyntaxException e) {
 				throw new TestFailedException(rq.getId(), "Invalid URI to Build");

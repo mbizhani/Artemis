@@ -19,14 +19,14 @@ public class Immutable {
 		return Collections.unmodifiableMap(result);
 	}
 
-	public static List<?> create(List<Object> list) {
+	public static List<?> create(List<?> list) {
 		final List<Object> result = new ArrayList<>();
 
 		for (Object cell : list) {
 			if (cell instanceof Map) {
 				result.add(create((Map) cell));
 			} else if (cell instanceof List) {
-				result.add(create((List) cell));
+				result.add(create((List<?>) cell));
 			} else {
 				result.add(cell);
 			}
