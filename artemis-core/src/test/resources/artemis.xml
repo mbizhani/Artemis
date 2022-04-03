@@ -12,7 +12,11 @@
 
 	<scenario name="RegisterUser">
 		<vars>
+			<var name="randInt">${_.generate(3, '1'..'9')}</var>
+			<!--
+			OR
 			<var name="randInt" value="${_.generate(3, '1'..'9')}"/>
+			-->
 		</vars>
 
 		<post id="registration" url="/registrations?_p=${rand}" call="true">

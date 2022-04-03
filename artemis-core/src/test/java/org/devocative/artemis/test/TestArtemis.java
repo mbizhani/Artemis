@@ -3,6 +3,7 @@ package org.devocative.artemis.test;
 import io.javalin.Javalin;
 import io.javalin.core.validation.Validator;
 import org.devocative.artemis.ArtemisExecutor;
+import org.devocative.artemis.TestFailedException;
 import org.devocative.artemis.cfg.Config;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.devocative.artemis.test.Pair.pair;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class TestArtemis {
 	private static final Logger log = LoggerFactory.getLogger(TestArtemis.class);
@@ -34,7 +36,7 @@ public class TestArtemis {
 	}
 
 	@Test
-	public void test_setBaseUrlViaConfig() {
+	public void test_devMode_baseUrlViaConfig() {
 		final String baseUrl = "http://localhost:7777";
 
 		final Javalin app = Javalin
@@ -54,7 +56,7 @@ public class TestArtemis {
 	}
 
 	@Test
-	public void test_setBaseUrlViaSysProp() {
+	public void test_parallel_baseUrlViaSysProp() {
 		final String baseUrl = "http://localhost:8888";
 
 		final Javalin app = Javalin
@@ -72,13 +74,39 @@ public class TestArtemis {
 		app.stop();
 	}
 
+	@Test
+	public void test_error() {
+		final Javalin app = Javalin
+			.create()
+			.start(8080);
+
+		configure(app);
+
+		final int degree = 9;
+
+		try {
+			ArtemisExecutor.run(new Config("artemis-error")
+				.addVar("backEnd", "http://localhost:8080")
+				.setParallel(degree));
+
+			fail();
+		} catch (TestFailedException e) {
+			assertEquals(degree / 2 + degree % 2, e.getNoOfErrors());
+			assertEquals(degree, e.getDegree());
+		} catch (Exception e) {
+			log.error("test_error", e);
+			fail();
+		}
+
+		app.stop();
+	}
+
 	// ------------------------------
 
 	private void configure(Javalin app) {
 		app.before(context ->
 			context.headerAsClass("randHead", Integer.class)
 				.check(val -> {
-					System.out.println("val = " + val);
 					switch (context.method()) {
 						case "POST":
 							return val > 1000 && val < 2000;

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!DOCTYPE artemis PUBLIC "-//Devocative.Org//Artemis 1.0//EN"
+		"https://devocative.org/dtd/artemis-1.0.dtd">
+
+<artemis>
+	<scenario name="RegisterUser">
+		<post id="registration" url="/registrations?_p=${rand}">
+			<vars>
+				<var name="rand" value="${Artemis.generate(3, '0'..'9', 'a'..'z')}"/>
+			</vars>
+
+			<headers>
+				<header name="randHead" value="1001"/>
+			</headers>
+
+			<urlParams>
+				<param name="p1" value="${randInt}"/>
+			</urlParams>
+
+			<body type="json"><![CDATA[
+{
+	"name": "Foo\\nBar",
+	"cell": "${cell}"
+}
+			]]></body>
+
+			<assertRs status="200" body="empty"/>
+		</post>
+	</scenario>
+</artemis>

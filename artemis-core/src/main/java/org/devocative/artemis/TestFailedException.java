@@ -1,6 +1,16 @@
 package org.devocative.artemis;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+@Getter
+@Setter
+@Accessors(chain = true)
 public class TestFailedException extends RuntimeException {
+	private Integer degree;
+	private Integer noOfErrors;
+
 	public TestFailedException(String message) {
 		super(message);
 	}

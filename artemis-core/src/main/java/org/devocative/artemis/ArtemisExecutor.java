@@ -69,10 +69,13 @@ public class ArtemisExecutor {
 			run(scenarios, artemis.getVars(), config.getLoop());
 
 		final Result result = Parallel.execute(config.getXmlName(), config.getParallel(), runnable);
+
+		StatisticsContext.print();
+
 		if (result.hasError()) {
-			throw new TestFailedException(result.getErrors());
-		} else {
-			StatisticsContext.print();
+			throw new TestFailedException(result.getErrors())
+				.setDegree(result.getDegree())
+				.setNoOfErrors(result.getNoOfErrors());
 		}
 	}
 
@@ -86,23 +89,25 @@ public class ArtemisExecutor {
 		final Context ctx = ContextHandler.get();
 		config.getVars().forEach(v -> ctx.addVarByScope(v.getName(), v.getValue(), Global));
 
-		for (int i = 0; i < loopMax; i++) {
-			final long start = System.currentTimeMillis();
+		long start = System.currentTimeMillis();
+		int iteration = 0;
 
-			globalVars.forEach(var -> {
-				final String value = var.getValue();
-				ctx.addVarByScope(var.getName(), value, EVarScope.Global);
-				ALog.info("Global Var: name=[{}] value=[{}]", var.getName(), value);
-			});
+		try {
+			for (; iteration < loopMax; iteration++) {
+				start = System.currentTimeMillis();
 
-			final String loopVar = Integer.toString(i);
-			scenarios.forEach(scenario -> {
-				ctx.addVarByScope(LOOP_VAR, loopVar, Global);
+				globalVars.forEach(var -> {
+					final String value = var.getValue();
+					ctx.addVarByScope(var.getName(), value, EVarScope.Global);
+					ALog.info("Global Var: name=[{}] value=[{}]", var.getName(), value);
+				});
 
-				ContextHandler.updateMemory(m -> m.setScenarioName(scenario.getName()));
+				for (XScenario scenario : scenarios) {
+					ctx.addVarByScope(LOOP_VAR, iteration, Global);
 
-				ALog.info("=============== [{}] ===============", scenario.getName());
-				try {
+					ContextHandler.updateMemory(m -> m.setScenarioName(scenario.getName()));
+
+					ALog.info("=============== [{}] ===============", scenario.getName());
 					scenario.getVars()
 						.forEach(v -> ctx.addVarByScope(v.getName(), v.getValue(), Scenario));
 
@@ -128,24 +133,29 @@ public class ArtemisExecutor {
 
 					ctx.clearVars(Scenario);
 					ContextHandler.updateMemory(Memory::clearAll);
-				} catch (RuntimeException e) {
-					ALog.error(e.getMessage());
-					ContextHandler.memorize();
-					throw e;
 				}
-			});
+
+				final long duration = System.currentTimeMillis() - start;
+				if (loopMax == 1) {
+					ALog.info("***** [STATISTICS] *****");
+					StatisticsContext.printThis();
+					ALog.info("***** [PASSED SUCCESSFULLY in {} ms] *****",
+						duration);
+				} else {
+					ALog.info("***** [PASSED SUCCESSFULLY in {} ms, loopIdx={}] *****",
+						duration, iteration);
+				}
+
+				StatisticsContext.execFinished(iteration, duration, "");
+			}
+		} catch (RuntimeException e) {
+			ALog.error(e.getMessage());
+			ContextHandler.memorize();
+			StatisticsContext.execFinished(iteration, System.currentTimeMillis() - start, e.getMessage());
+			throw e;
+		} finally {
 			ContextHandler.shutdown();
 			httpFactory.shutdown();
-
-			if (loopMax == 1) {
-				ALog.info("***** [STATISTICS] *****");
-				StatisticsContext.printThis();
-				ALog.info("***** [PASSED SUCCESSFULLY in {} ms] *****",
-					System.currentTimeMillis() - start);
-			} else {
-				ALog.info("***** [PASSED SUCCESSFULLY in {} ms, loopIdx={}] *****",
-					System.currentTimeMillis() - start, i);
-			}
 		}
 	}
 

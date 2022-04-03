@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @RequiredArgsConstructor
 public class Result {
+	private final int degree;
 	private final int noOfErrors;
 	private String errors;
 

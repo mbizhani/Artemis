@@ -18,7 +18,7 @@ public class Parallel {
 				errStr = e.getMessage();
 			}
 
-			result = new Result(errStr == null ? 0 : 1)
+			result = new Result(1, errStr == null ? 0 : 1)
 				.setErrors(errStr);
 		} else {
 			final AtomicInteger counter = new AtomicInteger(0);
@@ -48,7 +48,7 @@ public class Parallel {
 				}
 			}
 
-			result = new Result(counter.get())
+			result = new Result(degree, counter.get())
 				.setErrors(builder.toString());
 		}
 		return result;

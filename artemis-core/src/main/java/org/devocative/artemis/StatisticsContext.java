@@ -7,6 +7,7 @@ import java.util.*;
 import static java.lang.Math.max;
 
 public class StatisticsContext {
+	private static final List<ExecRecord> EXEC_RECORDS = Collections.synchronizedList(new ArrayList<>());
 	private static final List<RecordList> ALL_LISTS = Collections.synchronizedList(new ArrayList<>());
 	private static final ThreadLocal<RecordList> CTX = new ThreadLocal<>();
 
@@ -18,6 +19,10 @@ public class StatisticsContext {
 		}
 		CTX.get()
 			.add(new Record(id, method, uri, status, duration, Thread.currentThread().getName()));
+	}
+
+	public static void execFinished(Integer iteration, long duration, String error) {
+		EXEC_RECORDS.add(new ExecRecord(Thread.currentThread().getName(), iteration, duration, error));
 	}
 
 	public static void print() {
@@ -47,35 +52,37 @@ public class StatisticsContext {
 	}
 
 	private static void printAll() {
+		Collections.sort(EXEC_RECORDS);
+		final Tabular execStat = new Tabular("Th", "It", "Duration", "Error");
+		EXEC_RECORDS.forEach(r -> execStat.addRow(r.thread, String.valueOf(r.iteration), String.valueOf(r.duration), r.error));
+		execStat.print();
+
 		final Map<String, StatRecord> map = new LinkedHashMap<>();
-		for (int i = 0; i < ALL_LISTS.size(); i++) {
-			for (final Record r : ALL_LISTS.get(i)) {
+		for (RecordList allList : ALL_LISTS) {
+			for (final Record r : allList) {
 				final String key = r.id + r.status;
-				if (i == 0) {
-					map.put(key, new StatRecord(r));
-				} else {
-					if (map.containsKey(key)) {
-						final StatRecord sr = map.get(key);
-						sr.count++;
-						sr.durSum += r.duration;
-						if (sr.min > r.duration) {
-							sr.min = r.duration;
-							sr.minName = r.threadName;
-						}
-						if (sr.max < r.duration) {
-							sr.max = r.duration;
-							sr.maxName = r.threadName;
-						}
-					} else {
-						map.put(key, new StatRecord(r));
+
+				if (map.containsKey(key)) {
+					final StatRecord sr = map.get(key);
+					sr.count++;
+					sr.durSum += r.duration;
+					if (sr.min > r.duration) {
+						sr.min = r.duration;
+						sr.minName = r.threadName;
 					}
+					if (sr.max < r.duration) {
+						sr.max = r.duration;
+						sr.maxName = r.threadName;
+					}
+				} else {
+					map.put(key, new StatRecord(r));
 				}
 			}
 		}
 
-		final Tabular t = new Tabular("ID", "Status", "Avg", "Count", "Min", "Min(th)", "Max", "Max(th)");
+		final Tabular stepsStat = new Tabular("ID", "Status", "Avg", "Count", "Min", "Min(th)", "Max", "Max(th)");
 		map.values().forEach(sr ->
-			t.addRow(
+			stepsStat.addRow(
 				sr.id,
 				String.valueOf(sr.status),
 				String.format("%.2f", sr.durSum / sr.count),
@@ -85,7 +92,7 @@ public class StatisticsContext {
 				String.valueOf(sr.max),
 				String.format("[%s]", sr.maxName)
 			));
-		t.print();
+		stepsStat.print();
 	}
 
 	// ------------------------------
@@ -118,6 +125,19 @@ public class StatisticsContext {
 			min = r.duration;
 			maxName = r.threadName;
 			minName = r.threadName;
+		}
+	}
+
+	@RequiredArgsConstructor
+	private static class ExecRecord implements Comparable<ExecRecord> {
+		private final String thread;
+		private final Integer iteration;
+		private final long duration;
+		private final String error;
+
+		@Override
+		public int compareTo(ExecRecord that) {
+			return thread.compareTo(that.thread);
 		}
 	}
 
