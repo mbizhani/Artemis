@@ -11,9 +11,9 @@ def before(Context ctx) {
 	ctx.addVar(<VAR>, <VAR_VALUE>)
 
 	// An interceptor before sending any request to server
-	ctx.config.beforeSend = { HttpRequestData data ->
-		...
-		data.headers["<HEADER_KEY>"] = <HEADER_VALUE>
+	ctx.config.beforeSend = { HttpRequestData rqData ->
+		rqData.headers["<HEADER_KEY>"] = <HEADER_VALUE>
+		// alter sending request by setting data to 'rqData' properties
 	}
 	*/
 }
@@ -41,7 +41,7 @@ def <ID_VALUE>(Context ctx) {
 
 
   // To validate the response body of a request, just set `call="true"` on the <assertRs/> tag,
-  // and create a function called `assertRs_REQUESTID`. The first parameter is the `Context` object,
+  // and create a function called `assertRs_<ID_VALUE>`. The first parameter is the `Context` object,
   // and the second parameter is the response body, which is type of `Map` or `List`.
   // Add JUnit dependency, or other assertion libraries, to validate the response body.
 
