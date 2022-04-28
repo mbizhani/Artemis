@@ -118,6 +118,10 @@ public class Context {
 	}
 
 	void addVarByScope(String name, Object value, EVarScope scope) {
+		if (name == null || name.trim().isEmpty()) {
+			throw new TestFailedException("Var Attribute's Name Required");
+		}
+
 		vars.put(name, value);
 
 		switch (scope) {

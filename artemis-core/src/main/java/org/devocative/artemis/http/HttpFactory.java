@@ -30,7 +30,9 @@ public class HttpFactory {
 	public void shutdown() {
 		try {
 			final CloseableHttpClient httpclient = CURRENT_CLIENT.get();
-			httpclient.close();
+			if (httpclient != null) {
+				httpclient.close();
+			}
 			CURRENT_CLIENT.remove();
 		} catch (IOException e) {
 			throw new RuntimeException(e);

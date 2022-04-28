@@ -33,25 +33,30 @@ public class Proxy {
 				.subclass(target.getClass())
 				.method(ElementMatchers.any())
 				.intercept(InvocationHandlerAdapter.of((proxy, method, args) -> {
-					final Object result = method.invoke(target, args);
+					try {
+						final Object result = method.invoke(target, args);
 
-					if (result != null) {
-						if (result instanceof List) {
-							return ((List<?>) result).stream()
-								.filter(Objects::nonNull)
-								.map(item -> doProxify(item) ? create(item) : item)
-								.collect(Collectors.toList());
-						} else if (result instanceof String) {
-							final String str = (String) result;
-							return str.contains("${") ? eval(str, method) : str;
-						} else if (doProxify(result)) {
-							return create(result);
+						if (result != null) {
+							if (result instanceof List) {
+								return ((List<?>) result).stream()
+									.filter(Objects::nonNull)
+									.map(item -> doProxify(item) ? create(item) : item)
+									.collect(Collectors.toList());
+							} else if (result instanceof String) {
+								final String str = (String) result;
+								return str.contains("${") ? eval(str, method) : str;
+							} else if (doProxify(result)) {
+								return create(result);
+							}
+							return result;
+						} else if (method.getReturnType().equals(List.class)) {
+							return Collections.emptyList();
 						}
-						return result;
-					} else if (method.getReturnType().equals(List.class)) {
-						return Collections.emptyList();
+						return null;
+					} catch (Exception e) {
+						log.error("Proxy.InvocationHandlerAdapter", e);
+						throw e;
 					}
-					return null;
 				}))
 				.make()
 				.load(Proxy.class.getClassLoader())

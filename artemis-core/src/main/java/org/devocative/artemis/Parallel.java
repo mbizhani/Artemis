@@ -15,7 +15,7 @@ public class Parallel {
 			try {
 				runnable.run();
 			} catch (Exception e) {
-				errStr = e.getMessage();
+				errStr = e.getMessage() != null ? e.getMessage() : e.getClass().getName();
 			}
 
 			result = new Result(1, errStr == null ? 0 : 1)

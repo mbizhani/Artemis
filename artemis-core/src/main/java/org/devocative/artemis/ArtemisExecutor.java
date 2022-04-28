@@ -184,9 +184,9 @@ public class ArtemisExecutor {
 			}
 			try {
 				ctx.runAtScope(Request, () -> ContextHandler.invoke(rq.getId()));
-				ALog.info("Call - {}(Context)", rq.getId());
+				ALog.info("Call Method - '{}(Context)'", rq.getId());
 			} catch (RuntimeException e) {
-				ALog.error("ERROR: RQ({}) - calling: {}(Context)", rq.getId(), rq.getId());
+				ALog.error("ERROR: RQ({}) - calling method: '{}(Context)'", rq.getId(), rq.getId());
 				throw e;
 			}
 		}
@@ -294,6 +294,14 @@ public class ArtemisExecutor {
 		final XArtemis artemis = (XArtemis) xStream.fromXML(ContextHandler.loadXmlFile());
 
 		if (config.getDevMode()) {
+			if (config.getLoop() != null && config.getLoop() > 1) {
+				ALog.warn("DEV MODE: 'loop' set to 1");
+			}
+
+			if (config.getParallel() != null && config.getParallel() > 1) {
+				ALog.warn("DEV MODE: 'parallel' set to 1");
+			}
+
 			config
 				.setLoop(1)
 				.setParallel(1);

@@ -33,7 +33,7 @@ public class XScenario {
 		int idx = 1;
 		for (XBaseRequest rq : requests) {
 			if (rq.isWithId() == null) {
-				rq.setWithId(rq.getId() != null);
+				rq.setWithId(rq.getId() != null && !rq.getId().trim().isEmpty());
 				if (rq.getId() == null) {
 					rq.setId(String.format("step #%s", idx));
 				}
