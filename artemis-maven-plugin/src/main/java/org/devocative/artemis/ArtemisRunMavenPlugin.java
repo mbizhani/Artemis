@@ -7,12 +7,15 @@ import org.devocative.artemis.cfg.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-@Mojo(name = "run")
+@Mojo(name = "run", requiresProject = false)
 public class ArtemisRunMavenPlugin extends AbstractMojo {
 	private static final Logger logger = LoggerFactory.getLogger(ArtemisRunMavenPlugin.class);
+	private static final String TEST_RESOURCE_DIR = "src/test/resources/";
 
 	@Parameter(property = "name", defaultValue = "artemis")
 	private String name;
@@ -29,7 +32,7 @@ public class ArtemisRunMavenPlugin extends AbstractMojo {
 	@Parameter(property = "devMode", defaultValue = "false")
 	private Boolean devMode;
 
-	@Parameter(property = "baseDir", defaultValue = "src/test/resources")
+	@Parameter(property = "baseDir")
 	private String baseDir;
 
 	@Parameter(property = "parallel", defaultValue = "1")
@@ -45,6 +48,12 @@ public class ArtemisRunMavenPlugin extends AbstractMojo {
 
 	@Override
 	public void execute() {
+		if (baseDir == null) {
+			baseDir = Files.exists(Paths.get("pom.xml")) ? TEST_RESOURCE_DIR : ".";
+		}
+
+		logger.info("Run Artemis: baseDir=[{}]", Paths.get(baseDir).toAbsolutePath().normalize());
+
 		final Config config;
 
 		if (xmlName != null || groovyName != null) {

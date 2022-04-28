@@ -14,9 +14,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-@Mojo(name = "create")
+@Mojo(name = "create", requiresProject = false)
 public class ArtemisCreateMavenPlugin extends AbstractMojo {
 	private static final Logger logger = LoggerFactory.getLogger(ArtemisCreateMavenPlugin.class);
+	private static final String TEST_RESOURCE_DIR = "src/test/resources/";
 
 	@Parameter(property = "name", defaultValue = "artemis")
 	private String name;
@@ -31,24 +32,31 @@ public class ArtemisCreateMavenPlugin extends AbstractMojo {
 
 	@Override
 	public void execute() throws MojoExecutionException {
-		final File testResourceDir = new File("src/test/resources/");
-		if (!testResourceDir.exists()) {
-			testResourceDir.mkdirs();
-			logger.info("Directory Created: {}", testResourceDir.getAbsolutePath());
+		final File baseDir = Files.exists(Paths.get("pom.xml")) ?
+			new File(TEST_RESOURCE_DIR) :
+			new File(".");
+
+		if (!baseDir.exists()) {
+			baseDir.mkdirs();
+			logger.info("Directory Created: {}", baseDir.getAbsolutePath());
 		}
 
 		final InputStream xmlIS = ArtemisCreateMavenPlugin.class.getResourceAsStream("/_template_.xml");
 		final InputStream groovyIS = ArtemisCreateMavenPlugin.class.getResourceAsStream("/_template_.groovy");
 
-		try {
-			final Path xmlPath = Paths.get(testResourceDir.getAbsolutePath(), (name != null ? name : xmlName) + ".xml");
-			final Path groovyPath = Paths.get(testResourceDir.getAbsolutePath(), (name != null ? name : groovyName) + ".groovy");
-			Files.copy(xmlIS, xmlPath);
-			logger.info("File Created: {}", xmlPath);
-			Files.copy(groovyIS, groovyPath);
-			logger.info("File Created: {}", groovyPath);
-		} catch (IOException e) {
-			throw new MojoExecutionException("Creating File: " + e.getMessage(), e);
+		if (xmlIS != null && groovyIS != null) {
+			try {
+				final Path xmlPath = Paths.get(baseDir.getAbsolutePath(), (name != null ? name : xmlName) + ".xml");
+				final Path groovyPath = Paths.get(baseDir.getAbsolutePath(), (name != null ? name : groovyName) + ".groovy");
+				Files.copy(xmlIS, xmlPath);
+				logger.info("File Created: {}", xmlPath.normalize());
+				Files.copy(groovyIS, groovyPath);
+				logger.info("File Created: {}", groovyPath.normalize());
+			} catch (IOException e) {
+				throw new MojoExecutionException("Creating File: " + e.getMessage(), e);
+			}
+		} else {
+			throw new MojoExecutionException("Artemis Template Files Not Found");
 		}
 	}
 }

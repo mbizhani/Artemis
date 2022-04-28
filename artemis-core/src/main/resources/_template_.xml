@@ -17,7 +17,7 @@
 			<var name="" value=""/>
 		</vars>
 
-		<!-- Method `REQUESTID(Context)` is called in associated groovy file -->
+		<!-- Method `<ID_VALUE>(Context)` is called in associated groovy file, if `call="true"` -->
 		<get id="" url="/" call="true">
 
 			<!-- Request-Scope Variable -->
@@ -25,8 +25,8 @@
 				<var name="" value=""/>
 			</vars>
 
-			<!-- Method `assertRs_REQUESTID(Context, Map|List)` is called in associated groovy file -->
-			<assertRs status="" properties="" call="true"/>
+			<!-- Method `assertRs_<ID_VALUE>(Context, Map|List)` is called in associated groovy file, if `call="true"` -->
+			<assertRs status="200" properties="" call="true"/>
 		</get>
 
 		<post id="" url="/">
@@ -36,7 +36,7 @@
 }
 			]]></body>
 
-			<assertRs status=""/>
+			<assertRs status="201"/>
 		</post>
 
 	</scenario>
