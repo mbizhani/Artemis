@@ -21,7 +21,8 @@ tool to apply Artemis, your IDE. You just need to develop an XML file, and a Gro
 file describes the structure flow of your scenarios by defining all HTTP requests and then asserting the status of
 response and its body. The Groovy file contains lots of functions, called by XML file, to present all the behavioral
 parts during your test, such as creating complex dynamic data, asserting the response body with all `Assertions`
-libraries, and processing the data necessary to the test scenarios.
+libraries, and processing the data necessary to the test scenarios. From version 1.3, a cookie store is enabled for
+Artemis, and you can assert cookie presence in `<assertRs cookies=''/>`.
 
 You can integrate Artemis in two ways into your project:
 
@@ -133,14 +134,19 @@ Some of Artemis parameters are passed before its execution. The most important o
 the `url` of each request in the XML file. These parameters are passed to `Config` object (`name` is just passed as
 constructor parameter) or inside `<configuration>` in the maven.
 
-Parameter  | Default Value           | Description
------------|-------------------------|-------------
-`name`     | `artemis`               | looking for `<name>.xml` and `<name>.groovy` files for execution
-`baseUrl`  | `http://localhost:8080` | prepend it to the `url` of each request in the XML file
-`devMode`  | `false`                 | store a memory object as the state of the test for incremental development of test files
-`baseDir`  | `src/test/resources`    | looking for the XML and Groovy files in this directory
-`parallel` | `1`                     | number of **parallel** executions of the entire XML file in a thread
-`loop`     | `1`                     | number of **sequential** executions of the entire XML file in a thread
+| Parameter    | Default Value           | Description                                                                              |
+|--------------|-------------------------|------------------------------------------------------------------------------------------|
+| `name`       | `artemis`               | looking for `<name>.xml` and `<name>.groovy` files for execution                         |
+| `xmlName`    |                         | in case of different name for XML and groovy files                                       |
+| `groovyName` |                         | in case of different name for XML and groovy files                                       |
+| `baseUrl`    | `http://localhost:8080` | prepend it to the `url` of each request in the XML file                                  |
+| `devMode`    | `false`                 | store a memory object as the state of the test for incremental development of test files |
+| `baseDir`    | `src/test/resources`    | looking for the XML and Groovy files in this directory                                   |
+| `parallel`   | `1`                     | number of **
+parallel** executions of the entire XML file in a thread                     |
+| `loop`       | `1`                     | number of **
+sequential** executions of the entire XML file in a thread                   |
+| `vars`       |                         | pass variables for scenarios from outside                                                |
 
 ### JUnit Integration
 
@@ -150,7 +156,7 @@ First add the following dependency
 <dependency>
   <groupId>org.devocative.artemis</groupId>
   <artifactId>artemis-core</artifactId>
-  <version>1.2</version>
+  <version>1.3</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -182,7 +188,7 @@ Add the following plugin to your `pom.xml` file. Then you can execute the `artem
 <plugin>
   <groupId>org.devocative.artemis</groupId>
   <artifactId>artemis-maven-plugin</artifactId>
-  <version>1.2</version>
+  <version>1.3</version>
   <configuration>
     <baseUrl>http://localhost:8080/api</baseUrl>
     <devMode>true</devMode>
@@ -193,7 +199,7 @@ Add the following plugin to your `pom.xml` file. Then you can execute the `artem
 You can also execute following command in the root of your project or module without adding the above plugin:
 
 ```shell
-mvn org.devocative.artemis:artemis-maven-plugin:1.2:run -DbaseUrl=http://localhost:8080/api -DdevMode=true
+mvn org.devocative.artemis:artemis-maven-plugin:1.3:run -DbaseUrl=http://localhost:8080/api -DdevMode=true
 ```
 
 ### Output
@@ -252,7 +258,7 @@ HEADERS = {Authorization=eyJhbGciOiJIUzUxMiJ9.eyJ1aWQiOjIsInN1YiI6IjA5NzM1OTI5ND
 2021-09-28 10:04:54,443 INFO  - ***** [PASSED SUCCESSFULLY in 512 ms] *****
 ```
 
-## Description of the Files
+## Description of the XML and Groovy Files
 
 The `<vars/>` are defining some variables for providing initial data for the test. In the `value`, you can call a
 function in the Groovy file by placing `${_.FUNCTION(PARAMS)}` in your attribute like the `cell` variable (the `_` is a
@@ -294,7 +300,7 @@ comprehensive statistical report is published in `artemis.log` file such as the 
 You can create both XML and Groovy files by calling the following maven command in the root of your project or module:
 
 ```shell
-mvn org.devocative.artemis:artemis-maven-plugin:1.2:create
+mvn org.devocative.artemis:artemis-maven-plugin:1.3:create
 ```
 
 After successful execution, the two files `artemis.xml` and `artemis.groovy`, are generated in `src/test/resources`
