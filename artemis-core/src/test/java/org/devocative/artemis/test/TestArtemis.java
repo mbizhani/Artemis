@@ -9,13 +9,13 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 import static org.devocative.artemis.test.Pair.pair;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestArtemis {
 	private static final Logger log = LoggerFactory.getLogger(TestArtemis.class);
@@ -99,6 +99,36 @@ public class TestArtemis {
 		}
 
 		app.stop();
+	}
+
+	@Test
+	public void test_devMode() {
+		final Javalin app = Javalin
+			.create()
+			.start(8080);
+
+		configure(app);
+
+		final File memFile = new File(".artemis-devMode.memory.json");
+		memFile.delete();
+
+		try {
+			ArtemisExecutor.run(new Config("artemis-devMode", "artemis")
+				.setDevMode(true)
+				.addVar("backEnd", "http://localhost:8080"));
+
+			fail();
+		} catch (TestFailedException e) {
+			assertEquals("Reached Break Point!", e.getMessage());
+
+			assertTrue(memFile.exists());
+		} catch (Exception e) {
+			log.error("test_error", e);
+			fail();
+		}
+
+		app.stop();
+		memFile.delete();
 	}
 
 	// ------------------------------

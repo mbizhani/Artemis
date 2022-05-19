@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!DOCTYPE artemis PUBLIC "-//Devocative.Org//Artemis 1.0//EN"
+		"https://devocative.org/dtd/artemis-1.0.dtd">
+
+<artemis>
+	<vars>
+		<var name="city" value="${Thread.currentThread().getName()}"/>
+	</vars>
+
+	<scenario name="RegisterUser">
+		<vars>
+			<var name="randInt">${_.generate(3, '1'..'9')}</var>
+			<!--
+			OR
+			<var name="randInt" value="${_.generate(3, '1'..'9')}"/>
+			-->
+		</vars>
+
+		<post id="registration" url="/registrations?_p=${rand}" call="true">
+			<vars>
+				<var name="rand" value="${_.generate(3, '0'..'9', 'a'..'z')}"/>
+			</vars>
+
+			<urlParams>
+				<param name="p1" value="${randInt}"/>
+			</urlParams>
+
+			<body type="json"><![CDATA[
+{
+	"name": "Foo\\nBar",
+	"cell": "${cell}"
+}
+			]]></body>
+
+			<assertRs status="200" body="empty" call="true"/>
+		</post>
+
+		<break-point/>
+
+		<get id="fetchCode" url="/registrations/${cell}">
+			<urlParams>
+				<param name="p1" value="${randInt}"/>
+			</urlParams>
+
+			<assertRs status="200" properties="smsCode" cookies="Cookie1,Cookie2" call="true"/>
+		</get>
+
+		<put id="verify" url="${backEnd}/registrations">
+			<body><![CDATA[
+{
+	"smsCode": "${_prev.rs.smsCode}",
+	"password": "${password}"
+}
+			]]></body>
+
+			<assertRs status="201" properties="token,userId,nullProp" store="token" call="true"/>
+		</put>
+
+		<put url="/users/${verify.rs.userId}">
+			<headers>
+				<header name="Authorization" value="${verify.rs.token}"/>
+			</headers>
+
+			<formParams>
+				<param name="city" value="${city}"/>
+				<param name="email" value="a@a.com"/>
+			</formParams>
+
+			<assertRs status="200" body="empty"/>
+		</put>
+	</scenario>
+
+</artemis>

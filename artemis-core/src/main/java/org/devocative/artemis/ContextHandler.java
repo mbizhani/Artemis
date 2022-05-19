@@ -82,12 +82,14 @@ public class ContextHandler {
 		return ctx;
 	}
 
-	public static void shutdown() {
+	public static void shutdown(boolean successfulExec) {
 		CTX.remove();
 
-		final File file = new File(MEM_FILE);
-		if (file.exists()) {
-			file.delete();
+		if (successfulExec) {
+			final File file = new File(MEM_FILE);
+			if (file.exists()) {
+				file.delete();
+			}
 		}
 	}
 

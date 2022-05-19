@@ -91,6 +91,7 @@ public class ArtemisExecutor {
 
 		long start = System.currentTimeMillis();
 		int iteration = 0;
+		boolean successfulExec = true;
 
 		try {
 			for (; iteration < loopMax; iteration++) {
@@ -149,12 +150,13 @@ public class ArtemisExecutor {
 				StatisticsContext.execFinished(iteration, duration, "");
 			}
 		} catch (RuntimeException e) {
+			successfulExec = false;
 			ALog.error(e.getMessage());
 			ContextHandler.memorize();
 			StatisticsContext.execFinished(iteration, System.currentTimeMillis() - start, e.getMessage());
 			throw e;
 		} finally {
-			ContextHandler.shutdown();
+			ContextHandler.shutdown(successfulExec);
 			httpFactory.shutdown();
 		}
 	}
