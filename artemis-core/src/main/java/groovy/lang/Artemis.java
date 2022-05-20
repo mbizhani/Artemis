@@ -3,7 +3,11 @@ package groovy.lang;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.devocative.artemis.ALog;
+import org.devocative.artemis.ContextHandler;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
@@ -15,6 +19,9 @@ public class Artemis {
 	private static final List<String> CHARS = new ArrayList<>();
 	private static final Random RANDOM = new Random();
 	private static final ObjectMapper MAPPER = new ObjectMapper();
+
+	private static final Base64.Encoder B64_ENC = Base64.getEncoder();
+	private static final Base64.Decoder B64_DEC = Base64.getDecoder();
 
 	private static Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
@@ -100,17 +107,27 @@ public class Artemis {
 
 	public static String encBase64(String str, boolean withPadding) {
 		return withPadding ?
-			Base64.getMimeEncoder().encodeToString(str.getBytes(DEFAULT_CHARSET)) :
-			Base64.getMimeEncoder().withoutPadding().encodeToString(str.getBytes(DEFAULT_CHARSET));
+			B64_ENC.encodeToString(str.getBytes(DEFAULT_CHARSET)) :
+			B64_ENC.withoutPadding().encodeToString(str.getBytes(DEFAULT_CHARSET));
 	}
 
 	public static String decBase64(String str) {
-		return new String(Base64.getMimeDecoder().decode(str.getBytes(DEFAULT_CHARSET)), DEFAULT_CHARSET);
+		return new String(B64_DEC.decode(str.getBytes(DEFAULT_CHARSET)), DEFAULT_CHARSET);
 	}
 
 	public static HttpBuilder http() {
 		return HttpBuilder.get();
 	}
 
-	// TODO sign
+	public static String readFile(String name) {
+		final InputStream in = ContextHandler.loadFile(name);
+
+		try (final BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+			return reader.lines().collect(Collectors.joining("\n"));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	// --- PKI
 }

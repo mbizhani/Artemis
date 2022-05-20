@@ -142,11 +142,15 @@ public class ContextHandler {
 	}
 
 	public static InputStream loadXmlFile() {
+		return loadFile(CONFIG.getXmlName() + ".xml");
+	}
+
+	public static InputStream loadFile(String name) {
 		if (CONFIG.getBaseDir() == null) {
-			return ContextHandler.class.getResourceAsStream(String.format("/%s.xml", CONFIG.getXmlName()));
+			return ContextHandler.class.getResourceAsStream("/" + name);
 		} else {
 			try {
-				return new FileInputStream(String.format("%s/%s.xml", CONFIG.getBaseDir(), CONFIG.getXmlName()));
+				return new FileInputStream(String.format("%s/%s", CONFIG.getBaseDir(), name));
 			} catch (FileNotFoundException e) {
 				throw new RuntimeException(e);
 			}
@@ -165,17 +169,6 @@ public class ContextHandler {
 	}
 
 	private static InputStream loadGroovyFile() {
-		if (CONFIG.getBaseDir() == null) {
-			return ContextHandler.class.getResourceAsStream(String.format("/%s.groovy", CONFIG.getGroovyName()));
-		} else {
-			final File baseDir = new File(CONFIG.getBaseDir());
-			log.info("Artemis Base Dir to Load Files: {}", baseDir.getAbsolutePath());
-
-			try {
-				return new FileInputStream(String.format("%s/%s.groovy", CONFIG.getBaseDir(), CONFIG.getGroovyName()));
-			} catch (FileNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-		}
+		return loadFile(CONFIG.getGroovyName() + ".groovy");
 	}
 }
