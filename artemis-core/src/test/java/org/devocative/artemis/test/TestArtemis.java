@@ -2,6 +2,7 @@ package org.devocative.artemis.test;
 
 import io.javalin.Javalin;
 import io.javalin.core.validation.Validator;
+import io.javalin.http.UploadedFile;
 import org.devocative.artemis.ArtemisExecutor;
 import org.devocative.artemis.TestFailedException;
 import org.devocative.artemis.cfg.Config;
@@ -9,8 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -158,6 +161,11 @@ public class TestArtemis {
 				final Validator<Integer> p1 = ctx.queryParamAsClass("p1", Integer.class)
 					.check(i -> i > 0, "Invalid param 'p1' value, should be greater than 0");
 
+				final List<String> list = ctx.queryParams("list");
+				assertEquals(2, list.size());
+				assertTrue(list.contains("l1"));
+				assertTrue(list.contains("l2"));
+
 				final Map<String, String> data = ctx.bodyAsClass(Map.class);
 				log("Register (Sending SMS) - {}, _p={}, p1={}", data, _p.get(), p1.get());
 
@@ -197,10 +205,24 @@ public class TestArtemis {
 				assertEquals("111", ctx.cookie("Cookie1"));
 				assertEquals("22", ctx.cookie("Cookie2"));
 
+				assertTrue(ctx.isMultipartFormData());
+
+				final UploadedFile file = ctx.uploadedFile("logo");
+				assertNotNull(file);
+				assertEquals("picture.jpg", file.getFilename());
+				ImageIO.read(file.getContent());
+
 				final Validator<String> city = ctx.formParamAsClass("city", String.class)
 					.check(s -> s.startsWith("artemis"), "Invalid param 'city', should starts with 'artemis'");
 				final Validator<String> email = ctx.formParamAsClass("email", String.class)
 					.check(s -> s.matches("\\w+@(\\w+\\.)+\\w+"), "Invalid email format");
+
+				final List<String> groups = ctx.formParams("groups");
+				assertEquals(3, groups.size());
+				assertTrue(groups.contains("g1"));
+				assertTrue(groups.contains("g2"));
+				assertTrue(groups.contains("g3"));
+				assertFalse(groups.contains("g4"));
 
 				log("UpdateProfile - id=[{}], authHeader=[{}], city={}, email={}",
 					ctx.pathParam("id"), ctx.header("Authorization"), city.get(), email.get());

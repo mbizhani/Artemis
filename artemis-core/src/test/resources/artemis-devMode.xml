@@ -24,6 +24,8 @@
 
 			<urlParams>
 				<param name="p1" value="${randInt}"/>
+				<param name="list" value="l1"/>
+				<param name="list" value="l2"/>
 			</urlParams>
 
 			<body type="json"><![CDATA[
@@ -62,10 +64,10 @@
 				<header name="Authorization" value="${verify.rs.token}"/>
 			</headers>
 
-			<formParams>
-				<param name="city" value="${city}"/>
-				<param name="email" value="a@a.com"/>
-			</formParams>
+			<form>
+				<field name="city" value="${city}"/>
+				<field name="email" value="a@a.com"/>
+			</form>
 
 			<assertRs status="200" body="empty"/>
 		</put>

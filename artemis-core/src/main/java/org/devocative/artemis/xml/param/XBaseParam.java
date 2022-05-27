@@ -1,17 +1,14 @@
-package org.devocative.artemis.xml;
+package org.devocative.artemis.xml.param;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
-import com.thoughtworks.xstream.annotations.XStreamConverter;
-import com.thoughtworks.xstream.converters.extended.ToAttributedValueConverter;
 import lombok.Getter;
 import lombok.Setter;
+import org.devocative.artemis.xml.INameTheValue;
 
 @Getter
 @Setter
-@XStreamAlias("param")
-@XStreamConverter(value = ToAttributedValueConverter.class, strings = "valueAsBody")
-public class XParam implements INameTheValue {
+public abstract class XBaseParam implements INameTheValue {
 	@XStreamAsAttribute
 	private String name;
 
@@ -19,9 +16,11 @@ public class XParam implements INameTheValue {
 	@XStreamAsAttribute
 	private String valueAsAttr;
 
-	private String valueAsBody;
-
 	// ------------------------------
+
+	public abstract String getValueAsBody();
+
+	// ---------------
 
 	@Override
 	public String getValue() {

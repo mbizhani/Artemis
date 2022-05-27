@@ -6,6 +6,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.devocative.artemis.xml.method.XBody;
+import org.devocative.artemis.xml.param.XFormField;
+import org.devocative.artemis.xml.param.XUrlParam;
 
 import java.util.List;
 
@@ -29,9 +31,9 @@ public abstract class XBaseRequest {
 
 	private XBody body;
 
-	private List<XParam> urlParams;
+	private List<XUrlParam> urlParams;
 
-	private List<XParam> formParams;
+	private List<XFormField> form;
 
 	private XAssertRs assertRs;
 

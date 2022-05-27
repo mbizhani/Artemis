@@ -3,10 +3,7 @@ package org.devocative.artemis;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.thoughtworks.xstream.XStream;
 import org.devocative.artemis.cfg.Config;
-import org.devocative.artemis.http.HttpFactory;
-import org.devocative.artemis.http.HttpRequest;
-import org.devocative.artemis.http.HttpRequestData;
-import org.devocative.artemis.http.HttpResponse;
+import org.devocative.artemis.http.*;
 import org.devocative.artemis.xml.*;
 import org.devocative.artemis.xml.method.*;
 
@@ -207,11 +204,17 @@ public class ArtemisExecutor {
 
 		final HttpRequestData data = new HttpRequestData(rq.getId(), rq.getUrl(), rq.getMethod().name());
 		data.setHeaders(asMap(rq.getHeaders()));
+
 		final XBody body = rq.getBody();
 		if (body != null) {
 			data.setBody(body.getContent().trim());
 		}
-		data.setFormParams(asMap(rq.getFormParams()));
+
+		if (rq.getForm() != null) {
+			data.setFormFields(rq.getForm().stream()
+				.map(x -> new FormField(x.getName(), x.getValue(), x.isFile()))
+				.collect(Collectors.toList()));
+		}
 
 		if (ctx.getConfig().getBeforeSend() != null) {
 			ctx.getConfig().getBeforeSend().accept(data);
@@ -222,7 +225,7 @@ public class ArtemisExecutor {
 		if (data.getBody() != null) {
 			httpRq.setBody(data.getBody().toString());
 		}
-		httpRq.setFormParams(data.getFormParams());
+		httpRq.setFormParams(data.getFormFields());
 		httpRq.send(rs -> processRs(rs, rq, rqAndRs));
 	}
 

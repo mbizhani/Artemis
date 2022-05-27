@@ -16,6 +16,8 @@
 
 			<urlParams>
 				<param name="p1" value="${randInt}"/>
+				<param name="list" value="l1"/>
+				<param name="list" value="l2"/>
 			</urlParams>
 
 			<body type="json"><![CDATA[

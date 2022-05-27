@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -17,6 +18,6 @@ public class HttpRequestData {
 	private final String method;
 
 	private Map<String, CharSequence> headers;
-	private Map<String, CharSequence> formParams;
+	private List<FormField> formFields;
 	private CharSequence body;
 }

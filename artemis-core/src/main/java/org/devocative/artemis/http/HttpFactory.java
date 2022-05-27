@@ -10,9 +10,6 @@ import org.devocative.artemis.xml.XBaseRequest;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
-
-import static org.devocative.artemis.Util.asMap;
 
 public class HttpFactory {
 	private static final ThreadLocal<CloseableHttpClient> CURRENT_CLIENT = new ThreadLocal<>();
@@ -41,7 +38,6 @@ public class HttpFactory {
 
 	public HttpRequest create(XBaseRequest rq) {
 		final String url = rq.getUrl();
-		final Map<String, CharSequence> urlParams = asMap(rq.getUrlParams());
 
 		final String finalUrl;
 		if (url.startsWith("http://") || url.startsWith("https://")) {
@@ -53,12 +49,12 @@ public class HttpFactory {
 		}
 
 		final URI uri;
-		if (urlParams.isEmpty()) {
+		if (rq.getUrlParams().isEmpty()) {
 			uri = URI.create(finalUrl);
 		} else {
 			try {
 				final URIBuilder builder = new URIBuilder(finalUrl);
-				urlParams.forEach((name, value) -> builder.addParameter(name, value.toString()));
+				rq.getUrlParams().forEach(param -> builder.addParameter(param.getName(), param.getValue()));
 				uri = builder.build();
 			} catch (URISyntaxException e) {
 				throw new TestFailedException(rq.getId(), "Invalid URI to Build");

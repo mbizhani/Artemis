@@ -5,6 +5,7 @@ import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.cookie.Cookie;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
@@ -24,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -50,16 +52,37 @@ public class HttpRequest {
 		builder.append("\n").append(body);
 	}
 
-	public void setFormParams(Map<String, CharSequence> formParams) {
-		if (!formParams.isEmpty()) {
-			final List<BasicNameValuePair> pairs = formParams
-				.entrySet()
+	public void setFormParams(List<FormField> fields) {
+		if (fields == null || fields.isEmpty()) {
+			return;
+		}
+
+		final Optional<FormField> first = fields.stream()
+			.filter(FormField::isFile)
+			.findFirst();
+
+		if (first.isPresent()) {
+			final MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
+
+			for (FormField field : fields) {
+				if (field.isFile()) {
+					final String filename = field.getValue();
+					multipartEntityBuilder.addBinaryBody(field.getName(), ContextHandler.loadFile(filename),
+						ContentType.DEFAULT_BINARY, filename);
+				} else {
+					multipartEntityBuilder.addTextBody(field.getName(), field.getValue());
+				}
+			}
+			request.setEntity(multipartEntityBuilder.build());
+		} else {
+			final List<BasicNameValuePair> pairs = fields
 				.stream()
-				.map(e -> new BasicNameValuePair(e.getKey(), e.getValue().toString()))
+				.map(e -> new BasicNameValuePair(e.getName(), e.getValue()))
 				.collect(Collectors.toList());
 			request.setEntity(new UrlEncodedFormEntity(pairs));
-			builder.append("\n").append("FORM = ").append(formParams);
 		}
+
+		builder.append("\n").append("FORM = ").append(fields);
 	}
 
 	public void send(Consumer<HttpResponse> responseConsumer) {
