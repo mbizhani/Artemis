@@ -156,7 +156,7 @@ First add the following dependency
 <dependency>
   <groupId>org.devocative.artemis</groupId>
   <artifactId>artemis-core</artifactId>
-  <version>1.3</version>
+  <version>1.4</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -188,7 +188,7 @@ Add the following plugin to your `pom.xml` file. Then you can execute the `artem
 <plugin>
   <groupId>org.devocative.artemis</groupId>
   <artifactId>artemis-maven-plugin</artifactId>
-  <version>1.3</version>
+  <version>1.4</version>
   <configuration>
     <baseUrl>http://localhost:8080/api</baseUrl>
     <devMode>true</devMode>
@@ -199,7 +199,7 @@ Add the following plugin to your `pom.xml` file. Then you can execute the `artem
 You can also execute following command in the root of your project or module without adding the above plugin:
 
 ```shell
-mvn org.devocative.artemis:artemis-maven-plugin:1.3:run -DbaseUrl=http://localhost:8080/api -DdevMode=true
+mvn org.devocative.artemis:artemis-maven-plugin:1.4:run -DbaseUrl=http://localhost:8080/api -DdevMode=true
 ```
 
 ### Output
@@ -300,7 +300,7 @@ comprehensive statistical report is published in `artemis.log` file such as the 
 You can create both XML and Groovy files by calling the following maven command in the root of your project or module:
 
 ```shell
-mvn org.devocative.artemis:artemis-maven-plugin:1.3:create
+mvn org.devocative.artemis:artemis-maven-plugin:1.4:create
 ```
 
 After successful execution, the two files `artemis.xml` and `artemis.groovy`, are generated in `src/test/resources`
