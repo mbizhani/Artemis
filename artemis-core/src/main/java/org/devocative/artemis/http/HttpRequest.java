@@ -1,7 +1,6 @@
 package org.devocative.artemis.http;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.cookie.Cookie;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
@@ -128,10 +127,8 @@ public class HttpRequest {
 
 			responseConsumer.accept(new HttpResponse(code, contentType, body, cookiesMap));
 
-		} catch (HttpHostConnectException e) {
-			throw new TestFailedException(rqId, String.format("Unknown Host (%s)", getUri()));
 		} catch (IOException e) {
-			throw new TestFailedException(rqId, String.format("%s (%s)", e.getMessage(), getUri()));
+			throw new TestFailedException(rqId, e);
 		}
 	}
 

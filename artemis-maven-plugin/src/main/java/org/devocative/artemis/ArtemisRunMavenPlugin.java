@@ -44,6 +44,9 @@ public class ArtemisRunMavenPlugin extends AbstractMojo {
 	@Parameter
 	private Var[] vars;
 
+	@Parameter
+	private String proxy;
+
 	// ------------------------------
 
 	@Override
@@ -75,7 +78,8 @@ public class ArtemisRunMavenPlugin extends AbstractMojo {
 			.setBaseDir(baseDir)
 			.setDevMode(devMode)
 			.setParallel(parallel)
-			.setLoop(loop);
+			.setLoop(loop)
+			.setProxy(proxy);
 
 		if (vars != null) {
 			Stream.of(vars).forEach(v -> config.addVar(v.getName(), v.getValue()));

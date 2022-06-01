@@ -1,8 +1,10 @@
 package org.devocative.artemis.test;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import io.javalin.Javalin;
 import io.javalin.core.validation.Validator;
 import io.javalin.http.UploadedFile;
+import org.bbottema.javasocksproxyserver.SocksServer;
 import org.devocative.artemis.ArtemisExecutor;
 import org.devocative.artemis.TestFailedException;
 import org.devocative.artemis.cfg.Config;
@@ -12,16 +14,20 @@ import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.io.File;
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.devocative.artemis.test.Pair.pair;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TestArtemis {
-	private static final Logger log = LoggerFactory.getLogger(TestArtemis.class);
+public class TestArtemisExecutor {
+	private static final Logger log = LoggerFactory.getLogger(TestArtemisExecutor.class);
 
 	@Test
 	public void test_defaultConfig() {
@@ -122,7 +128,7 @@ public class TestArtemis {
 
 			fail();
 		} catch (TestFailedException e) {
-			assertEquals("Reached Break Point!", e.getMessage());
+			assertEquals("TestFailedException: Reached Break Point!", e.getMessage());
 
 			assertTrue(memFile.exists());
 		} catch (Exception e) {
@@ -132,6 +138,102 @@ public class TestArtemis {
 
 		app.stop();
 		memFile.delete();
+	}
+
+	@Test
+	public void test_socks_proxy_connection_refused() {
+		final Javalin app = Javalin
+			.create()
+			.start(8080);
+
+		configure(app);
+
+		try {
+			ArtemisExecutor.run(new Config()
+				.addVar("backEnd", "http://localhost:8080")
+				.setProxy("socks://127.0.0.1:44444")
+				.setParallel(1));
+
+			fail();
+		} catch (TestFailedException e) {
+			assertEquals("TestFailedException: ERROR(registration) - CAUSE: Connection refused (Connection refused) [java.net.SocketException]", e.getMessage());
+		}
+
+		app.stop();
+	}
+
+	@Test
+	public void test_socks_proxy_successful() {
+		final int socksPort = findPort();
+		log.info("PORT = {}", socksPort);
+
+		final SocksServer socksServer = new SocksServer();
+		socksServer.start(socksPort);
+
+		final Javalin app = Javalin
+			.create()
+			.start(8080);
+
+		configure(app);
+
+		ArtemisExecutor.run(new Config()
+			.addVar("backEnd", "http://localhost:8080")
+			.setProxy("socks://127.0.0.1:" + socksPort)
+			.setParallel(1));
+
+		app.stop();
+		socksServer.stop();
+	}
+
+	@Test
+	public void test_socks_http_connection_refused() {
+		final Javalin app = Javalin
+			.create()
+			.start(8080);
+
+		configure(app);
+
+		try {
+			ArtemisExecutor.run(new Config()
+				.addVar("backEnd", "http://localhost:8080")
+				.setProxy("http://127.0.0.1:44444")
+				.setParallel(1));
+
+			fail();
+		} catch (TestFailedException e) {
+			assertEquals("TestFailedException: ERROR(registration) - " +
+				"CAUSE: Connect to http://127.0.0.1:44444 [/127.0.0.1] failed: " +
+				"Connection refused (Connection refused) [org.apache.hc.client5.http.HttpHostConnectException]", e.getMessage());
+		}
+
+		app.stop();
+	}
+
+	@Test
+	public void test_http_proxy_successful() {
+		final int httpPort = findPort();
+		log.info("PORT = {}", httpPort);
+
+		final WireMockServer proxyMock = new WireMockServer(wireMockConfig().port(httpPort));
+		proxyMock.stubFor(
+			any(urlMatching(".*"))
+				.willReturn(aResponse().proxiedFrom("http://localhost:8080"))
+		);
+		proxyMock.start();
+
+		final Javalin app = Javalin
+			.create()
+			.start(8080);
+
+		configure(app);
+
+		ArtemisExecutor.run(new Config()
+			.addVar("backEnd", "http://localhost:8080")
+			.setProxy("http://127.0.0.1:" + httpPort)
+			.setParallel(1));
+
+		app.stop();
+		proxyMock.stop();
 	}
 
 	// ------------------------------
@@ -263,5 +365,13 @@ public class TestArtemis {
 
 	private static void log(String str, Object... vars) {
 		log.info("--- TEST --- | " + str, vars);
+	}
+
+	private static int findPort() {
+		try (final ServerSocket s = new ServerSocket(0)) {
+			return s.getLocalPort();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

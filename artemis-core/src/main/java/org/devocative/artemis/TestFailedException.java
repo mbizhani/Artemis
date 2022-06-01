@@ -18,4 +18,8 @@ public class TestFailedException extends RuntimeException {
 	public TestFailedException(String id, String message, Object... vars) {
 		super(String.format("ERROR(%s) - %s", id, String.format(message, vars)));
 	}
+
+	public TestFailedException(String id, Throwable cause) {
+		super(String.format("ERROR(%s) - CAUSE: %s [%s]", id, cause.getMessage(), cause.getClass().getName()), cause);
+	}
 }

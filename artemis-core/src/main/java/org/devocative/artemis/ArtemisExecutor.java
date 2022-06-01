@@ -48,7 +48,7 @@ public class ArtemisExecutor {
 		this.config = config;
 
 		ContextHandler.init(config);
-		this.httpFactory = new HttpFactory(config.getBaseUrl());
+		this.httpFactory = new HttpFactory(config.getBaseUrl(), config.getProxy());
 	}
 
 	// ------------------------------

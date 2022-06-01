@@ -1,10 +1,14 @@
 package org.devocative.artemis;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Parallel {
+	private static final Logger log = LoggerFactory.getLogger(Parallel.class);
 
 	public static Result execute(String name, int degree, Runnable runnable) {
 		final Result result;
@@ -14,8 +18,15 @@ public class Parallel {
 
 			try {
 				runnable.run();
+			} catch (TestFailedException e) {
+				errStr = "TestFailedException: " + e.getMessage();
+
+				if (e.getCause() != null) {
+					log.error("Parallel Execute: ", e.getCause());
+				}
 			} catch (Exception e) {
-				errStr = e.getMessage() != null ? e.getMessage() : e.getClass().getName();
+				log.error("Parallel Execute: ", e);
+				errStr = "Exception: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getName());
 			}
 
 			result = new Result(1, errStr == null ? 0 : 1)

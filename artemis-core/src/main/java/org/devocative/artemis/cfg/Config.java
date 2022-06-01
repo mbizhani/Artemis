@@ -34,6 +34,7 @@ public class Config {
 	private Integer loop = 1;
 	private Boolean consoleLog;
 	private List<Var> vars = new ArrayList<>();
+	private String proxy;
 
 	// ------------------------------
 
