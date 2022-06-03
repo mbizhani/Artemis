@@ -31,11 +31,7 @@ public class TestArtemisExecutor {
 
 	@Test
 	public void test_defaultConfig() {
-		final Javalin app = Javalin
-			.create()
-			.start(8080);
-
-		configure(app);
+		final Javalin app = startJavalin(8080);
 
 		ArtemisExecutor.run(new Config()
 			.addVar("backEnd", "http://localhost:8080")
@@ -48,11 +44,7 @@ public class TestArtemisExecutor {
 	public void test_devMode_baseUrlViaConfig() {
 		final String baseUrl = "http://localhost:7777";
 
-		final Javalin app = Javalin
-			.create()
-			.start(7777);
-
-		configure(app);
+		final Javalin app = startJavalin(7777);
 
 		ArtemisExecutor.run(new Config()
 			.setDevMode(true)
@@ -68,11 +60,7 @@ public class TestArtemisExecutor {
 	public void test_parallel_baseUrlViaSysProp() {
 		final String baseUrl = "http://localhost:8888";
 
-		final Javalin app = Javalin
-			.create()
-			.start(8888);
-
-		configure(app);
+		final Javalin app = startJavalin(8888);
 
 		System.setProperty("artemis.base.url", baseUrl);
 		ArtemisExecutor.run(new Config()
@@ -85,11 +73,7 @@ public class TestArtemisExecutor {
 
 	@Test
 	public void test_error() {
-		final Javalin app = Javalin
-			.create()
-			.start(8080);
-
-		configure(app);
+		final Javalin app = startJavalin(8080);
 
 		final int degree = 9;
 
@@ -112,11 +96,7 @@ public class TestArtemisExecutor {
 
 	@Test
 	public void test_devMode() {
-		final Javalin app = Javalin
-			.create()
-			.start(8080);
-
-		configure(app);
+		final Javalin app = startJavalin(8080);
 
 		final File memFile = new File(".artemis-devMode.memory.json");
 		memFile.delete();
@@ -142,11 +122,7 @@ public class TestArtemisExecutor {
 
 	@Test
 	public void test_socks_proxy_connection_refused() {
-		final Javalin app = Javalin
-			.create()
-			.start(8080);
-
-		configure(app);
+		final Javalin app = startJavalin(8080);
 
 		try {
 			ArtemisExecutor.run(new Config()
@@ -170,11 +146,7 @@ public class TestArtemisExecutor {
 		final SocksServer socksServer = new SocksServer();
 		socksServer.start(socksPort);
 
-		final Javalin app = Javalin
-			.create()
-			.start(8080);
-
-		configure(app);
+		final Javalin app = startJavalin(8080);
 
 		ArtemisExecutor.run(new Config()
 			.addVar("backEnd", "http://localhost:8080")
@@ -187,11 +159,7 @@ public class TestArtemisExecutor {
 
 	@Test
 	public void test_socks_http_connection_refused() {
-		final Javalin app = Javalin
-			.create()
-			.start(8080);
-
-		configure(app);
+		final Javalin app = startJavalin(8080);
 
 		try {
 			ArtemisExecutor.run(new Config()
@@ -221,11 +189,7 @@ public class TestArtemisExecutor {
 		);
 		proxyMock.start();
 
-		final Javalin app = Javalin
-			.create()
-			.start(8080);
-
-		configure(app);
+		final Javalin app = startJavalin(8080);
 
 		ArtemisExecutor.run(new Config()
 			.addVar("backEnd", "http://localhost:8080")
@@ -238,7 +202,11 @@ public class TestArtemisExecutor {
 
 	// ------------------------------
 
-	private void configure(Javalin app) {
+	public static Javalin startJavalin(int port) {
+		final Javalin app = Javalin
+			.create()
+			.start(port);
+
 		app.before(context ->
 			context.headerAsClass("randHead", Integer.class)
 				.check(val -> {
@@ -353,7 +321,11 @@ public class TestArtemisExecutor {
 					pair("token", UUID.randomUUID().toString())
 				));
 			});
+
+		return app;
 	}
+
+	// ------------------------------
 
 	private static Map<String, Object> asMap(Pair... pairs) {
 		final Map<String, Object> result = new HashMap<>();

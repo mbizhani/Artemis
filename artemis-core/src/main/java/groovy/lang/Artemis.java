@@ -6,6 +6,7 @@ import org.devocative.artemis.ALog;
 import org.devocative.artemis.ContextHandler;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
@@ -13,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class Artemis {
@@ -125,6 +127,14 @@ public class Artemis {
 		try (final BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
 			return reader.lines().collect(Collectors.joining("\n"));
 		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static void readFile(String name, Consumer<InputStream> consumer) {
+		try (final InputStream stream = ContextHandler.loadFile(name)) {
+			consumer.accept(stream);
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
