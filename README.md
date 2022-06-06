@@ -142,10 +142,8 @@ constructor parameter) or inside `<configuration>` in the maven.
 | `baseUrl`    | `http://localhost:8080` | prepend it to the `url` of each request in the XML file                                  |
 | `devMode`    | `false`                 | store a memory object as the state of the test for incremental development of test files |
 | `baseDir`    | `src/test/resources`    | looking for the XML and Groovy files in this directory                                   |
-| `parallel`   | `1`                     | number of **
-parallel** executions of the entire XML file in a thread                     |
-| `loop`       | `1`                     | number of **
-sequential** executions of the entire XML file in a thread                   |
+| `parallel`   | `1`                     | number of **parallel** executions of the entire XML file in a thread                     |
+| `loop`       | `1`                     | number of **sequential** executions of the entire XML file in a thread                   |
 | `vars`       |                         | pass variables for scenarios from outside                                                |
 | `proxy`      |                         | pass requests through proxy server, format `socks://HOST:PORT` or `http://HOST:PORT`     |
 
