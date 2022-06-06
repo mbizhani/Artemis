@@ -6,15 +6,19 @@ import org.devocative.artemis.ALog;
 import org.devocative.artemis.ContextHandler;
 
 import java.io.BufferedReader;
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.*;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class Artemis {
@@ -61,12 +65,17 @@ public class Artemis {
 		return builder.toString();
 	}
 
-	public static int rand(int bound) {
-		return RANDOM.nextInt(bound);
-	}
+	public static int rand(int min, int max) {
+		int res = RANDOM.nextInt(max);
 
-	public static String rand(int bound, String pattern) {
-		return format(RANDOM.nextInt(bound), pattern);
+		while (res < min) {
+			res += RANDOM.nextInt(max);
+
+			if (res > max) {
+				res -= min;
+			}
+		}
+		return res;
 	}
 
 	public static String format(Number number, String pattern) {
@@ -131,13 +140,54 @@ public class Artemis {
 		}
 	}
 
-	public static void readFile(String name, Consumer<InputStream> consumer) {
-		try (final InputStream stream = ContextHandler.loadFile(name)) {
-			consumer.accept(stream);
-		} catch (IOException e) {
+	// --- PKI
+
+	public static KeyPairUnit genKeyPair() {
+		return genKeyPair("RSA", 2048, "SHA256withRSA");
+	}
+
+	public static KeyPairUnit genKeyPair(String keyPairAlgorithm, int keySize, String signAlgorithm) {
+		try {
+			final KeyPairGenerator instance = KeyPairGenerator.getInstance(keyPairAlgorithm);
+			instance.initialize(keySize);
+			return new KeyPairUnit(instance.generateKeyPair(), signAlgorithm);
+		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	// --- PKI
+	public static X509Certificate loadCert(String certStr) {
+		certStr = certStr
+			.replaceAll("-----BEGIN CERTIFICATE-----", "")
+			.replaceAll("-----END CERTIFICATE-----", "")
+			.replaceAll("\n", "");
+
+		try {
+			return (X509Certificate) CertificateFactory
+				.getInstance("X.509")
+				.generateCertificate(new ByteArrayInputStream(B64_DEC.decode(certStr)));
+		} catch (CertificateException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static KeyPairUnit loadKeyStore(String file, String password, String alias) {
+		try (final InputStream in = ContextHandler.loadFile(file)) {
+			final KeyStore keyStore = KeyStore.getInstance("JKS");
+			keyStore.load(in, password.toCharArray());
+
+			final Key key = keyStore.getKey(alias, password.toCharArray());
+			final Certificate certificate = keyStore.getCertificate(alias);
+
+			if (key instanceof PrivateKey && certificate instanceof X509Certificate) {
+				final PrivateKey privateKey = (PrivateKey) key;
+				final X509Certificate x509Certificate = (X509Certificate) certificate;
+				return new KeyPairUnit(privateKey, x509Certificate);
+			} else {
+				throw new RuntimeException("Unsupported KeyStore Entries: alias should be private and it must have a certificate");
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 }
