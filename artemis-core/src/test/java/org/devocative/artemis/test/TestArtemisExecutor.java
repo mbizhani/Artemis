@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -31,178 +32,169 @@ public class TestArtemisExecutor {
 
 	@Test
 	public void test_defaultConfig() {
-		final Javalin app = startJavalin(8080);
-
-		ArtemisExecutor.run(new Config()
-			.addVar("backEnd", "http://localhost:8080")
-			.setParallel(1));
-
-		app.stop();
+		startJavalin(url -> ArtemisExecutor.run(new Config()
+			.addVar("backEnd", url)
+			.setBaseUrl(url)
+			.setParallel(1))
+		);
 	}
 
 	@Test
 	public void test_devMode_baseUrlViaConfig() {
-		final String baseUrl = "http://localhost:7777";
-
-		final Javalin app = startJavalin(7777);
-
-		ArtemisExecutor.run(new Config()
+		startJavalin(url -> ArtemisExecutor.run(new Config()
 			.setDevMode(true)
 			.setConsoleLog(false)
-			.setBaseUrl(baseUrl)
+			.setBaseUrl(url)
 			.setBaseDir("src/test/resources")
-			.addVar("backEnd", baseUrl));
-
-		app.stop();
+			.addVar("backEnd", url))
+		);
 	}
 
 	@Test
 	public void test_parallel_baseUrlViaSysProp() {
-		final String baseUrl = "http://localhost:8888";
+		startJavalin(url -> {
+			System.setProperty("artemis.base.url", url);
 
-		final Javalin app = startJavalin(8888);
+			ArtemisExecutor.run(new Config()
+				.setParallel(8)
+				.addVar("backEnd", url));
 
-		System.setProperty("artemis.base.url", baseUrl);
-		ArtemisExecutor.run(new Config()
-			.setParallel(8)
-			.addVar("backEnd", baseUrl));
-		System.clearProperty("artemis.base.url");
-
-		app.stop();
+			System.clearProperty("artemis.base.url");
+		});
 	}
 
 	@Test
 	public void test_error() {
-		final Javalin app = startJavalin(8080);
+		startJavalin(url -> {
+			final int degree = 9;
 
-		final int degree = 9;
+			try {
+				ArtemisExecutor.run(new Config("artemis-error")
+					.addVar("backEnd", url)
+					.setBaseUrl(url)
+					.setParallel(degree));
 
-		try {
-			ArtemisExecutor.run(new Config("artemis-error")
-				.addVar("backEnd", "http://localhost:8080")
-				.setParallel(degree));
+				fail();
+			} catch (TestFailedException e) {
+				assertEquals(degree / 2 + degree % 2, e.getNoOfErrors());
+				assertEquals(degree, e.getDegree());
+			} catch (Exception e) {
+				log.error("test_error", e);
+				fail();
+			}
 
-			fail();
-		} catch (TestFailedException e) {
-			assertEquals(degree / 2 + degree % 2, e.getNoOfErrors());
-			assertEquals(degree, e.getDegree());
-		} catch (Exception e) {
-			log.error("test_error", e);
-			fail();
-		}
-
-		app.stop();
+		});
 	}
 
 	@Test
 	public void test_devMode() {
-		final Javalin app = startJavalin(8080);
+		startJavalin(url -> {
+			final File memFile = new File(".artemis-devMode.memory.json");
+			memFile.delete();
 
-		final File memFile = new File(".artemis-devMode.memory.json");
-		memFile.delete();
+			try {
+				ArtemisExecutor.run(new Config("artemis-devMode", "artemis")
+					.setDevMode(true)
+					.setBaseUrl(url)
+					.addVar("backEnd", url));
 
-		try {
-			ArtemisExecutor.run(new Config("artemis-devMode", "artemis")
-				.setDevMode(true)
-				.addVar("backEnd", "http://localhost:8080"));
+				fail();
+			} catch (TestFailedException e) {
+				assertEquals("TestFailedException: Reached Break Point!", e.getMessage());
 
-			fail();
-		} catch (TestFailedException e) {
-			assertEquals("TestFailedException: Reached Break Point!", e.getMessage());
+				assertTrue(memFile.exists());
+			} catch (Exception e) {
+				log.error("test_error", e);
+				fail();
+			}
 
-			assertTrue(memFile.exists());
-		} catch (Exception e) {
-			log.error("test_error", e);
-			fail();
-		}
-
-		app.stop();
-		memFile.delete();
+			memFile.delete();
+		});
 	}
 
 	@Test
 	public void test_socks_proxy_connection_refused() {
-		final Javalin app = startJavalin(8080);
+		startJavalin(url -> {
+			try {
+				ArtemisExecutor.run(new Config()
+					.addVar("backEnd", url)
+					.setBaseUrl(url)
+					.setProxy("socks://127.0.0.1:44444")
+					.setParallel(1));
 
-		try {
-			ArtemisExecutor.run(new Config()
-				.addVar("backEnd", "http://localhost:8080")
-				.setProxy("socks://127.0.0.1:44444")
-				.setParallel(1));
-
-			fail();
-		} catch (TestFailedException e) {
-			assertEquals("TestFailedException: ERROR(registration) - CAUSE: Connection refused (Connection refused) [java.net.SocketException]", e.getMessage());
-		}
-
-		app.stop();
+				fail();
+			} catch (TestFailedException e) {
+				assertEquals("TestFailedException: ERROR(registration) - CAUSE: Connection refused (Connection refused) [java.net.SocketException]", e.getMessage());
+			}
+		});
 	}
 
 	@Test
 	public void test_socks_proxy_successful() {
-		final int socksPort = findPort();
-		log.info("PORT = {}", socksPort);
+		startJavalin(url -> {
+			final int socksPort = findPort();
+			log.info("SOCKS PROXY PORT = {}", socksPort);
 
-		final SocksServer socksServer = new SocksServer();
-		socksServer.start(socksPort);
+			final SocksServer socksServer = new SocksServer();
+			socksServer.start(socksPort);
 
-		final Javalin app = startJavalin(8080);
+			ArtemisExecutor.run(new Config()
+				.addVar("backEnd", url)
+				.setBaseUrl(url)
+				.setProxy("socks://127.0.0.1:" + socksPort)
+				.setParallel(1));
 
-		ArtemisExecutor.run(new Config()
-			.addVar("backEnd", "http://localhost:8080")
-			.setProxy("socks://127.0.0.1:" + socksPort)
-			.setParallel(1));
-
-		app.stop();
-		socksServer.stop();
+			socksServer.stop();
+		});
 	}
 
 	@Test
 	public void test_socks_http_connection_refused() {
-		final Javalin app = startJavalin(8080);
+		startJavalin(url -> {
+			try {
+				ArtemisExecutor.run(new Config()
+					.addVar("backEnd", "http://localhost:8080")
+					.setProxy("http://127.0.0.1:44444")
+					.setParallel(1));
 
-		try {
-			ArtemisExecutor.run(new Config()
-				.addVar("backEnd", "http://localhost:8080")
-				.setProxy("http://127.0.0.1:44444")
-				.setParallel(1));
-
-			fail();
-		} catch (TestFailedException e) {
-			assertEquals("TestFailedException: ERROR(registration) - " +
-				"CAUSE: Connect to http://127.0.0.1:44444 [/127.0.0.1] failed: " +
-				"Connection refused (Connection refused) [org.apache.hc.client5.http.HttpHostConnectException]", e.getMessage());
-		}
-
-		app.stop();
+				fail();
+			} catch (TestFailedException e) {
+				assertEquals("TestFailedException: ERROR(registration) - " +
+					"CAUSE: Connect to http://127.0.0.1:44444 [/127.0.0.1] failed: " +
+					"Connection refused (Connection refused) [org.apache.hc.client5.http.HttpHostConnectException]", e.getMessage());
+			}
+		});
 	}
 
 	@Test
 	public void test_http_proxy_successful() {
-		final int httpPort = findPort();
-		log.info("PORT = {}", httpPort);
+		startJavalin(url -> {
+			final int httpPort = findPort();
+			log.info("HTTP PROXY PORT = {}", httpPort);
 
-		final WireMockServer proxyMock = new WireMockServer(wireMockConfig().port(httpPort));
-		proxyMock.stubFor(
-			any(urlMatching(".*"))
-				.willReturn(aResponse().proxiedFrom("http://localhost:8080"))
-		);
-		proxyMock.start();
+			final WireMockServer proxyMock = new WireMockServer(wireMockConfig().port(httpPort));
+			proxyMock.stubFor(
+				any(urlMatching(".*"))
+					.willReturn(aResponse().proxiedFrom(url))
+			);
+			proxyMock.start();
 
-		final Javalin app = startJavalin(8080);
+			ArtemisExecutor.run(new Config()
+				.addVar("backEnd", url)
+				.setBaseUrl(url)
+				.setProxy("http://127.0.0.1:" + httpPort)
+				.setParallel(1));
 
-		ArtemisExecutor.run(new Config()
-			.addVar("backEnd", "http://localhost:8080")
-			.setProxy("http://127.0.0.1:" + httpPort)
-			.setParallel(1));
-
-		app.stop();
-		proxyMock.stop();
+			proxyMock.stop();
+		});
 	}
 
 	// ------------------------------
 
-	public static Javalin startJavalin(int port) {
+	public static void startJavalin(Consumer<String> consumer) {
+		final int port = findPort();
+		log.info("Javalin PORT = {}", port);
+
 		final Javalin app = Javalin
 			.create()
 			.start(port);
@@ -322,7 +314,9 @@ public class TestArtemisExecutor {
 				));
 			});
 
-		return app;
+		consumer.accept("http://localhost:" + port);
+
+		app.close();
 	}
 
 	// ------------------------------
