@@ -321,8 +321,7 @@ functionalities. You can use it in XML by calling such `${Artemis.FUN()}` expres
 |--------------------------------------------------------|--------------------------------------------------------------------------------------------------|
 | `generate(len: int, charSet: List<String>...): String` | Generates random string of `len` characters of `charSet`, e.g. `generate(5, 'a'..'z', '1'..'9')` |
 | `generate(len: int): String`                           | Generates random string of `len` alpha-numeric characters                                        |
-| `generate(len: int): String`                           | Generates random string of `len` alpha-numeric characters                                        |
-| `rand(min: int, max: int): int`                        | Generates random number between `min` and `max`                                                  |
+| `rand(min: int, max: int): int`                        | Generates random number between `min` and `max` value                                            |
 | `uuid(): String`                                       | Generates UUID using `java.util.UUID`                                                            |
 
 #### String Functions
@@ -333,20 +332,20 @@ functionalities. You can use it in XML by calling such `${Artemis.FUN()}` expres
 | `format(date: Date, pattern: String): String`     | Format `date` based on `pattern` such as `yyyy/MM/mm HH:mm:ss` using `SimpleDateFormat` class |
 | `jsonify(obj: Object): String`                    | Convert general `obj` to JSON string                                                          |
 | `objectify(json: String): Object`                 | Convert `json` string to a general object                                                     |
-| `log(log: String)`                                | Log `log` message to main log process                                                         |
+| `log(msg: String)`                                | Log `msg` to main log process                                                                 |
 
 #### I/O Functions
 
-| Function                         | Description                                                                                |
-|----------------------------------|--------------------------------------------------------------------------------------------|
-| `readFile(name: String): String` | Read file `name` as string file. The relative file address is relative to Artemis XML file |
-| `http(): HttpBuilder`            | Create a `HttpBuilder` object to build a HTTP request                                      |
+| Function                         | Description                                                                                      |
+|----------------------------------|--------------------------------------------------------------------------------------------------|
+| `readFile(name: String): String` | Read file `name` as string file. The relative file address is calculated due to Artemis XML file |
+| `http(): HttpBuilder`            | Create a `HttpBuilder` object to build a HTTP request                                            |
 
 ```java
 def rs=Artemis.http()
-	.get(url:String)|post(url:String)|put(url:String)|patch(url:String)|delete(url:String)
-	.header(key:String,value:String)         // optional, call it many times
-	.body(text:String)|.body(obj:Object)    // optional, call it once
+	.get(url:String) | .post(url:String) | .put(url:String) | .patch(url:String) | .delete(url:String)
+	.header(key:String, value:String)         // optional, may call it many times
+	.body(text:String) | .body(obj:Object)    // optional, may call it once
 	.send()
 
 // Respons attributes

@@ -112,8 +112,8 @@ public class Artemis {
 		}
 	}
 
-	public static void log(String log) {
-		ALog.info("[Groovy] - " + log);
+	public static void log(String msg) {
+		ALog.info("[Groovy] - " + msg);
 	}
 
 	// --- I/O
