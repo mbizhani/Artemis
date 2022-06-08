@@ -48,6 +48,8 @@ public class Artemis {
 		DEFAULT_CHARSET = chs;
 	}
 
+	// --- Random Data Generation
+
 	public static String generate(int len) {
 		return generate(len, CHARS);
 	}
@@ -78,14 +80,20 @@ public class Artemis {
 		return res;
 	}
 
+	public static String uuid() {
+		return UUID.randomUUID().toString();
+	}
+
+	// --- String Functions
+
 	public static String format(Number number, String pattern) {
 		final DecimalFormat df = new DecimalFormat(pattern);
 		return df.format(number);
 	}
 
-	public static String format(Date number, String pattern) {
+	public static String format(Date date, String pattern) {
 		final SimpleDateFormat df = new SimpleDateFormat(pattern);
-		return df.format(number);
+		return df.format(date);
 	}
 
 	public static String jsonify(Object obj) {
@@ -108,23 +116,7 @@ public class Artemis {
 		ALog.info("[Groovy] - " + log);
 	}
 
-	public static String uuid() {
-		return UUID.randomUUID().toString();
-	}
-
-	public static String encBase64(String str) {
-		return encBase64(str, true);
-	}
-
-	public static String encBase64(String str, boolean withPadding) {
-		return withPadding ?
-			B64_ENC.encodeToString(str.getBytes(DEFAULT_CHARSET)) :
-			B64_ENC.withoutPadding().encodeToString(str.getBytes(DEFAULT_CHARSET));
-	}
-
-	public static String decBase64(String str) {
-		return new String(B64_DEC.decode(str.getBytes(DEFAULT_CHARSET)), DEFAULT_CHARSET);
-	}
+	// --- I/O
 
 	public static HttpBuilder http() {
 		return HttpBuilder.get();
@@ -140,7 +132,21 @@ public class Artemis {
 		}
 	}
 
-	// --- PKI
+	// --- Encryption/Decryption
+
+	public static String encBase64(String str) {
+		return encBase64(str, true);
+	}
+
+	public static String encBase64(String str, boolean withPadding) {
+		return withPadding ?
+			B64_ENC.encodeToString(str.getBytes(DEFAULT_CHARSET)) :
+			B64_ENC.withoutPadding().encodeToString(str.getBytes(DEFAULT_CHARSET));
+	}
+
+	public static String decBase64(String str) {
+		return new String(B64_DEC.decode(str.getBytes(DEFAULT_CHARSET)), DEFAULT_CHARSET);
+	}
 
 	public static KeyPairUnit genKeyPair() {
 		return genKeyPair("RSA", 2048, "SHA256withRSA");

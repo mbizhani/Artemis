@@ -13,6 +13,7 @@
 - [Description of the Files](#description-of-the-files)
 - [Parallel Execution and Performance Test](#parallel-execution-and-performance-test)
 - [Start Developing](#start-developing)
+  - [`Artemis` Utility/Helper Class](#artemis-utilityhelper-class)
 
 ## Introduction
 
@@ -307,4 +308,61 @@ directory.
 
 **Note:** To alter the generation, you can append `-Dname=NAME` to the command to generate files as `NAME.xml`
 and `NAME.groovy`.
+
+### `Artemis` Utility/Helper Class
+
+During test development, you need some actions such as random data generation, object <-> JSON conversion, and even data
+encryption/decryption. The `Artemis` class is a utility/helper class with some static methods that provides such
+functionalities. You can call it in XML by calling `${Artemis.FUN()}` expression or directly in groovy.
+
+#### Random Data Generation Functions
+
+| Function                                               | Description                                                                                      |
+|--------------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| `generate(len: int, charSet: List<String>...): String` | Generates random string of `len` characters of `charSet`, e.g. `generate(5, 'a'..'z', '1'..'9')` |
+| `generate(len: int): String`                           | Generates random string of `len` alpha-numeric characters                                        |
+| `generate(len: int): String`                           | Generates random string of `len` alpha-numeric characters                                        |
+| `rand(min: int, max: int): int`                        | Generates random number between `min` and `max`                                                  |
+| `uuid(): String`                                       | Generates UUID using `java.util.UUID`                                                            |
+
+#### String Functions
+
+| Function                                          | Description                                                                                   |
+|---------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| `format(number: Number, pattern: String): String` | Format `number` based on `pattern` such as `#,###.##` using `DecimalFormat` class             |
+| `format(date: Date, pattern: String): String`     | Format `date` based on `pattern` such as `yyyy/MM/mm HH:mm:ss` using `SimpleDateFormat` class |
+| `jsonify(obj: Object): String`                    | Convert general `obj` to JSON string                                                          |
+| `objectify(json: String): Object`                 | Convert `json` string to a general object                                                     |
+| `log(log: String)`                                | Log `log` message to main log process                                                         |
+
+#### I/O Functions
+
+| Function                         | Description                                                                                |
+|----------------------------------|--------------------------------------------------------------------------------------------|
+| `readFile(name: String): String` | Read file `name` as string file. The relative file address is relative to Artemis XML file |
+| `http(): HttpBuilder`            | Create a `HttpBuilder` object to build a HTTP request                                      |
+
+```java
+def rs=Artemis.http()
+	.get(url:String)|post(url:String)|put(url:String)|patch(url:String)|delete(url:String)
+	.header(key:String,value:String)         // optional, call it many times
+	.body(text:String)|.body(obj:Object)    // optional, call it once
+	.send()
+
+// Respons attributes
+	rs
+	.code           // HTTP status code
+	.codsString     // HTTP status code as string
+	.contentType    // HTTP response content type
+	.cookies        // Sent Cookies
+	.body           // Response body as string
+	.bodyAsObject   // Converted sent JSON-string body to an object
+```
+
+#### Encryption/Decryption Functions
+
+| Function                         | Description   |
+|----------------------------------|---------------|
+| `encBase64(str: String): String` | Encode base64 |
+| `decBase64(str: String): String` | Decode base64 |
 
