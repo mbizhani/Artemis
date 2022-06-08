@@ -313,7 +313,7 @@ and `NAME.groovy`.
 
 During test development, you need some actions such as random data generation, object <-> JSON conversion, and even data
 encryption/decryption. The `Artemis` class is a utility/helper class with some static methods that provides such
-functionalities. You can call it in XML by calling `${Artemis.FUN()}` expression or directly in groovy.
+functionalities. You can use it in XML by calling such `${Artemis.FUN()}` expression or directly in groovy.
 
 #### Random Data Generation Functions
 
