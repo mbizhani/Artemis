@@ -125,13 +125,7 @@ class CustomLayoutEncoder extends PatternLayoutEncoder {
 	}
 }
 
-abstract class CustomOutputLayout extends LayoutBase<ILoggingEvent> {
-	public abstract void setPattern(String pattern);
-
-	public abstract void setOutputPatternAsHeader(boolean outputPatternAsHeader);
-}
-
-class FileLayout extends CustomOutputLayout {
+class CustomOutputLayout extends LayoutBase<ILoggingEvent> {
 	private boolean outputPatternAsHeader;
 	private String pattern;
 
@@ -150,33 +144,23 @@ class FileLayout extends CustomOutputLayout {
 		pl.setPattern(pattern);
 		pl.setOutputPatternAsHeader(outputPatternAsHeader);
 		pl.start();
-		String formattedString = pl.doLayout(event);
+		return pl.doLayout(event);
+	}
+}
+
+class FileLayout extends CustomOutputLayout {
+	@Override
+	public String doLayout(ILoggingEvent event) {
+		String formattedString = super.doLayout(event);
 		MessageParser messageParser = new MessageParser(false);
 		return messageParser.parseFormatters(formattedString);
 	}
 }
 
 class ConsoleLayout extends CustomOutputLayout {
-	private boolean outputPatternAsHeader;
-	private String pattern;
-
-
-	public void setPattern(String pattern) {
-		this.pattern = pattern;
-	}
-
-	public void setOutputPatternAsHeader(boolean outputPatternAsHeader) {
-		this.outputPatternAsHeader = outputPatternAsHeader;
-	}
-
 	@Override
 	public String doLayout(ILoggingEvent event) {
-		PatternLayout pl = new PatternLayout();
-		pl.setContext(context);
-		pl.setPattern(pattern);
-		pl.setOutputPatternAsHeader(outputPatternAsHeader);
-		pl.start();
-		String formattedString = pl.doLayout(event);
+		String formattedString = super.doLayout(event);
 		MessageParser messageParser = new MessageParser(true);
 		return messageParser.parseFormatters(formattedString);
 	}
