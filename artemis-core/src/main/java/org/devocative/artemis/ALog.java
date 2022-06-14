@@ -47,7 +47,7 @@ public class ALog {
 		sa.setName("Artemis");
 		sa.setDiscriminator(discriminator);
 		sa.setAppenderFactory((context, discriminatingValue) -> {
-			final PatternLayoutEncoder ple = new CustomLayoutEncoder(new FileLayout());
+			final PatternLayoutEncoder ple = new CustomLayoutEncoder(false);
 			ple.setContext(context);
 			ple.setPattern(PATTERN);
 			ple.start();
@@ -79,7 +79,7 @@ public class ALog {
 		logger.addAppender(sa);
 
 		if (enableConsole) {
-			final PatternLayoutEncoder ple = new CustomLayoutEncoder(new ConsoleLayout());
+			final PatternLayoutEncoder ple = new CustomLayoutEncoder(true);
 			ple.setContext(lc);
 			ple.setPattern(PATTERN);
 			ple.start();
@@ -111,8 +111,8 @@ public class ALog {
 class CustomLayoutEncoder extends PatternLayoutEncoder {
 	CustomOutputLayout patternLayout;
 
-	CustomLayoutEncoder(CustomOutputLayout patternLayout) {
-		this.patternLayout = patternLayout;
+	CustomLayoutEncoder(boolean showANSIFormats) {
+		this.patternLayout = new CustomOutputLayout(showANSIFormats);
 	}
 
 	@Override
@@ -126,9 +126,13 @@ class CustomLayoutEncoder extends PatternLayoutEncoder {
 }
 
 class CustomOutputLayout extends LayoutBase<ILoggingEvent> {
-	private boolean outputPatternAsHeader;
-	private String pattern;
 
+	private boolean outputPatternAsHeader;
+	private boolean showANSIFormats;
+	private String pattern;
+	CustomOutputLayout (boolean showANSIFormats){
+		this.showANSIFormats = showANSIFormats;
+	}
 	public void setPattern(String pattern) {
 		this.pattern = pattern;
 	}
@@ -144,24 +148,8 @@ class CustomOutputLayout extends LayoutBase<ILoggingEvent> {
 		pl.setPattern(pattern);
 		pl.setOutputPatternAsHeader(outputPatternAsHeader);
 		pl.start();
-		return pl.doLayout(event);
-	}
-}
-
-class FileLayout extends CustomOutputLayout {
-	@Override
-	public String doLayout(ILoggingEvent event) {
-		String formattedString = super.doLayout(event);
-		MessageParser messageParser = new MessageParser(false);
-		return messageParser.parseFormatters(formattedString);
-	}
-}
-
-class ConsoleLayout extends CustomOutputLayout {
-	@Override
-	public String doLayout(ILoggingEvent event) {
-		String formattedString = super.doLayout(event);
-		MessageParser messageParser = new MessageParser(true);
+		String formattedString = pl.doLayout(event);
+		MessageParser messageParser = new MessageParser(this.showANSIFormats);
 		return messageParser.parseFormatters(formattedString);
 	}
 }
