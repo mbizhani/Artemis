@@ -18,29 +18,13 @@ import static org.devocative.artemis.Memory.EStep.*;
 import static org.devocative.artemis.Util.asMap;
 
 public class ArtemisExecutor {
+
 	private static final String THIS = "_this";
 	private static final String PREV = "_prev";
 	private static final String LOOP_VAR = "_loop";
 
 	private final Config config;
 	private final HttpFactory httpFactory;
-
-	// ------------------------------
-
-	public static void run() {
-		run(new Config());
-	}
-
-	// Main
-	public static void run(Config config) {
-		config.init();
-
-		ALog.init(config.getXmlName(), config.getConsoleLog() != null ?
-			config.getConsoleLog() :
-			config.getDevMode() || config.getParallel() == 1);
-
-		new ArtemisExecutor(config).execute();
-	}
 
 	// ------------------------------
 
@@ -51,37 +35,43 @@ public class ArtemisExecutor {
 		this.httpFactory = new HttpFactory(config.getBaseUrl(), config.getProxy());
 	}
 
+	public static void run() {
+		run(new Config());
+	}
+
+	// ------------------------------
+
+	// Main
+	public static void run(Config config) {
+		config.init();
+
+		ALog.init(config.getXmlName(), config.getConsoleLog() != null ? config.getConsoleLog() : config.getDevMode() || config.getParallel() == 1);
+
+		new ArtemisExecutor(config).execute();
+	}
+
 	// ------------------------------
 
 	private void execute() {
 		final XArtemis artemis = createXArtemis();
 
-		final List<XScenario> scenarios = artemis.getScenarios()
-			.stream()
-			.filter(scenario -> scenario.isEnabled() &&
-				(config.getOnlyScenarios().isEmpty() || config.getOnlyScenarios().contains(scenario.getName())))
-			.collect(Collectors.toList());
+		final List<XScenario> scenarios = artemis.getScenarios().stream().filter(scenario -> scenario.isEnabled() && (config.getOnlyScenarios().isEmpty() || config.getOnlyScenarios().contains(scenario.getName()))).collect(Collectors.toList());
 
-		final Runnable runnable = () ->
-			run(scenarios, artemis.getVars(), config.getLoop());
+		final Runnable runnable = () -> run(scenarios, artemis.getVars(), config.getLoop());
 
 		final Result result = Parallel.execute(config.getXmlName(), config.getParallel(), runnable);
 
 		StatisticsContext.print();
 
 		if (result.hasError()) {
-			throw new TestFailedException(result.getErrors())
-				.setDegree(result.getDegree())
-				.setNoOfErrors(result.getNoOfErrors());
+			throw new TestFailedException(result.getErrors()).setDegree(result.getDegree()).setNoOfErrors(result.getNoOfErrors());
 		}
 	}
 
 	private void run(final List<XScenario> scenarios, final List<XVar> globalVars, final int loopMax) {
 		ALog.info("*---------*---------*");
 		ALog.info("|   A R T E M I S   |");
-		ALog.info(config.getDevMode() ?
-			"*-------D E V-------*" :
-			"*---------*---------*");
+		ALog.info(config.getDevMode() ? "*-------D E V-------*" : "*---------*---------*");
 
 		final Context ctx = ContextHandler.get();
 		config.getVars().forEach(v -> ctx.addVarByScope(v.getName(), v.getValue(), Global));
@@ -97,7 +87,7 @@ public class ArtemisExecutor {
 				globalVars.forEach(var -> {
 					final String value = var.getValue();
 					ctx.addVarByScope(var.getName(), value, EVarScope.Global);
-					ALog.info("Global Var: name=[{}] value=[{}]", var.getName(), value);
+					ALog.info("%cyan(Global Var:) name=[{}] value=[{}]", var.getName(), value);
 				});
 
 				for (XScenario scenario : scenarios) {
@@ -105,14 +95,13 @@ public class ArtemisExecutor {
 
 					ContextHandler.updateMemory(m -> m.setScenarioName(scenario.getName()));
 
-					ALog.info("=============== [{}] ===============", scenario.getName());
-					scenario.getVars()
-						.forEach(v -> ctx.addVarByScope(v.getName(), v.getValue(), Scenario));
+					ALog.info("%purple(=============== [{}] ===============)", scenario.getName());
+					scenario.getVars().forEach(v -> ctx.addVarByScope(v.getName(), v.getValue(), Scenario));
 
 					scenario.updateRequestsIds();
 
 					for (XBaseRequest rq : scenario.getRequests()) {
-						ALog.info("--------------- [{}] ---------------", rq.getId());
+						ALog.info("%blue(--------------- [{}] ---------------)", rq.getId());
 
 						ContextHandler.updateMemory(m -> m.setRqId(rq.getId()));
 
@@ -135,13 +124,11 @@ public class ArtemisExecutor {
 
 				final long duration = System.currentTimeMillis() - start;
 				if (loopMax == 1) {
-					ALog.info("***** [STATISTICS] *****");
+					ALog.info("%cyan(***** [STATISTICS] *****)");
 					StatisticsContext.printThis();
-					ALog.info("***** [PASSED SUCCESSFULLY in {} ms] *****",
-						duration);
+					ALog.info("%green(***** [PASSED SUCCESSFULLY in {} ms] *****)", duration);
 				} else {
-					ALog.info("***** [PASSED SUCCESSFULLY in {} ms, loopIdx={}] *****",
-						duration, iteration);
+					ALog.info("%green***** [PASSED SUCCESSFULLY in {} ms, loopIdx={}] *****)", duration, iteration);
 				}
 
 				StatisticsContext.execFinished(iteration, duration, "");
@@ -183,7 +170,7 @@ public class ArtemisExecutor {
 			}
 			try {
 				ctx.runAtScope(Request, () -> ContextHandler.invoke(rq.getId()));
-				ALog.info("Call Method - '{}(Context)'", rq.getId());
+				ALog.info("%cyan(Call Method) - '{}(Context)'", rq.getId());
 			} catch (RuntimeException e) {
 				ALog.error("ERROR: RQ({}) - calling method: '{}(Context)'", rq.getId(), rq.getId());
 				throw e;
@@ -211,9 +198,7 @@ public class ArtemisExecutor {
 		}
 
 		if (rq.getForm() != null) {
-			data.setFormFields(rq.getForm().stream()
-				.map(x -> new FormField(x.getName(), x.getValue(), x.isFile()))
-				.collect(Collectors.toList()));
+			data.setFormFields(rq.getForm().stream().map(x -> new FormField(x.getName(), x.getValue(), x.isFile())).collect(Collectors.toList()));
 		}
 
 		if (ctx.getConfig().getBeforeSend() != null) {
@@ -243,8 +228,7 @@ public class ArtemisExecutor {
 		assertCode(rq, rs);
 
 		if (assertRs.getProperties() != null && assertRs.getBody() != ERsBodyType.json) {
-			throw new TestFailedException(rq.getId(),
-				"Invalid <assertRs/> Definition: properties defined for non-json body");
+			throw new TestFailedException(rq.getId(), "Invalid <assertRs/> Definition: properties defined for non-json body");
 		}
 
 		final String rsBodyAsStr = rs.getBody();
@@ -253,7 +237,7 @@ public class ArtemisExecutor {
 				final Object obj = json(rq.getId(), rsBodyAsStr);
 				rqAndRs.put("rs", obj);
 				if (obj instanceof Map) {
-					ALog.info("RS Properties = {}", ((Map<?, ?>) obj).keySet());
+					ALog.info("%cyan(RS Properties =) {}", ((Map<?, ?>) obj).keySet());
 				}
 				assertProperties(rq, obj);
 				if (assertRs.getStore() != null) {
@@ -292,8 +276,7 @@ public class ArtemisExecutor {
 
 	private XArtemis createXArtemis() {
 		final XStream xStream = new XStream();
-		xStream.processAnnotations(new Class[]{XArtemis.class, XGet.class,
-			XPost.class, XPut.class, XPatch.class, XDelete.class, XBreakPoint.class});
+		xStream.processAnnotations(new Class[]{XArtemis.class, XGet.class, XPost.class, XPut.class, XPatch.class, XDelete.class, XBreakPoint.class});
 		xStream.allowTypesByWildcard(new String[]{"org.devocative.artemis.xml.**"});
 
 		final XArtemis artemis = (XArtemis) xStream.fromXML(ContextHandler.loadXmlFile());
@@ -307,9 +290,7 @@ public class ArtemisExecutor {
 				ALog.warn("DEV MODE: 'parallel' set to 1");
 			}
 
-			config
-				.setLoop(1)
-				.setParallel(1);
+			config.setLoop(1).setParallel(1);
 
 			final Memory memory = ContextHandler.getMEMORY();
 			if (memory.isEmpty()) {
@@ -354,10 +335,7 @@ public class ArtemisExecutor {
 							rq.setCall(null);
 						}
 					}
-				} else if (
-					steps.isEmpty() &&
-						XBaseRequest.BREAK_POINT_ID.equals(memory.getRqId()) &&
-						memory.getLastSuccessfulRqId() != null) {
+				} else if (steps.isEmpty() && XBaseRequest.BREAK_POINT_ID.equals(memory.getRqId()) && memory.getLastSuccessfulRqId() != null) {
 
 					while (!scenario.getRequests().isEmpty()) {
 						final XBaseRequest removed = scenario.getRequests().remove(0);
@@ -425,13 +403,11 @@ public class ArtemisExecutor {
 	private void assertCall(XBaseRequest rq, Object obj) {
 		final String methodName = String.format("assertRs_%s", rq.getId());
 		if (obj instanceof Map) {
-			ALog.info("AssertRs Call: {}(Context, Map)", methodName);
-			ContextHandler.get().runAtScope(Assert, () ->
-				ContextHandler.invoke(methodName, Immutable.create((Map) obj)));
+			ALog.info("%cyan(AssertRs Call:) {}(Context, Map)", methodName);
+			ContextHandler.get().runAtScope(Assert, () -> ContextHandler.invoke(methodName, Immutable.create((Map) obj)));
 		} else if (obj instanceof List) {
-			ALog.info("AssertRs Call: {}(Context, List)", methodName);
-			ContextHandler.get().runAtScope(Assert, () ->
-				ContextHandler.invoke(methodName, Immutable.create((List<?>) obj)));
+			ALog.info("%cyan(AssertRs Call:) {}(Context, List)", methodName);
+			ContextHandler.get().runAtScope(Assert, () -> ContextHandler.invoke(methodName, Immutable.create((List<?>) obj)));
 		} else {
 			throw new TestFailedException(rq.getId(), "Unsupported Response Body Type");
 		}
@@ -441,9 +417,7 @@ public class ArtemisExecutor {
 		final Object obj = rsAsMap.get(parts[idx]);
 
 		if (obj == null) {
-			throw new RuntimeException(String.format("Prop Not Found: %s (%s)",
-				parts[idx],
-				String.join(".", parts)));
+			throw new RuntimeException(String.format("Prop Not Found: %s (%s)", parts[idx], String.join(".", parts)));
 		}
 
 		if (idx == parts.length - 1) {
@@ -451,8 +425,7 @@ public class ArtemisExecutor {
 		} else {
 			final Map<String, Object> result = new HashMap<>();
 			if (!(obj instanceof Map)) {
-				throw new RuntimeException(String.format("Invalid Prop as Map: %s (%s)",
-					parts[idx], String.join(".", parts)));
+				throw new RuntimeException(String.format("Invalid Prop as Map: %s (%s)", parts[idx], String.join(".", parts)));
 			}
 			result.put(parts[idx], findValue(parts, idx + 1, (Map<?, ?>) obj));
 			return result;
@@ -462,8 +435,7 @@ public class ArtemisExecutor {
 	private void assertCode(XBaseRequest rq, HttpResponse rs) {
 		final XAssertRs assertRs = rq.getAssertRs();
 		if (assertRs.getStatus() != null && !assertRs.getStatus().equals(rs.getCode())) {
-			throw new TestFailedException(rq.getId(), "Invalid RS Code: expected %s, got %s",
-				assertRs.getStatus(), rs.getCode());
+			throw new TestFailedException(rq.getId(), "Invalid RS Code: expected %s, got %s", assertRs.getStatus(), rs.getCode());
 		}
 	}
 
