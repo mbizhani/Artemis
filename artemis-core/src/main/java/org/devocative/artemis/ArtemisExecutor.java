@@ -55,7 +55,13 @@ public class ArtemisExecutor {
 	private void execute() {
 		final XArtemis artemis = createXArtemis();
 
-		final List<XScenario> scenarios = artemis.getScenarios().stream().filter(scenario -> scenario.isEnabled() && (config.getOnlyScenarios().isEmpty() || config.getOnlyScenarios().contains(scenario.getName()))).collect(Collectors.toList());
+		final List<XScenario> scenarios = artemis.getScenarios().stream()
+			.filter(scenario -> scenario.isEnabled() &&
+				(config.getOnlyScenarios().isEmpty() ||
+					config.getOnlyScenarios().contains(scenario.getName())
+				)
+			)
+			.collect(Collectors.toList());
 
 		final Runnable runnable = () -> run(scenarios, artemis.getVars(), config.getLoop());
 
@@ -73,8 +79,7 @@ public class ArtemisExecutor {
 		ALog.info("|   A R T E M I S   |");
 		ALog.info(config.getDevMode() ? "*-------D E V-------*" : "*---------*---------*");
 
-		final Context ctx = ContextHandler.get();
-		config.getVars().forEach(v -> ctx.addVarByScope(v.getName(), v.getValue(), Global));
+		ContextHandler.createContext();
 
 		long start = System.currentTimeMillis();
 		int iteration = 0;
@@ -83,6 +88,8 @@ public class ArtemisExecutor {
 		try {
 			for (; iteration < loopMax; iteration++) {
 				start = System.currentTimeMillis();
+
+				final Context ctx = ContextHandler.get();
 
 				globalVars.forEach(var -> {
 					final String value = var.getValue();

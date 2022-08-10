@@ -72,14 +72,22 @@ public class ContextHandler {
 		}
 	}
 
-	public static synchronized Context get() {
-		Context ctx = CTX.get();
+	public static synchronized void createContext() {
+		final Context ctx = new Context(CONFIG.getProfile());
+		ctx.addVarByScope(SCRIPT_VAR, MAIN, Global);
 
-		if (ctx == null) {
-			CTX.set(ctx = createContext());
-		}
+		CONFIG.getVars().forEach(var -> {
+			ctx.addVarByScope(var.getName(), var.getValue(), Global);
+			ALog.info("%cyan(External Global Var:) name=[{}] value=[{}]", var.getName(), var.getValue());
+		});
 
-		return ctx;
+		ctx.runAtScope(Global, () -> MAIN.invokeMethod("before", new Object[]{ctx}));
+
+		CTX.set(ctx);
+	}
+
+	public static Context get() {
+		return CTX.get();
 	}
 
 	public static void shutdown(boolean successfulExec) {
@@ -158,15 +166,6 @@ public class ContextHandler {
 	}
 
 	// ------------------------------
-
-	private static Context createContext() {
-		final Context ctx = new Context(CONFIG.getProfile());
-		ctx.addVarByScope(SCRIPT_VAR, MAIN, Global);
-
-		ctx.runAtScope(Global, () -> MAIN.invokeMethod("before", new Object[]{ctx}));
-
-		return ctx;
-	}
 
 	private static InputStream loadGroovyFile() {
 		return loadFile(CONFIG.getGroovyName() + ".groovy");
