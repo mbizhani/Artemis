@@ -22,6 +22,7 @@
 	<modules>
 		<module>artemis-core</module>
 		<module>artemis-maven-plugin</module>
+		<module>artemis-cli</module>
 	</modules>
 
 	<build>

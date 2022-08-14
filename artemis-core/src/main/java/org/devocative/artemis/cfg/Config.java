@@ -47,8 +47,8 @@ public class Config {
 	}
 
 	public Config(String xmlName, String groovyName) {
-		this.xmlName = xmlName;
-		this.groovyName = groovyName;
+		this.xmlName = xmlName.toLowerCase().endsWith(".xml") ? xmlName : xmlName + ".xml";
+		this.groovyName = groovyName.toLowerCase().endsWith(".groovy") ? groovyName : groovyName + ".groovy";
 	}
 
 	// ------------------------------

@@ -54,7 +54,10 @@ public class ContextHandler {
 		});
 		MAPPER.registerModule(grv);
 
-		MEM_FILE = String.format(".%s.memory.json", config.getXmlName());
+		final String name = config.getXmlName().toLowerCase().endsWith(".xml") ?
+			config.getXmlName().substring(0, config.getXmlName().length() - 4) :
+			config.getXmlName();
+		MEM_FILE = String.format(".%s.memory.json", name);
 		final File file = new File(MEM_FILE);
 		if (config.getDevMode() && file.exists()) {
 			try {
@@ -150,7 +153,7 @@ public class ContextHandler {
 	}
 
 	public static InputStream loadXmlFile() {
-		return loadFile(CONFIG.getXmlName() + ".xml");
+		return loadFile(CONFIG.getXmlName());
 	}
 
 	public static InputStream loadFile(String name) {
@@ -168,6 +171,6 @@ public class ContextHandler {
 	// ------------------------------
 
 	private static InputStream loadGroovyFile() {
-		return loadFile(CONFIG.getGroovyName() + ".groovy");
+		return loadFile(CONFIG.getGroovyName());
 	}
 }
