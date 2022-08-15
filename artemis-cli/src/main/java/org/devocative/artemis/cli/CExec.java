@@ -6,7 +6,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-import java.util.stream.Stream;
+import java.util.Map;
 
 @Command(name = "exec", description = "Execute Artemis", mixinStandardHelpOptions = true)
 public class CExec implements Runnable {
@@ -36,8 +36,8 @@ public class CExec implements Runnable {
 	@Option(names = {"-l", "--loop"}, paramLabel = "Loop", description = "number of serial execution", defaultValue = "1")
 	private Integer loop;
 
-	@Option(names = {"-v", "--var"}, paramLabel = "VariablesInsideTest", split = ",", description = "external variables(s) passing to test")
-	private String[] vars;
+	@Option(names = {"-v", "--var"}, paramLabel = "VariablesInsideTest", split = ",", splitSynopsisLabel = "=", description = "external variables(s) passing to test")
+	private Map<String, String> vars;
 
 	@Option(names = {"-X", "--proxy"}, paramLabel = "HTTP/SocksProxy", description = "all requests passed through the proxy")
 	private String proxy;
@@ -63,10 +63,7 @@ public class CExec implements Runnable {
 			.setProxy(proxy);
 
 		if (vars != null) {
-			Stream.of(vars)
-				.map(v -> v.split("="))
-				.filter(arr -> arr.length == 2)
-				.forEach(arr -> config.addVar(arr[0], arr[1]));
+			vars.forEach(config::addVar);
 		}
 
 		try {
