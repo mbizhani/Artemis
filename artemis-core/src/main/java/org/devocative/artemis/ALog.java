@@ -18,12 +18,15 @@ import ch.qos.logback.core.util.FileSize;
 public class ALog {
 	private static final String PATTERN = "%date %-5level - %msg%n";
 	private static final LoggerContext lc = new LoggerContext();
-	private static Logger log = null;
+	private static Logger fileLog = null;
+	private static Logger consoleLog = null;
+	private static String name;
 
 	public synchronized static void init(String name, boolean enableConsole) {
+		ALog.name = name;
 		Thread.currentThread().setName(name);
 
-		if (log != null) {
+		if (fileLog != null) {
 			return;
 		}
 
@@ -73,10 +76,10 @@ public class ALog {
 		});
 		sa.start();
 
-		final Logger logger = lc.getLogger(ALog.class);
-		logger.setLevel(Level.INFO);
-		logger.setAdditive(false);
-		logger.addAppender(sa);
+		fileLog = lc.getLogger("FILE");
+		fileLog.setLevel(Level.INFO);
+		fileLog.setAdditive(false);
+		fileLog.addAppender(sa);
 
 		if (enableConsole) {
 			final PatternLayoutEncoder ple = new CustomLayoutEncoder(true);
@@ -89,22 +92,41 @@ public class ALog {
 			ca.setEncoder(ple);
 			ca.start();
 
-			logger.addAppender(ca);
+			consoleLog = lc.getLogger("CONSOLE");
+			consoleLog.setLevel(Level.INFO);
+			consoleLog.setAdditive(false);
+			consoleLog.addAppender(ca);
 		}
-
-		log = logger;
 	}
 
 	public static void info(String s, Object... params) {
-		log.info(s, params);
+		fileLog.info(s, params);
+
+		if (doLogConsole()) {
+			consoleLog.info(s, params);
+		}
 	}
 
 	public static void warn(String s, Object... params) {
-		log.warn(s, params);
+		fileLog.warn(s, params);
+
+		if (doLogConsole()) {
+			consoleLog.warn(s, params);
+		}
 	}
 
 	public static void error(String s, Object... params) {
-		log.error(s, params);
+		fileLog.error(s, params);
+
+		if (doLogConsole()) {
+			consoleLog.error(s, params);
+		}
+	}
+
+	// ------------------------------
+
+	private static boolean doLogConsole() {
+		return consoleLog != null && Thread.currentThread().getName().equals(name);
 	}
 }
 
@@ -130,9 +152,11 @@ class CustomOutputLayout extends LayoutBase<ILoggingEvent> {
 	private boolean outputPatternAsHeader;
 	private boolean showANSIFormats;
 	private String pattern;
-	CustomOutputLayout (boolean showANSIFormats){
+
+	CustomOutputLayout(boolean showANSIFormats) {
 		this.showANSIFormats = showANSIFormats;
 	}
+
 	public void setPattern(String pattern) {
 		this.pattern = pattern;
 	}
@@ -187,14 +211,14 @@ class MessageParser {
 	}
 
 	public String parseFormatters(String sub) {
-		Integer percentIndex = sub.indexOf("%");
+		int percentIndex = sub.indexOf("%");
 		if (percentIndex == -1) return sub;
 		String leadingPercent = sub.substring(percentIndex + 1);
-		Integer openIndex = leadingPercent.indexOf("(");
+		int openIndex = leadingPercent.indexOf("(");
 		if (openIndex == -1) return sub;
 		String leadingParentheses = leadingPercent.substring(openIndex + 1);
 		String inner = parseFormatters(leadingParentheses);
-		Integer closeIndex = inner.indexOf(")");
+		int closeIndex = inner.indexOf(")");
 		if (closeIndex == -1) return sub;
 		String theArg = leadingPercent.substring(0, openIndex);
 		String preMsg = sub.substring(0, percentIndex);

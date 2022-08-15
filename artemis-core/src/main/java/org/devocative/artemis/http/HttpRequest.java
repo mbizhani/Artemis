@@ -2,11 +2,13 @@ package org.devocative.artemis.http;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.cookie.BasicCookieStore;
 import org.apache.hc.client5.http.cookie.Cookie;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.cookie.BasicClientCookie;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.StringEntity;
@@ -88,7 +90,9 @@ public class HttpRequest {
 		ALog.info("RQ: {} - {}{}", request.getMethod(), getUri(), builder.toString());
 
 		final HttpClientContext context = HttpClientContext.create();
+		updateCookies(context);
 		final long start = System.currentTimeMillis();
+
 		try (final CloseableHttpResponse rs = httpClient.execute(request, context)) {
 			final long duration = System.currentTimeMillis() - start;
 			final int code = rs.getCode();
@@ -142,7 +146,7 @@ public class HttpRequest {
 		}
 	}
 
-	public String getBody(CloseableHttpResponse response) {
+	private String getBody(CloseableHttpResponse response) {
 		try {
 			return new BufferedReader(new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8))
 				.lines()
@@ -150,6 +154,22 @@ public class HttpRequest {
 		} catch (IOException e) {
 			//throw new TestFailedException(rqId, e.getMessage());
 			throw new RuntimeException(e);
+		}
+	}
+
+	private void updateCookies(HttpClientContext context) {
+		if (!ContextHandler.get().getCookies().isEmpty()) {
+			context.setCookieStore(new BasicCookieStore());
+			ContextHandler.get().getCookies()
+				.forEach((key, value) -> {
+					final BasicClientCookie cookie = new BasicClientCookie(key, value);
+					try {
+						cookie.setDomain(request.getUri().getHost());
+					} catch (URISyntaxException e) {
+						throw new RuntimeException(e);
+					}
+					context.getCookieStore().addCookie(cookie);
+				});
 		}
 	}
 }

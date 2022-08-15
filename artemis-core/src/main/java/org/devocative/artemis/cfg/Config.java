@@ -12,8 +12,6 @@ import java.util.List;
 @Setter
 @Accessors(chain = true)
 public class Config {
-	private static final String ARTEMIS_PROFILE_ENV = "ARTEMIS_PROFILE";
-	private static final String ARTEMIS_PROFILE_SYS_PROP = "artemis.profile";
 	private static final String ARTEMIS_BASE_URL_ENV = "ARTEMIS_BASE_URL";
 	private static final String ARTEMIS_BASE_URL_SYS_PROP = "artemis.base.url";
 	private static final String ARTEMIS_DEV_MODE_ENV = "ARTEMIS_DEV_MODE";
@@ -23,9 +21,9 @@ public class Config {
 
 	// ------------------------------
 
+	private final String name;
 	private final String xmlName;
 	private final String groovyName;
-	private String profile;
 	private String baseUrl;
 	private Boolean devMode;
 	private List<String> onlyScenarios = Collections.emptyList();
@@ -47,6 +45,7 @@ public class Config {
 	}
 
 	public Config(String xmlName, String groovyName) {
+		this.name = xmlName.toLowerCase().endsWith(".xml") ? xmlName.substring(0, xmlName.length() - 4) : xmlName;
 		this.xmlName = xmlName.toLowerCase().endsWith(".xml") ? xmlName : xmlName + ".xml";
 		this.groovyName = groovyName.toLowerCase().endsWith(".groovy") ? groovyName : groovyName + ".groovy";
 	}
@@ -71,10 +70,6 @@ public class Config {
 	// ---------------
 
 	public void init() {
-		if (getProfile() == null) {
-			setProfile(findValue(ARTEMIS_PROFILE_ENV, ARTEMIS_PROFILE_SYS_PROP, "local"));
-		}
-
 		if (getBaseUrl() == null) {
 			setBaseUrl(findValue(ARTEMIS_BASE_URL_ENV, ARTEMIS_BASE_URL_SYS_PROP, "http://localhost:8080"));
 		}

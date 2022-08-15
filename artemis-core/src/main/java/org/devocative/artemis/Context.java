@@ -14,11 +14,9 @@ public class Context {
 	private final Map<String, Object> globalVars = new HashMap<>();
 	private final Map<String, Object> scenarioVars = new HashMap<>();
 	private final Map<String, Object> vars = new HashMap<>();
-	private final ContextConfig config = new ContextConfig();
+	private final ContextConfig config;
 
 	private Map<String, String> cookies = Collections.emptyMap();
-
-	private final String profile;
 
 	@JsonIgnore
 	private EVarScope scope;
@@ -26,11 +24,18 @@ public class Context {
 	// ------------------------------
 
 	public Context() {
-		this("default");
+		this(null);
 	}
 
-	public Context(String profile) {
-		this.profile = profile;
+	public Context(Context parent) {
+		if (parent != null) {
+			this.globalVars.putAll(parent.globalVars);
+			this.vars.putAll(parent.globalVars);
+			this.config = parent.config;
+			setCookies(parent.cookies);
+		} else {
+			this.config = new ContextConfig();
+		}
 	}
 
 	// ------------------------------
@@ -64,17 +69,12 @@ public class Context {
 		return Immutable.create(vars);
 	}
 
-	public String getProfile() {
-		return profile;
-	}
-
 	public Map<String, String> getCookies() {
 		return cookies;
 	}
 
-	public Context setCookies(Map<String, String> cookies) {
+	public void setCookies(Map<String, String> cookies) {
 		this.cookies = Collections.unmodifiableMap(cookies);
-		return this;
 	}
 
 	public ContextConfig getConfig() {

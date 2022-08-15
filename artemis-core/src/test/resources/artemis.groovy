@@ -4,8 +4,6 @@ import org.junit.jupiter.api.Assertions
 
 // Called by ContextHandler Initialization
 def before(Context ctx) {
-	Artemis.log("Inside artemis.groovy: profile=${ctx.profile}")
-
 	ctx.addVar("password", generate(9, '0'..'9', 'a'..'z'))
 
 	ctx.config.beforeSend = { HttpRequestData data ->

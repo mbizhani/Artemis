@@ -25,15 +25,19 @@ public class StatisticsContext {
 		EXEC_RECORDS.add(new ExecRecord(Thread.currentThread().getName(), iteration, duration, error));
 	}
 
-	public static void print() {
+	public static void printAll() {
 		if (ALL_LISTS.size() > 1) {
-			printAll();
+			ALog.info("%green(/‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾[ STATISTICS ]‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\\)");
+			printAllList();
+			ALog.info("%green(\\____________________________________________/)");
 		}
 		ALL_LISTS.clear();
 	}
 
-	public static void printThis() {
+	public static void printThis(long duration) {
+		ALog.info("%cyan(/‾‾‾‾‾‾‾[ One-Time Execution ]‾‾‾‾‾‾‾\\)");
 		printOne(CTX.get());
+		ALog.info(String.format("%%cyan(\\_______[ Duration: %s ]_______/)", readableDuration(duration)));
 		CTX.remove();
 	}
 
@@ -47,14 +51,14 @@ public class StatisticsContext {
 
 	private static void printOne(RecordList list) {
 		final Tabular t = new Tabular("ID", "URI", "Method", "Status", "Duration");
-		list.forEach(r -> t.addRow(r.id, r.uri, r.method, String.valueOf(r.status), String.valueOf(r.duration)));
+		list.forEach(r -> t.addRow(r.id, r.uri, r.method, String.valueOf(r.status), readableDuration(r.duration)));
 		t.print();
 	}
 
-	private static void printAll() {
+	private static void printAllList() {
 		Collections.sort(EXEC_RECORDS);
 		final Tabular execStat = new Tabular("Th", "It", "Duration", "Error");
-		EXEC_RECORDS.forEach(r -> execStat.addRow(r.thread, String.valueOf(r.iteration), String.valueOf(r.duration), r.error));
+		EXEC_RECORDS.forEach(r -> execStat.addRow(r.thread, String.valueOf(r.iteration), readableDuration(r.duration), r.error));
 		execStat.print();
 
 		final Map<String, StatRecord> map = new LinkedHashMap<>();
@@ -85,14 +89,28 @@ public class StatisticsContext {
 			stepsStat.addRow(
 				sr.id,
 				String.valueOf(sr.status),
-				String.format("%.2f", sr.durSum / sr.count),
+				readableDuration((long) (sr.durSum / sr.count)),
 				String.valueOf(sr.count),
-				String.valueOf(sr.min),
+				readableDuration(sr.min),
 				String.format("[%s]", sr.minName),
-				String.valueOf(sr.max),
+				readableDuration(sr.max),
 				String.format("[%s]", sr.maxName)
 			));
 		stepsStat.print();
+	}
+
+	public static String readableDuration(long duration) {
+		final String result;
+
+		if (duration < 1000) {
+			result = String.format("%5d ms", duration);
+		} else if (duration < 60_000) {
+			result = String.format("%4.1f sec", duration / 1000.0);
+		} else {
+			result = String.format("%4.1f min", duration / 60_000.0);
+		}
+
+		return result;
 	}
 
 	// ------------------------------

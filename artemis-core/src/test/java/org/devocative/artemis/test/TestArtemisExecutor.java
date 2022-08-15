@@ -35,7 +35,7 @@ public class TestArtemisExecutor {
 		startJavalin(url -> ArtemisExecutor.run(new Config()
 			.addVar("backEnd", url)
 			.setBaseUrl(url)
-			.setParallel(1))
+			.setParallel(2))
 		);
 	}
 

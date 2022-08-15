@@ -54,10 +54,7 @@ public class ContextHandler {
 		});
 		MAPPER.registerModule(grv);
 
-		final String name = config.getXmlName().toLowerCase().endsWith(".xml") ?
-			config.getXmlName().substring(0, config.getXmlName().length() - 4) :
-			config.getXmlName();
-		MEM_FILE = String.format(".%s.memory.json", name);
+		MEM_FILE = String.format(".%s.memory.json", config.getName());
 		final File file = new File(MEM_FILE);
 		if (config.getDevMode() && file.exists()) {
 			try {
@@ -75,16 +72,23 @@ public class ContextHandler {
 		}
 	}
 
-	public static synchronized void createContext() {
-		final Context ctx = new Context(CONFIG.getProfile());
-		ctx.addVarByScope(SCRIPT_VAR, MAIN, Global);
+	public static void createContext() {
+		createContext(null);
+	}
 
-		CONFIG.getVars().forEach(var -> {
-			ctx.addVarByScope(var.getName(), var.getValue(), Global);
-			ALog.info("%cyan(External Global Var:) name=[{}] value=[{}]", var.getName(), var.getValue());
-		});
+	public static synchronized void createContext(Context parent) {
+		final Context ctx = new Context(parent);
 
-		ctx.runAtScope(Global, () -> MAIN.invokeMethod("before", new Object[]{ctx}));
+		if (parent == null) {
+			ctx.addVarByScope(SCRIPT_VAR, MAIN, Global);
+
+			CONFIG.getVars().forEach(var -> {
+				ctx.addVarByScope(var.getName(), var.getValue(), Global);
+				ALog.info("%cyan(External Global Var:) name=[{}] value=[{}]", var.getName(), var.getValue());
+			});
+
+			ctx.runAtScope(Global, () -> MAIN.invokeMethod("before", new Object[]{ctx}));
+		}
 
 		CTX.set(ctx);
 	}

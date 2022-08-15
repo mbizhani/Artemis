@@ -45,7 +45,7 @@ public class ArtemisExecutor {
 	public static void run(Config config) {
 		config.init();
 
-		ALog.init(config.getXmlName(), config.getConsoleLog() != null ? config.getConsoleLog() : config.getDevMode() || config.getParallel() == 1);
+		ALog.init(config.getName(), config.getConsoleLog() != null ? config.getConsoleLog() : config.getDevMode() || config.getParallel() == 1);
 
 		new ArtemisExecutor(config).execute();
 	}
@@ -65,9 +65,9 @@ public class ArtemisExecutor {
 
 		final Runnable runnable = () -> run(scenarios, artemis.getVars(), config.getLoop());
 
-		final Result result = Parallel.execute(config.getXmlName(), config.getParallel(), runnable);
+		final Result result = Parallel.execute(config.getName(), config.getParallel(), runnable);
 
-		StatisticsContext.print();
+		StatisticsContext.printAll();
 
 		if (result.hasError()) {
 			throw new TestFailedException(result.getErrors()).setDegree(result.getDegree()).setNoOfErrors(result.getNoOfErrors());
@@ -98,42 +98,31 @@ public class ArtemisExecutor {
 				});
 
 				for (XScenario scenario : scenarios) {
-					ctx.addVarByScope(LOOP_VAR, iteration, Global);
+					if (scenario.getParallel() == null || scenario.getParallel() < 2) {
+						runScenario(scenario, iteration);
+					} else {
+						final int itr = iteration;
+						ALog.info("%purple(=============== [{} - PARALLEL] ===============)", scenario.getName());
 
-					ContextHandler.updateMemory(m -> m.setScenarioName(scenario.getName()));
+						final Runnable runnable = () -> {
+							ContextHandler.createContext(ctx);
+							long startScenario = System.currentTimeMillis();
+							runScenario(scenario, itr);
+							final long duration = System.currentTimeMillis() - startScenario;
+							StatisticsContext.execFinished(itr, duration, "");
+							StatisticsContext.printThis(duration);
+						};
 
-					ALog.info("%purple(=============== [{}] ===============)", scenario.getName());
-					scenario.getVars().forEach(v -> ctx.addVarByScope(v.getName(), v.getValue(), Scenario));
-
-					scenario.updateRequestsIds();
-
-					for (XBaseRequest rq : scenario.getRequests()) {
-						ALog.info("%blue(--------------- [{}] ---------------)", rq.getId());
-
-						ContextHandler.updateMemory(m -> m.setRqId(rq.getId()));
-
-						if (!XBaseRequest.BREAK_POINT_ID.equals(rq.getId())) {
-							initRq(rq);
-							sendRq(rq);
-
-							ContextHandler.updateMemory(Memory::clear);
-							ctx.clearVars(EVarScope.Request);
-						} else if (config.getDevMode()) {
-							throw new TestFailedException("Reached Break Point!");
-						} else {
-							ALog.warn("Passing <break-point/> in Main Mode!");
+						final Result result = Parallel.execute(Thread.currentThread().getName() + "_" + scenario.getName(), scenario.getParallel(), runnable);
+						if (result.hasError()) {
+							throw new TestFailedException(result.getErrors()).setDegree(result.getDegree()).setNoOfErrors(result.getNoOfErrors());
 						}
 					}
-
-					ctx.clearVars(Scenario);
-					ContextHandler.updateMemory(Memory::clearAll);
 				}
 
 				final long duration = System.currentTimeMillis() - start;
 				if (loopMax == 1) {
-					ALog.info("%cyan(***** [STATISTICS] *****)");
-					StatisticsContext.printThis();
-					ALog.info("%green(***** [PASSED SUCCESSFULLY in {} ms] *****)", duration);
+					StatisticsContext.printThis(duration);
 				} else {
 					ALog.info("%green***** [PASSED SUCCESSFULLY in {} ms, loopIdx={}] *****)", duration, iteration);
 				}
@@ -150,6 +139,40 @@ public class ArtemisExecutor {
 			ContextHandler.shutdown(successfulExec);
 			httpFactory.shutdown();
 		}
+	}
+
+	private void runScenario(XScenario scenario, int iteration) {
+		final Context ctx = ContextHandler.get();
+
+		ctx.addVarByScope(LOOP_VAR, iteration, Global);
+
+		ContextHandler.updateMemory(m -> m.setScenarioName(scenario.getName()));
+
+		ALog.info("%purple(=============== [{}] ===============)", scenario.getName());
+		scenario.getVars().forEach(v -> ctx.addVarByScope(v.getName(), v.getValue(), Scenario));
+
+		scenario.updateRequestsIds();
+
+		for (XBaseRequest rq : scenario.getRequests()) {
+			ALog.info("%blue(--------------- [{}] ---------------)", rq.getId());
+
+			ContextHandler.updateMemory(m -> m.setRqId(rq.getId()));
+
+			if (!XBaseRequest.BREAK_POINT_ID.equals(rq.getId())) {
+				initRq(rq);
+				sendRq(rq);
+
+				ContextHandler.updateMemory(Memory::clear);
+				ctx.clearVars(EVarScope.Request);
+			} else if (config.getDevMode()) {
+				throw new TestFailedException("Reached Break Point!");
+			} else {
+				ALog.warn("Passing <break-point/> in Main Mode!");
+			}
+		}
+
+		ctx.clearVars(Scenario);
+		ContextHandler.updateMemory(Memory::clearAll);
 	}
 
 	private void initRq(XBaseRequest rq) {

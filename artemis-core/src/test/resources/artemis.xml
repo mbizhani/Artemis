@@ -77,7 +77,7 @@
 		</put>
 	</scenario>
 
-	<scenario name="Login">
+	<scenario name="Login" parallel="2">
 		<get url="/login/${cell}">
 			<headers>
 				<header name="Authorization" value="${verify.rs.token}"/>
