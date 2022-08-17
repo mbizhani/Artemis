@@ -27,17 +27,17 @@ public class StatisticsContext {
 
 	public static void printAll() {
 		if (ALL_LISTS.size() > 1) {
-			ALog.info("%green(/‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾[ STATISTICS ]‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\\)");
+			ALog.info("%green(//===============[ STATISTICS ]===============\\\\)");
 			printAllList();
-			ALog.info("%green(\\____________________________________________/)");
+			ALog.info("%green(\\\\============================================//)");
 		}
 		ALL_LISTS.clear();
 	}
 
 	public static void printThis(long duration) {
-		ALog.info("%cyan(/‾‾‾‾‾‾‾[ One-Time Execution ]‾‾‾‾‾‾‾\\)");
+		ALog.info("%cyan(//=======[ One-Time Execution ]=======\\\\)");
 		printOne(CTX.get());
-		ALog.info(String.format("%%cyan(\\_______[ Duration: %s ]_______/)", readableDuration(duration)));
+		ALog.info(String.format("%%cyan(\\\\=======[ Duration: %s ]=======//)", readableDuration(duration)));
 		CTX.remove();
 	}
 

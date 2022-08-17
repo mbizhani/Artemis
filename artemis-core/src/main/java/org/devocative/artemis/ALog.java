@@ -14,13 +14,26 @@ import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy;
 import ch.qos.logback.core.sift.AbstractDiscriminator;
 import ch.qos.logback.core.sift.Discriminator;
 import ch.qos.logback.core.util.FileSize;
+import org.slf4j.LoggerFactory;
+
+import java.nio.charset.StandardCharsets;
 
 public class ALog {
 	private static final String PATTERN = "%date %-5level - %msg%n";
-	private static final LoggerContext lc = new LoggerContext();
+	private static final LoggerContext LOGGER_CONTEXT = new LoggerContext();
+
 	private static Logger fileLog = null;
 	private static Logger consoleLog = null;
 	private static String name;
+
+	// ------------------------------
+
+	static {
+		final Logger rootLogger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+		rootLogger.setLevel(Level.ERROR);
+	}
+
+	// ------------------------------
 
 	public synchronized static void init(String name, boolean enableConsole) {
 		ALog.name = name;
@@ -30,7 +43,7 @@ public class ALog {
 			return;
 		}
 
-		lc.start();
+		LOGGER_CONTEXT.start();
 
 		final Discriminator<ILoggingEvent> discriminator = new AbstractDiscriminator<ILoggingEvent>() {
 			@Override
@@ -46,13 +59,14 @@ public class ALog {
 		discriminator.start();
 
 		final SiftingAppender sa = new SiftingAppender();
-		sa.setContext(lc);
+		sa.setContext(LOGGER_CONTEXT);
 		sa.setName("Artemis");
 		sa.setDiscriminator(discriminator);
 		sa.setAppenderFactory((context, discriminatingValue) -> {
 			final PatternLayoutEncoder ple = new CustomLayoutEncoder(false);
 			ple.setContext(context);
 			ple.setPattern(PATTERN);
+			ple.setCharset(StandardCharsets.UTF_8);
 			ple.start();
 
 			final RollingFileAppender<ILoggingEvent> appender = new RollingFileAppender<>();
@@ -76,28 +90,32 @@ public class ALog {
 		});
 		sa.start();
 
-		fileLog = lc.getLogger("FILE");
+		fileLog = LOGGER_CONTEXT.getLogger("FILE");
 		fileLog.setLevel(Level.INFO);
 		fileLog.setAdditive(false);
 		fileLog.addAppender(sa);
 
 		if (enableConsole) {
 			final PatternLayoutEncoder ple = new CustomLayoutEncoder(true);
-			ple.setContext(lc);
+			ple.setContext(LOGGER_CONTEXT);
 			ple.setPattern(PATTERN);
+			ple.setCharset(StandardCharsets.UTF_8);
 			ple.start();
 
 			final ConsoleAppender<ILoggingEvent> ca = new ConsoleAppender<>();
-			ca.setContext(lc);
+			ca.setContext(LOGGER_CONTEXT);
 			ca.setEncoder(ple);
+			ca.setWithJansi(true);
 			ca.start();
 
-			consoleLog = lc.getLogger("CONSOLE");
+			consoleLog = LOGGER_CONTEXT.getLogger("CONSOLE");
 			consoleLog.setLevel(Level.INFO);
 			consoleLog.setAdditive(false);
 			consoleLog.addAppender(ca);
 		}
 	}
+
+	// ---------------
 
 	public static void info(String s, Object... params) {
 		fileLog.info(s, params);
