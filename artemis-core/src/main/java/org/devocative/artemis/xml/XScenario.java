@@ -19,7 +19,7 @@ public class XScenario {
 	private Boolean enabled;
 
 	@XStreamAsAttribute
-	private Integer parallel;
+	private String parallel;
 
 	private List<XVar> vars;
 

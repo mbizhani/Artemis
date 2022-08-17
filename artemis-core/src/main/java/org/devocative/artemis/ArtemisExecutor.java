@@ -98,25 +98,33 @@ public class ArtemisExecutor {
 				});
 
 				for (XScenario scenario : scenarios) {
-					if (scenario.getParallel() == null || scenario.getParallel() < 2) {
-						runScenario(scenario, iteration);
-					} else {
+					final String parallel = scenario.getParallel();
+					int parallelValue = parallel != null ? Integer.parseInt(parallel) : 1;
+
+					if (parallelValue > 1) {
 						final int itr = iteration;
 						ALog.info("%purple(=============== [{} - PARALLEL] ===============)", scenario.getName());
 
 						final Runnable runnable = () -> {
 							ContextHandler.createContext(ctx);
-							long startScenario = System.currentTimeMillis();
+
+							final long startScenario = System.currentTimeMillis();
 							runScenario(scenario, itr);
 							final long duration = System.currentTimeMillis() - startScenario;
+
 							StatisticsContext.execFinished(itr, duration, "");
 							StatisticsContext.printThis(duration);
 						};
 
-						final Result result = Parallel.execute(Thread.currentThread().getName() + "_" + scenario.getName(), scenario.getParallel(), runnable);
+						final Result result = Parallel.execute(
+							Thread.currentThread().getName() + "_" + scenario.getName(),
+							parallelValue,
+							runnable);
 						if (result.hasError()) {
 							throw new TestFailedException(result.getErrors()).setDegree(result.getDegree()).setNoOfErrors(result.getNoOfErrors());
 						}
+					} else {
+						runScenario(scenario, iteration);
 					}
 				}
 
