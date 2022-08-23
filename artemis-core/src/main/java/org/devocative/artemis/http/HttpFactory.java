@@ -13,8 +13,8 @@ import org.apache.hc.core5.http.config.Registry;
 import org.apache.hc.core5.http.config.RegistryBuilder;
 import org.apache.hc.core5.http.protocol.HttpContext;
 import org.apache.hc.core5.net.URIBuilder;
-import org.devocative.artemis.ALog;
 import org.devocative.artemis.TestFailedException;
+import org.devocative.artemis.log.ALog;
 import org.devocative.artemis.xml.XBaseRequest;
 
 import java.io.IOException;

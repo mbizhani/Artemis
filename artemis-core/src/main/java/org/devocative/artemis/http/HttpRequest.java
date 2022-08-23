@@ -13,10 +13,10 @@ import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
-import org.devocative.artemis.ALog;
 import org.devocative.artemis.ContextHandler;
-import org.devocative.artemis.StatisticsContext;
 import org.devocative.artemis.TestFailedException;
+import org.devocative.artemis.ctx.StatisticsContext;
+import org.devocative.artemis.log.ALog;
 
 import java.io.BufferedReader;
 import java.io.IOException;

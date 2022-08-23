@@ -1,24 +1,34 @@
 import org.devocative.artemis.Context
-import org.devocative.artemis.http.HttpRequestData
+import org.devocative.artemis.ctx.InitContext
 import org.junit.jupiter.api.Assertions
 
 // Called by ContextHandler Initialization
-def before(Context ctx) {
-	ctx.addVar("password", generate(9, '0'..'9', 'a'..'z'))
+def before(InitContext init) {
+	init.ctx.addVar("password", generate(9, '0'..'9', 'a'..'z'))
 
-	ctx.config.beforeSend = { HttpRequestData data ->
-		switch (data.method) {
+	init.config.createBeforeSend({
+		switch (it.method) {
 			case "POST":
-				data.headers["randHead"] = "1${generate(3, '1'..'8')}"
+				it.headers["randHead"] = "1${generate(3, '1'..'8')}"
 				break
 			case "PUT":
-				data.headers["randHead"] = "2${generate(3, '1'..'8')}"
+				it.headers["randHead"] = "2${generate(3, '1'..'8')}"
 				break
 			case "GET":
-				data.headers["randHead"] = "3${generate(3, '1'..'8')}"
+				it.headers["randHead"] = "3${generate(3, '1'..'8')}"
 				break
 		}
-	}
+	})
+
+	init.config.createCommonAssertRs({
+		it
+			.matches("step", {
+				Artemis.log("CommonAssertRs for no-id: ${it.rqId}")
+			})
+			.other({
+				Artemis.log("CommonAssertRs for id: ${it.rqId}")
+			})
+	})
 }
 
 def generate(int n, List<String>... alphaSet) {

@@ -3,7 +3,9 @@ package org.devocative.artemis;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.thoughtworks.xstream.XStream;
 import org.devocative.artemis.cfg.Config;
+import org.devocative.artemis.ctx.StatisticsContext;
 import org.devocative.artemis.http.*;
+import org.devocative.artemis.log.ALog;
 import org.devocative.artemis.xml.*;
 import org.devocative.artemis.xml.method.*;
 
@@ -239,9 +241,7 @@ public class ArtemisExecutor {
 			data.setFormFields(rq.getForm().stream().map(x -> new FormField(x.getName(), x.getValue(), x.isFile())).collect(Collectors.toList()));
 		}
 
-		if (ctx.getConfig().getBeforeSend() != null) {
-			ctx.getConfig().getBeforeSend().accept(data);
-		}
+		ContextHandler.getCtxCfg().callBeforeSend(data);
 
 		final HttpRequest httpRq = httpFactory.create(rq);
 		httpRq.setHeaders(data.getHeaders());
@@ -285,6 +285,8 @@ public class ArtemisExecutor {
 						throw new TestFailedException(rq.getId(), "Id Not Found to Store: %s", assertRs.getStore());
 					}
 				}
+
+				ContextHandler.getCtxCfg().callCommonAssertRs(rq.getId(), obj);
 
 				if (assertRs.getCall() != null && assertRs.getCall()) {
 					if (rq.isWithId()) {
