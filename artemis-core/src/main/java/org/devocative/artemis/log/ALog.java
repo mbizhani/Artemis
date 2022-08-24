@@ -27,8 +27,11 @@ public class ALog {
 	// ------------------------------
 
 	static {
-		final Logger rootLogger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-		rootLogger.setLevel(Level.ERROR);
+		final org.slf4j.Logger logger = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+		if (logger instanceof Logger) {
+			final Logger rootLogger = (Logger) logger;
+			rootLogger.setLevel(Level.ERROR);
+		}
 	}
 
 	// ------------------------------

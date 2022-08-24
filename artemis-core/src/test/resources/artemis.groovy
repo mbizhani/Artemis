@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Assertions
 def before(InitContext init) {
 	init.ctx.addVar("password", generate(9, '0'..'9', 'a'..'z'))
 
-	init.config.createBeforeSend({
+	init.aspects.createBeforeSend({
 		switch (it.method) {
 			case "POST":
 				it.headers["randHead"] = "1${generate(3, '1'..'8')}"
@@ -20,7 +20,7 @@ def before(InitContext init) {
 		}
 	})
 
-	init.config.createCommonAssertRs({
+	init.aspects.createCommonAssertRs({
 		it
 			.matches("step", {
 				Artemis.log("CommonAssertRs for no-id: ${it.rqId}")

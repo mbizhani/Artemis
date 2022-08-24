@@ -241,7 +241,7 @@ public class ArtemisExecutor {
 			data.setFormFields(rq.getForm().stream().map(x -> new FormField(x.getName(), x.getValue(), x.isFile())).collect(Collectors.toList()));
 		}
 
-		ContextHandler.getCtxCfg().callBeforeSend(data);
+		ContextHandler.getAspects().callBeforeSend(data);
 
 		final HttpRequest httpRq = httpFactory.create(rq);
 		httpRq.setHeaders(data.getHeaders());
@@ -286,7 +286,7 @@ public class ArtemisExecutor {
 					}
 				}
 
-				ContextHandler.getCtxCfg().callCommonAssertRs(rq.getId(), obj);
+				ContextHandler.getAspects().callCommonAssertRs(rq.getId(), obj);
 
 				if (assertRs.getCall() != null && assertRs.getCall()) {
 					if (rq.isWithId()) {

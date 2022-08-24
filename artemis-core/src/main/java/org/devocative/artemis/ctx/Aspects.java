@@ -7,10 +7,11 @@ import org.devocative.artemis.http.HttpRequestData;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
-public class ContextConfig {
+public class Aspects {
 	private Consumer<HttpRequestData> beforeSend;
-	private final LinkedHashMap<String, Consumer<AssertRsData>> handlers = new LinkedHashMap<>();
+	private final LinkedHashMap<Pattern, Consumer<AssertRsData>> handlers = new LinkedHashMap<>();
 
 	// ------------------------------
 
@@ -36,8 +37,8 @@ public class ContextConfig {
 	public void callCommonAssertRs(String rqId, Object rsBody) {
 		final Context ctx = ContextHandler.get();
 
-		for (Map.Entry<String, Consumer<AssertRsData>> entry : handlers.entrySet()) {
-			if (rqId.matches(entry.getKey())) {
+		for (Map.Entry<Pattern, Consumer<AssertRsData>> entry : handlers.entrySet()) {
+			if (entry.getKey().matcher(rqId).find()) {
 				entry.getValue().accept(new AssertRsData(ctx, rqId, rsBody));
 				break;
 			}

@@ -13,7 +13,7 @@ import groovy.lang.Script;
 import groovy.text.SimpleTemplateEngine;
 import lombok.extern.slf4j.Slf4j;
 import org.devocative.artemis.cfg.Config;
-import org.devocative.artemis.ctx.ContextConfig;
+import org.devocative.artemis.ctx.Aspects;
 import org.devocative.artemis.ctx.InitContext;
 import org.devocative.artemis.log.ALog;
 
@@ -31,7 +31,7 @@ public class ContextHandler {
 	private static final SimpleTemplateEngine ENGINE = new SimpleTemplateEngine();
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 	private static final Memory NEW_MEMORY = new Memory();
-	private static final ContextConfig CONTEXT_CONFIG = new ContextConfig();
+	private static final Aspects ASPECTS = new Aspects();
 
 	private static Script MAIN;
 	private static Config CONFIG;
@@ -91,7 +91,7 @@ public class ContextHandler {
 				ALog.info("%cyan(External Global Var:) name=[{}] value=[{}]", var.getName(), var.getValue());
 			});
 
-			final InitContext init = new InitContext(ctx, CONTEXT_CONFIG);
+			final InitContext init = new InitContext(ctx, ASPECTS);
 			ctx.runAtScope(Global, () -> MAIN.invokeMethod("before", new Object[]{init}));
 		}
 
@@ -102,8 +102,8 @@ public class ContextHandler {
 		return CTX.get();
 	}
 
-	public static ContextConfig getCtxCfg() {
-		return CONTEXT_CONFIG;
+	public static Aspects getAspects() {
+		return ASPECTS;
 	}
 
 	public static void shutdown(boolean successfulExec) {
