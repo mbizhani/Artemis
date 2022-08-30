@@ -34,7 +34,8 @@ public class TestArtemisExecutor {
 	public void test_defaultConfig() {
 		startJavalin(url -> ArtemisExecutor.run(new Config()
 			.addVar("backEnd", url)
-			.addVar("parallelLogin", 2)
+			.addVar("parallelLogin", 3)
+			.addVar("loopLogin", 2)
 			.setBaseUrl(url)
 			.setParallel(1))
 		);
@@ -48,7 +49,8 @@ public class TestArtemisExecutor {
 			.setBaseUrl(url)
 			.setBaseDir("src/test/resources")
 			.addVar("backEnd", url)
-			.addVar("parallelLogin", 1))
+			.addVar("parallelLogin", 1)
+			.addVar("loopLogin", 1))
 		);
 	}
 
@@ -60,7 +62,8 @@ public class TestArtemisExecutor {
 			ArtemisExecutor.run(new Config()
 				.setParallel(8)
 				.addVar("backEnd", url)
-				.addVar("parallelLogin", 1));
+				.addVar("parallelLogin", 1)
+				.addVar("loopLogin", 1));
 
 			System.clearProperty("artemis.base.url");
 		});
@@ -75,6 +78,7 @@ public class TestArtemisExecutor {
 				ArtemisExecutor.run(new Config("artemis-error")
 					.addVar("backEnd", url)
 					.addVar("parallelLogin", 1)
+					.addVar("loopLogin", 1)
 					.setBaseUrl(url)
 					.setParallel(degree));
 
@@ -101,7 +105,8 @@ public class TestArtemisExecutor {
 					.setDevMode(true)
 					.setBaseUrl(url)
 					.addVar("backEnd", url)
-					.addVar("parallelLogin", 1));
+					.addVar("parallelLogin", 1)
+					.addVar("loopLogin", 1));
 
 				fail();
 			} catch (TestFailedException e) {
@@ -124,6 +129,7 @@ public class TestArtemisExecutor {
 				ArtemisExecutor.run(new Config()
 					.addVar("backEnd", url)
 					.addVar("parallelLogin", 1)
+					.addVar("loopLogin", 1)
 					.setBaseUrl(url)
 					.setProxy("socks://127.0.0.1:44444")
 					.setParallel(1));
@@ -147,6 +153,7 @@ public class TestArtemisExecutor {
 			ArtemisExecutor.run(new Config()
 				.addVar("backEnd", url)
 				.addVar("parallelLogin", 1)
+				.addVar("loopLogin", 1)
 				.setBaseUrl(url)
 				.setProxy("socks://127.0.0.1:" + socksPort)
 				.setParallel(1));
@@ -162,6 +169,7 @@ public class TestArtemisExecutor {
 				ArtemisExecutor.run(new Config()
 					.addVar("backEnd", "http://localhost:8080")
 					.addVar("parallelLogin", 1)
+					.addVar("loopLogin", 1)
 					.setProxy("http://127.0.0.1:44444")
 					.setParallel(1));
 
@@ -190,6 +198,7 @@ public class TestArtemisExecutor {
 			ArtemisExecutor.run(new Config()
 				.addVar("backEnd", url)
 				.addVar("parallelLogin", 1)
+				.addVar("loopLogin", 1)
 				.setBaseUrl(url)
 				.setProxy("http://127.0.0.1:" + httpPort)
 				.setParallel(1));

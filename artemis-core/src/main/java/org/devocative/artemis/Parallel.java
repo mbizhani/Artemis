@@ -4,10 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class Parallel {
+	public static final String THREAD_MIDIX = "-th-";
 	private static final Logger log = LoggerFactory.getLogger(Parallel.class);
 
 	public static Result execute(String name, int degree, Runnable runnable) {
@@ -32,20 +33,12 @@ public class Parallel {
 			result = new Result(1, errStr == null ? 0 : 1)
 				.setErrors(errStr);
 		} else {
-			final AtomicInteger counter = new AtomicInteger(0);
-			final StringBuilder builder = new StringBuilder();
+			final List<String> builder = Collections.synchronizedList(new ArrayList<>());
 			final List<Thread> list = new ArrayList<>();
 			for (int i = 0; i < degree; i++) {
-				final Thread t = new Thread(runnable, String.format("%s-th-%02d", name, i + 1));
+				final Thread t = new Thread(runnable, String.format("%s" + THREAD_MIDIX + "%05d", name, i));
 				t.setUncaughtExceptionHandler((t1, e) -> {
-					counter.incrementAndGet();
-					synchronized (builder) {
-						builder
-							.append("\n")
-							.append(t1.getName())
-							.append(": ")
-							.append(e.getMessage());
-					}
+					builder.add(String.format("\n%s: %s", t1.getName(), e.getMessage()));
 				});
 				t.start();
 				list.add(t);
@@ -59,8 +52,10 @@ public class Parallel {
 				}
 			}
 
-			result = new Result(degree, counter.get())
-				.setErrors(builder.toString());
+			Collections.sort(builder);
+
+			result = new Result(degree, builder.size())
+				.setErrors(String.join("", builder));
 		}
 		return result;
 	}

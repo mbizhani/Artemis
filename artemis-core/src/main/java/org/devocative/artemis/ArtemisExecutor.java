@@ -23,6 +23,7 @@ public class ArtemisExecutor {
 
 	private static final String THIS = "_this";
 	private static final String PREV = "_prev";
+	private static final String G_LOOP_VAR = "_gLoop";
 	private static final String LOOP_VAR = "_loop";
 
 	private final Config config;
@@ -154,30 +155,51 @@ public class ArtemisExecutor {
 	private void runScenario(XScenario scenario, int iteration) {
 		final Context ctx = ContextHandler.get();
 
-		ctx.addVarByScope(LOOP_VAR, iteration, Global);
+		ctx.addVarByScope(G_LOOP_VAR, iteration, Global);
 
 		ContextHandler.updateMemory(m -> m.setScenarioName(scenario.getName()));
 
-		ALog.info("%purple(=============== [{}] ===============)", scenario.getName());
-		scenario.getVars().forEach(v -> ctx.addVarByScope(v.getName(), v.getValue(), Scenario));
-
 		scenario.updateRequestsIds();
 
-		for (XBaseRequest rq : scenario.getRequests()) {
-			ALog.info("%blue(--------------- [{}] ---------------)", rq.getId());
+		final String loopMaxStr = scenario.getLoop();
+		final int loopMax = loopMaxStr == null ? 1 : Integer.parseInt(loopMaxStr);
 
-			ContextHandler.updateMemory(m -> m.setRqId(rq.getId()));
-
-			if (!XBaseRequest.BREAK_POINT_ID.equals(rq.getId())) {
-				initRq(rq);
-				sendRq(rq);
-
-				ContextHandler.updateMemory(Memory::clear);
-				ctx.clearVars(EVarScope.Request);
-			} else if (config.getDevMode()) {
-				throw new TestFailedException("Reached Break Point!");
+		for (int it = 0; it < loopMax; it++) {
+			if (loopMax == 1) {
+				ALog.info("%purple(=============== [{}] ===============)", scenario.getName());
 			} else {
-				ALog.warn("Passing <break-point/> in Main Mode!");
+				ALog.info("%purple(=============== [{}]_{}/{}_===============)", scenario.getName(), it + 1, loopMax);
+			}
+			scenario.getVars().forEach(v -> ctx.addVarByScope(v.getName(), v.getValue(), Scenario));
+
+			ctx.addVarByScope(LOOP_VAR, it, Scenario);
+
+			if (scenario.getCall() != null && scenario.getCall()) {
+				try {
+					ctx.runAtScope(Scenario, () -> ContextHandler.invoke(scenario.getName()));
+					ALog.info("%cyan(Call Method) - '{}(Context)'", scenario.getName());
+				} catch (RuntimeException e) {
+					ALog.error("ERROR: Scenario({}) - calling method: '{}(Context)'", scenario.getName(), scenario.getName());
+					throw e;
+				}
+			}
+
+			for (XBaseRequest rq : scenario.getRequests()) {
+				ALog.info("%blue(--------------- [{}] ---------------)", rq.getId());
+
+				ContextHandler.updateMemory(m -> m.setRqId(rq.getId()));
+
+				if (!XBaseRequest.BREAK_POINT_ID.equals(rq.getId())) {
+					initRq(rq);
+					sendRq(rq);
+
+					ContextHandler.updateMemory(Memory::clear);
+					ctx.clearVars(EVarScope.Request);
+				} else if (config.getDevMode()) {
+					throw new TestFailedException("Reached Break Point!");
+				} else {
+					ALog.warn("Passing <break-point/> in Main Mode!");
+				}
 			}
 		}
 
@@ -235,6 +257,7 @@ public class ArtemisExecutor {
 		final XBody body = rq.getBody();
 		if (body != null) {
 			data.setBody(body.getContent().trim());
+			rqAndRs.put("oRq", body.getContent().trim());
 		}
 
 		if (rq.getForm() != null) {

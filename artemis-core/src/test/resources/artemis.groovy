@@ -7,15 +7,15 @@ def before(InitContext init) {
 	init.ctx.addVar("password", generate(9, '0'..'9', 'a'..'z'))
 
 	init.aspects.createBeforeSend({
-		switch (it.method) {
+		switch (it.data.method) {
 			case "POST":
-				it.headers["randHead"] = "1${generate(3, '1'..'8')}"
+				it.data.headers["randHead"] = "1${generate(3, '1'..'8')}"
 				break
 			case "PUT":
-				it.headers["randHead"] = "2${generate(3, '1'..'8')}"
+				it.data.headers["randHead"] = "2${generate(3, '1'..'8')}"
 				break
 			case "GET":
-				it.headers["randHead"] = "3${generate(3, '1'..'8')}"
+				it.data.headers["randHead"] = "3${generate(3, '1'..'8')}"
 				break
 		}
 	})
@@ -23,10 +23,10 @@ def before(InitContext init) {
 	init.aspects.createCommonAssertRs({
 		it
 			.matches("step", {
-				Artemis.log("CommonAssertRs for no-id: ${it.rqId}")
+				Artemis.log("CommonAssertRs for no-id: ${it.rqId}, this=${it.ctx.vars._this}")
 			})
 			.other({
-				Artemis.log("CommonAssertRs for id: ${it.rqId}")
+				Artemis.log("CommonAssertRs for id: ${it.rqId}, this=${it.ctx.vars._this}")
 			})
 	})
 }

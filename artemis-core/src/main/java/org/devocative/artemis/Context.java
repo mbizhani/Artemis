@@ -58,6 +58,27 @@ public class Context {
 		}
 	}
 
+	public void putVar(String name, Object value) {
+		putVar(name, value, false);
+	}
+
+	public void putVar(String name, Object value, boolean store) {
+		if (scope == null) {
+			throw new RuntimeException("Null scope in 'putVar'");
+		}
+
+		if (scope == EVarScope.Assert) {
+			throw new RuntimeException("Can't 'putVar' in <assertRs/> call");
+		}
+
+		if (store) {
+			ALog.warn("[Groovy] Put Var Globally: {}", name);
+			addVarByScope(name, value, EVarScope.Global);
+		} else {
+			addVarByScope(name, value, scope);
+		}
+	}
+
 	public Map<String, Object> getVars() {
 		return Immutable.create(vars);
 	}

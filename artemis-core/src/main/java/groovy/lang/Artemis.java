@@ -3,6 +3,7 @@ package groovy.lang;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.devocative.artemis.ContextHandler;
+import org.devocative.artemis.Parallel;
 import org.devocative.artemis.log.ALog;
 
 import java.io.BufferedReader;
@@ -82,6 +83,16 @@ public class Artemis {
 
 	public static String uuid() {
 		return UUID.randomUUID().toString();
+	}
+
+	public static int getThreadId() {
+		final String name = Thread.currentThread().getName();
+		final int idx = name.lastIndexOf(Parallel.THREAD_MIDIX);
+		if (idx > 0) {
+			final String threadId = name.substring(idx + Parallel.THREAD_MIDIX.length());
+			return Integer.parseInt(threadId);
+		}
+		return 0;
 	}
 
 	// --- String Functions

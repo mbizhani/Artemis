@@ -10,12 +10,12 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 public class Aspects {
-	private Consumer<HttpRequestData> beforeSend;
+	private Consumer<BeforeSendData> beforeSend;
 	private final LinkedHashMap<Pattern, Consumer<AssertRsData>> handlers = new LinkedHashMap<>();
 
 	// ------------------------------
 
-	public void createBeforeSend(Consumer<HttpRequestData> beforeSend) {
+	public void createBeforeSend(Consumer<BeforeSendData> beforeSend) {
 		if (this.beforeSend == null) {
 			this.beforeSend = beforeSend;
 		}
@@ -23,7 +23,8 @@ public class Aspects {
 
 	public void callBeforeSend(HttpRequestData data) {
 		if (beforeSend != null) {
-			beforeSend.accept(data);
+			final Context ctx = ContextHandler.get();
+			beforeSend.accept(new BeforeSendData(ctx, data));
 		}
 	}
 

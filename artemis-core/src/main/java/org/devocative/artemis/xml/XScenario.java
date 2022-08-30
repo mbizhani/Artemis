@@ -21,6 +21,12 @@ public class XScenario {
 	@XStreamAsAttribute
 	private String parallel;
 
+	@XStreamAsAttribute
+	private String loop;
+
+	@XStreamAsAttribute
+	private Boolean call;
+
 	private List<XVar> vars;
 
 	@XStreamImplicit
