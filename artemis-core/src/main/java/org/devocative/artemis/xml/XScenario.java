@@ -13,7 +13,7 @@ import java.util.List;
 @XStreamAlias("scenario")
 public class XScenario {
 	@XStreamAsAttribute
-	private String name;
+	private String id;
 
 	@XStreamAsAttribute
 	private Boolean enabled;
@@ -48,7 +48,7 @@ public class XScenario {
 				}
 			}
 
-			rq.setGlobalId(getName() + "." + rq.getId());
+			rq.setGlobalId(this.getId() + "." + rq.getId());
 			idx++;
 		}
 	}

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!DOCTYPE artemis PUBLIC "-//Devocative.Org//Artemis 1.0//EN"
-		"https://devocative.org/dtd/artemis-1.0.dtd">
+		"https://devocative.org/dtd/artemis-2.0.dtd">
 
 <artemis>
 	<vars>
@@ -10,7 +10,7 @@
 		<var name="city" value="${Thread.currentThread().getName()}"/>
 	</vars>
 
-	<scenario name="RegisterUser">
+	<scenario id="RegisterUser">
 		<vars>
 			<var name="randInt">${_.generate(3, '1'..'9')}</var>
 			<!--
@@ -77,7 +77,7 @@
 		</put>
 	</scenario>
 
-	<scenario name="Login" parallel="${parallelLogin}" loop="${loopLogin}">
+	<scenario id="Login" parallel="${parallelLogin}" loop="${loopLogin}">
 		<get url="/login/${cell}">
 			<headers>
 				<header name="Authorization" value="${verify.rs.token}"/>
