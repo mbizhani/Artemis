@@ -193,6 +193,8 @@ public class ArtemisExecutor {
 					initRq(rq);
 					sendRq(rq);
 
+					checkSleep(scenario);
+
 					ContextHandler.updateMemory(Memory::clear);
 					ctx.clearVars(EVarScope.Request);
 				} else if (config.getDevMode()) {
@@ -507,6 +509,19 @@ public class ArtemisExecutor {
 			return ContextHandler.fromJson(content, Object.class);
 		} catch (JsonProcessingException e) {
 			throw new TestFailedException(id, "Invalid JSON Format:\n%s", content);
+		}
+	}
+
+	private void checkSleep(XScenario scenario) {
+		final String sleepStr = scenario.getSleep();
+		if (sleepStr != null) {
+			long sleep = Long.parseLong(sleepStr);
+			try {
+				ALog.info("sleep: {}", sleep);
+				Thread.sleep(sleep);
+			} catch (InterruptedException e) {
+				throw new RuntimeException("Sleep Problem", e);
+			}
 		}
 	}
 }

@@ -8,9 +8,10 @@
 		<!-- 'cell'     is set in artemis.groovy's 'storeCell()' method-->
 		<!-- 'password' is set in artemis.groovy's 'before()' method -->
 		<var name="city" value="${Thread.currentThread().getName()}"/>
+		<var name="sleep" value="1100"/>
 	</vars>
 
-	<scenario id="RegisterUser">
+	<scenario id="RegisterUser" sleep="${sleep}">
 		<vars>
 			<var name="randInt">${_.generate(3, '1'..'9')}</var>
 			<!--

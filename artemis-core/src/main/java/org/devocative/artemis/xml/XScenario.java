@@ -25,6 +25,9 @@ public class XScenario {
 	private String loop;
 
 	@XStreamAsAttribute
+	private String sleep;
+
+	@XStreamAsAttribute
 	private Boolean call;
 
 	private List<XVar> vars;
