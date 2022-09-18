@@ -86,9 +86,9 @@ public class ContextHandler {
 		if (parent == null) {
 			ctx.addVarByScope(SCRIPT_VAR, MAIN, Global);
 
-			CONFIG.getVars().forEach(var -> {
-				ctx.addVarByScope(var.getName(), var.getValue(), Global);
-				ALog.info("%cyan(External Global Var:) name=[{}] value=[{}]", var.getName(), var.getValue());
+			CONFIG.getVars().forEach((key, value) -> {
+				ctx.addVarByScope(key, value, Global);
+				ALog.info("%cyan(External Global Var:) name=[{}] value=[{}]", key, value);
 			});
 
 			final InitContext init = new InitContext(ctx, ASPECTS);
@@ -171,12 +171,18 @@ public class ContextHandler {
 
 	public static InputStream loadFile(String name) {
 		if (CONFIG.getBaseDir() == null) {
-			return ContextHandler.class.getResourceAsStream("/" + name);
+			final InputStream stream = ContextHandler.class.getResourceAsStream("/" + name);
+			if (stream == null) {
+				throw new RuntimeException("Resource Not Found: /" + name);
+			}
+			return stream;
 		} else {
+			final File file = new File(String.format("%s/%s", CONFIG.getBaseDir(), name));
+
 			try {
-				return new FileInputStream(String.format("%s/%s", CONFIG.getBaseDir(), name));
+				return new FileInputStream(file);
 			} catch (FileNotFoundException e) {
-				throw new RuntimeException(e);
+				throw new RuntimeException("File Not Found: " + file.getAbsolutePath());
 			}
 		}
 	}

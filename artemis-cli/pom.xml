@@ -31,6 +31,12 @@
 			<version>2.4.0</version>
 		</dependency>
 
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
+			<version>${d.jackson}</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>

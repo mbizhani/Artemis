@@ -8,15 +8,15 @@ import picocli.CommandLine.Parameters;
 
 import java.util.Map;
 
+import static org.devocative.artemis.Util.isEmpty;
+
 @Command(name = "exec", description = "Execute Artemis", mixinStandardHelpOptions = true)
 public class CExec implements Runnable {
 
-	@Parameters(index = "0", arity = "0..1", paramLabel = "BaseURL", description = "base url for all requests",
-		defaultValue = "http://localhost:8080")
+	@Parameters(arity = "0..1", paramLabel = "BaseURL", description = "base url for all requests")
 	private String baseUrl;
 
-	@Option(names = {"-n", "--name"}, paramLabel = "NAME", description = "look for '<name>.xml' and '<name>.groovy'",
-		defaultValue = "artemis")
+	@Option(names = {"-n", "--name"}, paramLabel = "NAME", description = "look for '<name>.xml' and '<name>.groovy'")
 	private String name;
 
 	@Option(names = {"-x", "--xml"}, paramLabel = "XmlFileName", description = "look for '<name>.xml'")
@@ -25,15 +25,13 @@ public class CExec implements Runnable {
 	@Option(names = {"-g", "--groovy"}, paramLabel = "GroovyFileName", description = "look for '<name>.groovy'")
 	private String groovyName;
 
-	@Option(names = {"-d", "--dir"}, paramLabel = "BaseDirectory", description = "look for files in this directory",
-		defaultValue = ".")
+	@Option(names = {"-d", "--dir"}, paramLabel = "BaseDirectory", description = "look for files in this directory")
 	private String baseDir;
 
-	@Option(names = {"-p", "--parallel"}, paramLabel = "ParallelExecution", description = "create threads to execute concurrently",
-		defaultValue = "1")
+	@Option(names = {"-p", "--parallel"}, paramLabel = "ParallelExecution", description = "create threads to execute concurrently")
 	private Integer parallel;
 
-	@Option(names = {"-l", "--loop"}, paramLabel = "Loop", description = "number of serial execution", defaultValue = "1")
+	@Option(names = {"-l", "--loop"}, paramLabel = "Loop", description = "number of serial execution")
 	private Integer loop;
 
 	@Option(names = {"-v", "--var"}, paramLabel = "VariablesInsideTest", split = ",", splitSynopsisLabel = "=", description = "external variables(s) passing to test")
@@ -46,21 +44,23 @@ public class CExec implements Runnable {
 
 	@Override
 	public void run() {
-		if (xmlName == null) {
-			xmlName = name;
-		}
+		final Config config = ConfigLoader.load(name, xmlName, groovyName);
 
-		if (groovyName == null) {
-			groovyName = name;
+		if (!isEmpty(baseUrl)) {
+			config.setBaseUrl(baseUrl);
 		}
-
-		final Config config = new Config(xmlName, groovyName);
-		config
-			.setBaseUrl(baseUrl)
-			.setBaseDir(baseDir)
-			.setLoop(loop)
-			.setParallel(parallel)
-			.setProxy(proxy);
+		if (!isEmpty(baseDir)) {
+			config.setBaseDir(baseDir);
+		}
+		if (loop != null) {
+			config.setLoop(loop);
+		}
+		if (parallel != null) {
+			config.setParallel(parallel);
+		}
+		if (!isEmpty(proxy)) {
+			config.setProxy(proxy);
+		}
 
 		if (vars != null) {
 			vars.forEach(config::addVar);
@@ -68,6 +68,8 @@ public class CExec implements Runnable {
 
 		try {
 			ArtemisExecutor.run(config);
+		} catch (NullPointerException e) {
+			e.printStackTrace();
 		} catch (Exception e) {
 			if (e.getCause() != null) {
 				System.err.println("ERROR: " + e.getCause().getMessage());

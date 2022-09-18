@@ -4,9 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -31,7 +32,7 @@ public class Config {
 	private Integer parallel;
 	private Integer loop = 1;
 	private Boolean consoleLog;
-	private List<Var> vars = new ArrayList<>();
+	private Map<String, Object> vars = new HashMap<>();
 	private String proxy;
 
 	// ------------------------------
@@ -63,7 +64,7 @@ public class Config {
 	}
 
 	public Config addVar(String name, Object value) {
-		vars.add(new Var(name, value));
+		vars.put(name, value);
 		return this;
 	}
 

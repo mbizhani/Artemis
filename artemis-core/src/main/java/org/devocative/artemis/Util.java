@@ -14,4 +14,8 @@ public class Util {
 				.stream()
 				.collect(Collectors.toMap(INameTheValue::getName, nv -> nv.getValue().toString()));
 	}
+
+	public static boolean isEmpty(String str) {
+		return str == null || str.trim().isEmpty();
+	}
 }
