@@ -54,6 +54,12 @@
 							<mainClass>org.devocative.artemis.cli.ArtemisCLIMain</mainClass>
 						</transformer>
 					</transformers>
+
+					<artifactSet>
+						<excludes>
+							<exclude>org.projectlombok:lombok</exclude>
+						</excludes>
+					</artifactSet>
 				</configuration>
 
 				<executions>

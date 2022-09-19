@@ -11,6 +11,7 @@ public class ArtemisCLIMain {
 		final CommandLine line = new CommandLine(new ArtemisCommand());
 		line
 			.addSubcommand(new CExec())
+			.addSubcommand(new CInit())
 			.execute(args);
 
 		AnsiConsole.systemUninstall();

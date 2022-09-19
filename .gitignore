@@ -3,4 +3,6 @@
 target/
 logs/
 .*.memory.json
+
 config.yaml
+/files/
