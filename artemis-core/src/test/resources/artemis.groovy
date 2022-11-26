@@ -4,18 +4,18 @@ import org.junit.jupiter.api.Assertions
 
 // Called by ContextHandler Initialization
 def before(InitContext init) {
-	init.ctx.addVar("password", generate(9, '0'..'9', 'a'..'z'))
+	init.ctx.addVar("password", Util.generate(9, '0'..'9', 'a'..'z'))
 
 	init.aspects.createBeforeSend({
 		switch (it.data.method) {
 			case "POST":
-				it.data.headers["randHead"] = "1${generate(3, '1'..'8')}"
+				it.data.headers["randHead"] = "1${Util.generate(3, '1'..'8')}"
 				break
 			case "PUT":
-				it.data.headers["randHead"] = "2${generate(3, '1'..'8')}"
+				it.data.headers["randHead"] = "2${Util.generate(3, '1'..'8')}"
 				break
 			case "GET":
-				it.data.headers["randHead"] = "3${generate(3, '1'..'8')}"
+				it.data.headers["randHead"] = "3${Util.generate(3, '1'..'8')}"
 				break
 		}
 	})
@@ -31,15 +31,8 @@ def before(InitContext init) {
 	})
 }
 
-def generate(int n, List<String>... alphaSet) {
-	def list = alphaSet.flatten()
-	new Random().with {
-		(1..n).collect { list[nextInt(list.size())] }.join()
-	}
-}
-
 def registration(Context ctx) {
-	ctx.addVar("cell", "09${generate(9, '0'..'9')}", true);
+	ctx.addVar("cell", "09${Util.generate(9, '0'..'9')}", true);
 }
 
 def assertRs_registration(Context ctx, Object rsBody) {

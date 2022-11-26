@@ -10,16 +10,16 @@
 
 	<scenario name="RegisterUser">
 		<vars>
-			<var name="randInt">${_.generate(3, '1'..'9')}</var>
+			<var name="randInt">${Util.generate(3, '1'..'9')}</var>
 			<!--
 			OR
-			<var name="randInt" value="${_.generate(3, '1'..'9')}"/>
+			<var name="randInt" value="${Util.generate(3, '1'..'9')}"/>
 			-->
 		</vars>
 
 		<post id="registration" url="/registrations?_p=${rand}" call="true">
 			<vars>
-				<var name="rand" value="${_.generate(3, '0'..'9', 'a'..'z')}"/>
+				<var name="rand" value="${Util.generate(3, '0'..'9', 'a'..'z')}"/>
 			</vars>
 
 			<urlParams>

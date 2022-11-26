@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import groovy.lang.GString;
+import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import groovy.text.SimpleTemplateEngine;
@@ -28,11 +29,11 @@ public class ContextHandler {
 	private static final String SCRIPT_VAR = "_";
 
 	private static final ThreadLocal<Context> CTX = new ThreadLocal<>();
-	private static final SimpleTemplateEngine ENGINE = new SimpleTemplateEngine();
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 	private static final Memory NEW_MEMORY = new Memory();
 	private static final Aspects ASPECTS = new Aspects();
 
+	private static SimpleTemplateEngine ENGINE;
 	private static Script MAIN;
 	private static Config CONFIG;
 	private static String MEM_FILE;
@@ -43,7 +44,16 @@ public class ContextHandler {
 	public static void init(Config config) {
 		CONFIG = config;
 
-		final GroovyShell shell = new GroovyShell();
+		final GroovyClassLoader gcl = new GroovyClassLoader();
+		if (CONFIG.getBaseDir() != null) {
+			final File file = new File(CONFIG.getBaseDir());
+			log.info("Groovy Add Classpath: {}", file.getAbsolutePath());
+			gcl.addClasspath(file.getAbsolutePath());
+		}
+
+		ENGINE = new SimpleTemplateEngine(gcl);
+
+		final GroovyShell shell = new GroovyShell(gcl);
 		MAIN = shell.parse(new InputStreamReader(loadGroovyFile()));
 
 		MAPPER.setVisibility(MAPPER.getSerializationConfig().getDefaultVisibilityChecker()
