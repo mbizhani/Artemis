@@ -82,7 +82,7 @@ public class Proxy {
 
 	private Object eval(String str, Method method) {
 		try {
-			return ContextHandler.eval(str);
+			return ContextHandler.evalTxtTemplate(str);
 		} catch (MissingPropertyException | MissingMethodException e) {
 			final String missing;
 			if (e instanceof MissingPropertyException) {

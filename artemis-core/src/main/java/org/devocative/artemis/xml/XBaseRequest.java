@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.devocative.artemis.xml.method.XBody;
+import org.devocative.artemis.xml.method.XWhen;
 import org.devocative.artemis.xml.param.XFormField;
 import org.devocative.artemis.xml.param.XUrlParam;
 
@@ -24,6 +25,8 @@ public abstract class XBaseRequest {
 
 	@XStreamAsAttribute
 	private Boolean call;
+
+	private XWhen when;
 
 	private List<XVar> vars;
 

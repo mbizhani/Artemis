@@ -50,6 +50,7 @@
 		</get>
 
 		<put id="verify" url="${backEnd}/registrations">
+			<when message="Oops!">fetchCode.rs.smsCode != null</when>
 			<body><![CDATA[
 {
 	"smsCode": "${_prev.rs.smsCode}",

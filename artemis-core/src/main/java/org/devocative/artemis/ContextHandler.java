@@ -7,10 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import groovy.lang.GString;
-import groovy.lang.GroovyClassLoader;
-import groovy.lang.GroovyShell;
-import groovy.lang.Script;
+import groovy.lang.*;
 import groovy.text.SimpleTemplateEngine;
 import lombok.extern.slf4j.Slf4j;
 import org.devocative.artemis.cfg.Config;
@@ -33,6 +30,7 @@ public class ContextHandler {
 	private static final Memory NEW_MEMORY = new Memory();
 	private static final Aspects ASPECTS = new Aspects();
 
+	private static GroovyShell SHELL;
 	private static SimpleTemplateEngine ENGINE;
 	private static Script MAIN;
 	private static Config CONFIG;
@@ -53,8 +51,8 @@ public class ContextHandler {
 
 		ENGINE = new SimpleTemplateEngine(gcl);
 
-		final GroovyShell shell = new GroovyShell(gcl);
-		MAIN = shell.parse(new InputStreamReader(loadGroovyFile()));
+		SHELL = new GroovyShell(gcl);
+		MAIN = SHELL.parse(new InputStreamReader(loadGroovyFile()));
 
 		MAPPER.setVisibility(MAPPER.getSerializationConfig().getDefaultVisibilityChecker()
 			.withFieldVisibility(JsonAutoDetect.Visibility.ANY));
@@ -127,7 +125,7 @@ public class ContextHandler {
 		}
 	}
 
-	public static Object eval(String str) {
+	public static String evalTxtTemplate(String str) {
 		try {
 			return ENGINE
 				.createTemplate(str)
@@ -136,6 +134,12 @@ public class ContextHandler {
 		} catch (ClassNotFoundException | IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static Object evalExpr(String str) {
+		final Script script = SHELL.parse(str);
+		script.setBinding(new Binding(new HashMap<>(get().getVars())));
+		return script.run();
 	}
 
 	public static void invoke(String method) {

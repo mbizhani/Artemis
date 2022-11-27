@@ -190,13 +190,18 @@ public class ArtemisExecutor {
 				ContextHandler.updateMemory(m -> m.setRqId(rq.getId()));
 
 				if (!XBaseRequest.BREAK_POINT_ID.equals(rq.getId())) {
-					initRq(rq);
-					sendRq(rq);
+					if (evaluateWhen(rq.getWhen())) {
+						initRq(rq);
+						sendRq(rq);
 
-					checkSleep(scenario);
+						checkSleep(scenario);
 
-					ContextHandler.updateMemory(Memory::clear);
-					ctx.clearVars(EVarScope.Request);
+						ContextHandler.updateMemory(Memory::clear);
+						ctx.clearVars(EVarScope.Request);
+					} else {
+						final String msg = rq.getWhen().getMessage() != null ? rq.getWhen().getMessage() : "'when' is false!";
+						ALog.info("RQ SKIPPED: {}", msg);
+					}
 				} else if (config.getDevMode()) {
 					throw new TestFailedException("Reached Break Point!");
 				} else {
@@ -207,6 +212,13 @@ public class ArtemisExecutor {
 
 		ctx.clearVars(Scenario);
 		ContextHandler.updateMemory(Memory::clearAll);
+	}
+
+	private Boolean evaluateWhen(XWhen when) {
+		if (when != null) {
+			return (Boolean) ContextHandler.evalExpr(when.getContent());
+		}
+		return true;
 	}
 
 	private void initRq(XBaseRequest rq) {
