@@ -25,6 +25,13 @@ def before(InitContext init) {
 			.matches("step", {
 				Artemis.log("CommonAssertRs for no-id: ${it.rqId}, this=${it.ctx.vars._this}")
 			})
+			.matches("verify", {
+				Assertions.assertTrue(it.rqId.contains("verify"))
+
+				if (it.rqId == 'verify_by$sms') {
+					Assertions.assertEquals("sms", it.rqIdVar("by"))
+				}
+			})
 			.other({
 				Artemis.log("CommonAssertRs for id: ${it.rqId}, this=${it.ctx.vars._this}")
 			})
@@ -45,7 +52,7 @@ def assertRs_fetchCode(Context ctx, Object rsBody) {
 	Assertions.assertEquals("22", ctx.cookies.Cookie2)
 }
 
-def assertRs_verify(Context ctx, Map rsBody) {
+def assertRs_verify_by$sms(Context ctx, Map rsBody) {
 	Assertions.assertNotNull(rsBody.token)
 	Assertions.assertNotNull(rsBody.userId)
 	Assertions.assertNull(rsBody.nullProp)

@@ -9,12 +9,13 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-public class Aspects {
+public class Aspects implements IAspects {
 	private Consumer<BeforeSendData> beforeSend;
 	private final LinkedHashMap<Pattern, Consumer<AssertRsData>> handlers = new LinkedHashMap<>();
 
 	// ------------------------------
 
+	@Override
 	public void createBeforeSend(Consumer<BeforeSendData> beforeSend) {
 		if (this.beforeSend == null) {
 			this.beforeSend = beforeSend;
@@ -30,6 +31,7 @@ public class Aspects {
 
 	// ---------------
 
+	@Override
 	public void createCommonAssertRs(Consumer<CommonAssertRs> consumer) {
 		final CommonAssertRs commonAssertRs = new CommonAssertRs(handlers);
 		consumer.accept(commonAssertRs);

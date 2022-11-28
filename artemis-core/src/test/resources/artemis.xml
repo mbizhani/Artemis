@@ -49,7 +49,7 @@
 			<assertRs status="200" properties="smsCode" cookies="Cookie1,Cookie2" call="true"/>
 		</get>
 
-		<put id="verify" url="${backEnd}/registrations">
+		<put id="verify_by$sms" url="${backEnd}/registrations">
 			<when message="Oops!">fetchCode.rs.smsCode != null</when>
 			<body><![CDATA[
 {
@@ -61,9 +61,9 @@
 			<assertRs status="201" properties="token,userId,nullProp" store="token" call="true"/>
 		</put>
 
-		<put url="/users/${verify.rs.userId}">
+		<put url="/users/${verify_by$sms.rs.userId}">
 			<headers>
-				<header name="Authorization" value="${verify.rs.token}"/>
+				<header name="Authorization" value="${verify_by$sms.rs.token}"/>
 			</headers>
 
 			<form>
@@ -82,7 +82,7 @@
 	<scenario id="Login" parallel="${parallelLogin}" loop="${loopLogin}">
 		<get url="/login/${cell}">
 			<headers>
-				<header name="Authorization" value="${verify.rs.token}"/>
+				<header name="Authorization" value="${verify_by$sms.rs.token}"/>
 			</headers>
 
 			<assertRs status="200" properties="smsCode"/>

@@ -4,18 +4,22 @@ import org.devocative.artemis.Context;
 
 public class InitContext {
 	private final Context ctx;
-	private final Aspects aspects;
+	private final IAspects aspects;
 
-	public InitContext(Context ctx, Aspects aspects) {
+	// ------------------------------
+
+	public InitContext(Context ctx, IAspects aspects) {
 		this.ctx = ctx;
 		this.aspects = aspects;
 	}
+
+	// ------------------------------
 
 	public Context getCtx() {
 		return ctx;
 	}
 
-	public Aspects getAspects() {
+	public IAspects getAspects() {
 		return aspects;
 	}
 }
