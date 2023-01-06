@@ -23,19 +23,19 @@ import java.net.*;
 public class HttpFactory {
 	private static final ThreadLocal<CloseableHttpClient> CURRENT_CLIENT = new ThreadLocal<>();
 
-	private final String baseUrl;
-	private final String proxy;
+	private static String baseUrl;
+	private static String proxy;
 
 	// ------------------------------
 
-	public HttpFactory(String baseUrl, String proxy) {
-		this.baseUrl = baseUrl;
-		this.proxy = proxy;
+	public static void init(String baseUrl, String proxy) {
+		HttpFactory.baseUrl = baseUrl;
+		HttpFactory.proxy = proxy;
 	}
 
 	// ------------------------------
 
-	public void shutdown() {
+	public static void shutdown() {
 		try {
 			final CloseableHttpClient httpclient = CURRENT_CLIENT.get();
 			if (httpclient != null) {
@@ -47,7 +47,7 @@ public class HttpFactory {
 		}
 	}
 
-	public HttpRequest create(XBaseRequest rq) {
+	public static HttpRequest create(XBaseRequest rq) {
 		final String url = rq.getUrl();
 
 		final String finalUrl;
