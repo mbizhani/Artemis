@@ -16,13 +16,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.devocative.artemis.Constants.PREV;
+import static org.devocative.artemis.Constants.THIS;
 import static org.devocative.artemis.EVarScope.*;
 import static org.devocative.artemis.Memory.EStep.*;
 import static org.devocative.artemis.util.Util.asMap;
 
 public class ScenariosRunner implements Runnable {
-	private static final String THIS = "_this";
-	private static final String PREV = "_prev";
 	private static final String G_LOOP_VAR = "_gLoop";
 	private static final String LOOP_VAR = "_loop";
 

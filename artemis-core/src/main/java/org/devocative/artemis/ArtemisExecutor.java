@@ -17,14 +17,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.devocative.artemis.Constants.PREV;
+import static org.devocative.artemis.Constants.THIS;
 import static org.devocative.artemis.EVarScope.Scenario;
 import static org.devocative.artemis.Memory.EStep.*;
 
 public class ArtemisExecutor {
-
-	private static final String THIS = "_this";
-	private static final String PREV = "_prev";
-
 	private final Config config;
 
 	// ------------------------------
