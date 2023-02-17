@@ -1,5 +1,7 @@
-package org.devocative.artemis;
+package org.devocative.artemis.util;
 
+import org.devocative.artemis.Result;
+import org.devocative.artemis.TestFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

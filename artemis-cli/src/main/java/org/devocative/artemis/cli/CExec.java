@@ -8,7 +8,7 @@ import picocli.CommandLine.Parameters;
 
 import java.util.Map;
 
-import static org.devocative.artemis.Util.isEmpty;
+import static org.devocative.artemis.util.Util.isEmpty;
 
 @Command(name = "exec", description = "Execute Artemis", mixinStandardHelpOptions = true)
 public class CExec implements Runnable {

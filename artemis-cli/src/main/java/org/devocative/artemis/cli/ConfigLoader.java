@@ -11,7 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import static org.devocative.artemis.Util.isEmpty;
+import static org.devocative.artemis.util.Util.isEmpty;
 
 @Slf4j
 public class ConfigLoader {

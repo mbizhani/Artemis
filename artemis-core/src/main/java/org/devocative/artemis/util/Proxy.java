@@ -1,4 +1,4 @@
-package org.devocative.artemis;
+package org.devocative.artemis.util;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import groovy.lang.GroovyRuntimeException;
@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.implementation.InvocationHandlerAdapter;
 import net.bytebuddy.matcher.ElementMatchers;
+import org.devocative.artemis.ContextHandler;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -27,7 +28,13 @@ public class Proxy {
 
 	// ------------------------------
 
-	public Object get() {
+	public static <T> T create(T obj) {
+		return (T) new Proxy(obj).get();
+	}
+
+	// ------------------------------
+
+	private Object get() {
 		try {
 			return new ByteBuddy()
 				.subclass(target.getClass())
@@ -40,12 +47,12 @@ public class Proxy {
 							if (result instanceof List) {
 								return ((List<?>) result).stream()
 									.filter(Objects::nonNull)
-									.map(item -> doProxify(item) ? create(item) : item)
+									.map(item -> canProxify(item) ? create(item) : item)
 									.collect(Collectors.toList());
 							} else if (result instanceof String) {
 								final String str = (String) result;
 								return str.contains("${") ? eval(str, method) : str;
-							} else if (doProxify(result)) {
+							} else if (canProxify(result)) {
 								return create(result);
 							}
 							return result;
@@ -68,15 +75,7 @@ public class Proxy {
 		}
 	}
 
-	// ------------------------------
-
-	public static <T> T create(T obj) {
-		return (T) new Proxy(obj).get();
-	}
-
-	// ------------------------------
-
-	private boolean doProxify(Object obj) {
+	private boolean canProxify(Object obj) {
 		return obj.getClass().isAnnotationPresent(XStreamAlias.class);
 	}
 

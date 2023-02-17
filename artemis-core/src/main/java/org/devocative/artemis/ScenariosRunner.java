@@ -5,6 +5,8 @@ import org.devocative.artemis.cfg.Config;
 import org.devocative.artemis.ctx.StatisticsContext;
 import org.devocative.artemis.http.*;
 import org.devocative.artemis.log.ALog;
+import org.devocative.artemis.util.Immutable;
+import org.devocative.artemis.util.Parallel;
 import org.devocative.artemis.xml.*;
 import org.devocative.artemis.xml.method.XBody;
 import org.devocative.artemis.xml.method.XWhen;
@@ -16,7 +18,7 @@ import java.util.stream.Collectors;
 
 import static org.devocative.artemis.EVarScope.*;
 import static org.devocative.artemis.Memory.EStep.*;
-import static org.devocative.artemis.Util.asMap;
+import static org.devocative.artemis.util.Util.asMap;
 
 public class ScenariosRunner implements Runnable {
 	private static final String THIS = "_this";

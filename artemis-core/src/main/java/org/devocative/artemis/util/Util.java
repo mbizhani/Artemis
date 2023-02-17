@@ -1,4 +1,4 @@
-package org.devocative.artemis;
+package org.devocative.artemis.util;
 
 import org.devocative.artemis.xml.INameTheValue;
 

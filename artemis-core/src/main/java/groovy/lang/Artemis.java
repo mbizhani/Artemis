@@ -3,8 +3,8 @@ package groovy.lang;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.devocative.artemis.ContextHandler;
-import org.devocative.artemis.Parallel;
 import org.devocative.artemis.log.ALog;
+import org.devocative.artemis.util.Parallel;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;

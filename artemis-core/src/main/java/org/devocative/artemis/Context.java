@@ -2,6 +2,7 @@ package org.devocative.artemis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.devocative.artemis.log.ALog;
+import org.devocative.artemis.util.Immutable;
 
 import java.util.Collections;
 import java.util.HashMap;
