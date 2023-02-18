@@ -17,7 +17,6 @@ import org.devocative.artemis.log.ALog;
 
 import java.io.*;
 import java.util.HashMap;
-import java.util.function.Consumer;
 
 import static org.devocative.artemis.EVarScope.Global;
 
@@ -27,15 +26,12 @@ public class ContextHandler {
 
 	private static final ThreadLocal<Context> CTX = new ThreadLocal<>();
 	private static final ObjectMapper MAPPER = new ObjectMapper();
-	private static final Memory NEW_MEMORY = new Memory();
 	private static final Aspects ASPECTS = new Aspects();
 
 	private static GroovyShell SHELL;
 	private static SimpleTemplateEngine ENGINE;
 	private static Script MAIN;
 	private static Config CONFIG;
-	private static String MEM_FILE;
-	private static Memory MEMORY;
 
 	// ------------------------------
 
@@ -66,22 +62,7 @@ public class ContextHandler {
 		});
 		MAPPER.registerModule(grv);
 
-		MEM_FILE = String.format(".%s.memory.json", config.getName());
-		final File file = new File(MEM_FILE);
-		if (config.getDevMode() && file.exists()) {
-			try {
-				MEMORY = MAPPER.readValue(file, Memory.class);
-				final Context ctx = MEMORY.getContext();
-				ctx.addVarByScope(SCRIPT_VAR, MAIN, Global);
-				CTX.set(ctx);
-
-				NEW_MEMORY.setLastSuccessfulRqId(MEMORY.getLastSuccessfulRqId());
-			} catch (IOException e) {
-				throw new RuntimeException(String.format("Invalid '%s' as JSON file, you may need to delete it!", MEM_FILE), e);
-			}
-		} else {
-			MEMORY = new Memory();
-		}
+		// Load Memory from JSON file & apply its Context
 	}
 
 	public static void createContext() {
@@ -117,12 +98,7 @@ public class ContextHandler {
 	public static void shutdown(boolean successfulExec) {
 		CTX.remove();
 
-		if (successfulExec) {
-			final File file = new File(MEM_FILE);
-			if (file.exists()) {
-				file.delete();
-			}
-		}
+		// Remove Memory JSON file after successful execution
 	}
 
 	public static String evalTxtTemplate(String str) {
@@ -154,30 +130,12 @@ public class ContextHandler {
 		return MAPPER.readValue(json, cls);
 	}
 
-	public static Memory getMEMORY() {
-		return MEMORY;
-	}
-
-	public static void updateMemory(Consumer<Memory> consumer) {
-		if (CONFIG.getDevMode()) {
-			consumer.accept(NEW_MEMORY);
-		}
-	}
-
-	public static void memorize() {
-		if (CONFIG.getDevMode()) {
-			final Context ctx = CTX.get();
-			ctx.removeVar(SCRIPT_VAR, Global);
-
-			NEW_MEMORY.setContext(ctx);
-
-			try {
-				MAPPER.writeValue(new File(MEM_FILE), NEW_MEMORY);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-	}
+	/*
+	 All Memory functions:
+	   Memory getMEMORY()
+	   void updateMemory(Consumer<Memory> consumer)
+	   void memorize()
+	 */
 
 	public static InputStream loadXmlFile() {
 		return loadFile(CONFIG.getXmlName());

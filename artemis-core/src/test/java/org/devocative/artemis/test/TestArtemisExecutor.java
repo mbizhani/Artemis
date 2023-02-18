@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
-import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.HashMap;
@@ -94,7 +93,7 @@ public class TestArtemisExecutor {
 		});
 	}
 
-	@Test
+	/*@Test
 	public void test_devMode() {
 		startJavalin(url -> {
 			final File memFile = new File(".artemis-devMode.memory.json");
@@ -120,7 +119,7 @@ public class TestArtemisExecutor {
 
 			memFile.delete();
 		});
-	}
+	}*/
 
 	@Test
 	public void test_socks_proxy_connection_refused() {

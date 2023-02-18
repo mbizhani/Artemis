@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 import static org.devocative.artemis.Constants.PREV;
 import static org.devocative.artemis.Constants.THIS;
 import static org.devocative.artemis.EVarScope.*;
-import static org.devocative.artemis.Memory.EStep.*;
 import static org.devocative.artemis.util.Util.asMap;
 
 public class ScenariosRunner implements Runnable {
@@ -110,7 +109,7 @@ public class ScenariosRunner implements Runnable {
 		} catch (RuntimeException e) {
 			successfulExec = false;
 			ALog.error(e.getMessage());
-			ContextHandler.memorize();
+			//ContextHandler.memorize();
 			StatisticsContext.execFinished(iteration, System.currentTimeMillis() - start, e.getMessage());
 			throw e;
 		} finally {
@@ -124,7 +123,7 @@ public class ScenariosRunner implements Runnable {
 
 		ctx.addVarByScope(G_LOOP_VAR, iteration, Global);
 
-		ContextHandler.updateMemory(m -> m.setScenarioName(scenario.getId()));
+		//ContextHandler.updateMemory(m -> m.setScenarioName(scenario.getId()));
 
 		scenario.updateRequestsIds();
 
@@ -154,7 +153,7 @@ public class ScenariosRunner implements Runnable {
 			for (XBaseRequest rq : scenario.getRequests()) {
 				ALog.info("%blue(--------------- [{}] ---------------)", rq.getId());
 
-				ContextHandler.updateMemory(m -> m.setRqId(rq.getId()));
+				//ContextHandler.updateMemory(m -> m.setRqId(rq.getId()));
 
 				if (!XBaseRequest.BREAK_POINT_ID.equals(rq.getId())) {
 					if (evaluateWhen(rq.getWhen())) {
@@ -163,7 +162,7 @@ public class ScenariosRunner implements Runnable {
 
 						checkSleep(scenario);
 
-						ContextHandler.updateMemory(Memory::clear);
+						//ContextHandler.updateMemory(Memory::clear);
 						ctx.clearVars(EVarScope.Request);
 					} else {
 						final String msg = rq.getWhen().getMessage() != null ? rq.getWhen().getMessage() : "'when' is false!";
@@ -178,7 +177,7 @@ public class ScenariosRunner implements Runnable {
 		}
 
 		ctx.clearVars(Scenario);
-		ContextHandler.updateMemory(Memory::clearAll);
+		//ContextHandler.updateMemory(Memory::clearAll);
 	}
 
 	private Boolean evaluateWhen(XWhen when) {
@@ -195,7 +194,7 @@ public class ScenariosRunner implements Runnable {
 			ctx.addVarByScope(PREV, ctx.removeVar(THIS, Scenario), Scenario);
 		}
 
-		ContextHandler.updateMemory(m -> m.addStep(RqVars));
+		//ContextHandler.updateMemory(m -> m.addStep(RqVars));
 
 		int addVars = 0;
 		for (XVar var : rq.getVars()) {
@@ -206,7 +205,7 @@ public class ScenariosRunner implements Runnable {
 			ALog.info("[{}] var(s) added to context", addVars);
 		}
 
-		ContextHandler.updateMemory(m -> m.addStep(RqCall));
+		//ContextHandler.updateMemory(m -> m.addStep(RqCall));
 		if (rq.getCall() != null && rq.getCall()) {
 			if (!rq.isWithId()) {
 				throw new TestFailedException(rq.getId(), "No id for Request to Call");
@@ -222,7 +221,7 @@ public class ScenariosRunner implements Runnable {
 	}
 
 	private void sendRq(XBaseRequest rq) {
-		ContextHandler.updateMemory(m -> m.addStep(RqSend));
+		//ContextHandler.updateMemory(m -> m.addStep(RqSend));
 
 		final Context ctx = ContextHandler.get();
 

@@ -8,19 +8,12 @@ import org.devocative.artemis.log.ALog;
 import org.devocative.artemis.util.Parallel;
 import org.devocative.artemis.util.Proxy;
 import org.devocative.artemis.xml.XArtemis;
-import org.devocative.artemis.xml.XBaseRequest;
 import org.devocative.artemis.xml.XBreakPoint;
 import org.devocative.artemis.xml.XScenario;
 import org.devocative.artemis.xml.method.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.devocative.artemis.Constants.PREV;
-import static org.devocative.artemis.Constants.THIS;
-import static org.devocative.artemis.EVarScope.Scenario;
-import static org.devocative.artemis.Memory.EStep.*;
 
 public class ArtemisExecutor {
 	private final Config config;
@@ -92,61 +85,7 @@ public class ArtemisExecutor {
 
 			config.setLoop(1).setParallel(1);
 
-			final Memory memory = ContextHandler.getMEMORY();
-			if (memory.isEmpty()) {
-				ALog.info("DEV MODE - Empty Memory");
-			} else {
-				ALog.info("DEV MODE - Memory: {} -> {}, {}", memory.getScenarioName(), memory.getRqId(), memory.getSteps());
-			}
-
-			if (memory.getScenarioName() != null) {
-				artemis.setVars(Collections.emptyList());
-
-				while (!memory.getScenarioName().equals(artemis.getScenarios().get(0).getId())) {
-					final XScenario removed = artemis.getScenarios().remove(0);
-					ALog.info("DEV MODE - Removed Scenario: {}", removed.getId());
-				}
-
-				final XScenario scenario = artemis.getScenarios().get(0);
-				scenario.updateRequestsIds();
-				ALog.info("DEV MODE - Removed Scenario Vars: {}", scenario.getId());
-				scenario.setVars(Collections.emptyList());
-
-				final List<Memory.EStep> steps = memory.getSteps();
-
-				if (steps.contains(RqVars)) {
-					final Context ctx = memory.getContext();
-					if (ctx.containsVar(PREV, Scenario)) {
-						ctx.addVarByScope(THIS, ctx.removeVar(PREV, Scenario), Scenario);
-					}
-
-					while (!memory.getRqId().equals(scenario.getRequests().get(0).getId())) {
-						final XBaseRequest removed = scenario.getRequests().remove(0);
-						ALog.info("DEV MODE - Removed Rq: {} ({})", removed.getId(), scenario.getId());
-					}
-
-					final XBaseRequest rq = scenario.getRequests().get(0);
-					if (steps.contains(RqCall)) {
-						ALog.info("DEV MODE - Removed Rq Vars: {} ({})", rq.getId(), scenario.getId());
-						rq.setVars(Collections.emptyList());
-
-						if (steps.contains(RqSend)) {
-							ALog.info("DEV MODE - Removed Rq Call: {} ({})", rq.getId(), scenario.getId());
-							rq.setCall(null);
-						}
-					}
-				} else if (steps.isEmpty() && XBaseRequest.BREAK_POINT_ID.equals(memory.getRqId()) && memory.getLastSuccessfulRqId() != null) {
-
-					while (!scenario.getRequests().isEmpty()) {
-						final XBaseRequest removed = scenario.getRequests().remove(0);
-						ALog.info("DEV MODE - Removed Rq: {} ({})", removed.getId(), scenario.getId());
-
-						if (memory.getLastSuccessfulRqId().equals(removed.getId())) {
-							break;
-						}
-					}
-				}
-			}
+			// Apply Memory to XArtemis object
 		}
 
 		return Proxy.create(artemis);
