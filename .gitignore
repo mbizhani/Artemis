@@ -4,5 +4,6 @@ target/
 logs/
 .*.memory.json
 
-config.yaml
+/config.yaml
 /files/
+artemis-cli.jar

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!DOCTYPE artemis PUBLIC "-//Devocative.Org//Artemis 1.0//EN"
+		"https://devocative.org/dtd/artemis-2.0.dtd">
+
+<artemis>
+
+	<vars>
+		<var name="aVar1" value=""/>
+	</vars>
+
+	<scenario id="FirstScenario" call="true">
+		<!-- Method `<ID_VALUE>(Context)` is called in associated groovy file, if `call="true"` -->
+		<get id="firstGet" url="/" call="true">
+
+			<!-- Method `assertRs_<ID_VALUE>(Context, Map|List)` is called in associated groovy file, if `call="true"` -->
+			<assertRs status="200" properties="" call="true"/>
+		</get>
+
+		<post id="a2" url="/">
+			<body><![CDATA[
+{
+	"name": "${aVar1}"
+}
+			]]></body>
+
+			<assertRs status="201"/>
+		</post>
+
+	</scenario>
+
+</artemis>

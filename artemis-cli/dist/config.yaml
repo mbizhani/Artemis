@@ -1,0 +1,11 @@
+baseUrl: "http://localhost:8080"
+baseDir: "files/"
+name: "artemis"
+xmlName:
+groovyName:
+loop: 1
+parallel: 1
+#vars:
+#  - name: ""
+#    value: ""
+
